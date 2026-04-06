@@ -40,6 +40,78 @@
   margin-bottom: 0.2rem;
 }
 
+/* Quick Guide */
+.quick-guide {
+  gap: 0.6rem;
+}
+.guide-subtitle {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.85rem;
+}
+.guide-card {
+  background: var(--bg3);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 0.9rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.guide-card h3 {
+  font-size: 0.98rem;
+  color: var(--text);
+}
+.guide-list {
+  list-style: disc;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.4;
+}
+.guide-tags {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.guide-tag {
+  font-size: 0.9rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+  color: var(--text);
+  line-height: 1.4;
+}
+.guide-tag.soft {
+  border-color: var(--success);
+  background: rgba(46, 160, 67, 0.12);
+}
+.guide-tag.spicy {
+  border-color: var(--yellow);
+  background: rgba(210, 153, 34, 0.12);
+}
+.ratio-card {
+  margin-top: 0.2rem;
+}
+.ratio-list {
+  list-style: disc;
+  padding-left: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  color: var(--text);
+}
+
 /* Player count row */
 .player-count-row,
 .timer-config {
