@@ -90,14 +90,18 @@ export default function DayPhase() {
     .filter((r) => r?.dayTrigger);
 
   return (
-    <div className="day-phase">
+    <div className="day-phase" data-testid="day-phase">
       <div className="day-header">
         <span className="phase-icon">☀️</span>
         <div>
           <h2>Day Phase — Round {round}</h2>
           <p className="day-subtitle">All players open their eyes.</p>
         </div>
-        <button className="btn btn-ghost btn-sm" onClick={() => setRevealAll((r) => !r)}>
+        <button
+          className="btn btn-ghost btn-sm"
+          data-testid="dm-view-toggle"
+          onClick={() => setRevealAll((r) => !r)}
+        >
           {revealAll ? '🙈 Hide Roles' : '👁 DM View'}
         </button>
       </div>

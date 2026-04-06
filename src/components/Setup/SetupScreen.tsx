@@ -125,7 +125,7 @@ export default function SetupScreen() {
         <h2>🃏 Assign Roles</h2>
         <div className="player-list">
           {Array.from({ length: playerCount }, (_, i) => (
-            <div key={i} className="player-row">
+            <div key={i} className="player-row" data-testid={`player-row-${i}`}>
               <span className="player-num">{i + 1}</span>
               <input
                 className="player-name-input"
@@ -135,6 +135,7 @@ export default function SetupScreen() {
               />
               <select
                 className="role-select"
+                data-testid="role-select"
                 value={roleAssignment[i] ?? 'villager'}
                 onChange={(e) => handleRoleChange(i, e.target.value)}
               >
@@ -221,6 +222,7 @@ export default function SetupScreen() {
 
       <button
         className="start-btn"
+        data-testid="start-game"
         onClick={handleStart}
         disabled={!canStart}
       >
