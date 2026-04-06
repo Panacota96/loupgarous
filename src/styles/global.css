@@ -1,36 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap');
+
 /* ===================================================
    Global / Base Styles
    =================================================== */
 :root {
-  --bg: #0d1117;
-  --bg2: #161b22;
-  --bg3: #21262d;
-  --border: #30363d;
-  --text: #e6edf3;
-  --text-muted: #8b949e;
-  --primary: #388bfd;
-  --primary-hover: #58a6ff;
-  --danger: #da3633;
-  --danger-hover: #f85149;
-  --success: #2ea043;
-  --success-hover: #3fb950;
-  --yellow: #d29922;
-  --yellow-hover: #e3b341;
-  --night-bg: #0a0d16;
-  --night-accent: #3d3f8f;
-  --day-bg: #16120a;
-  --day-accent: #8f7f3d;
+  --bg: #07030c;
+  --bg2: #0e0914;
+  --bg3: #1a0f1f;
+  --border: #2d1a2e;
+  --panel-glow: rgba(185,42,58,0.28);
+  --text: #f2e9dc;
+  --text-muted: #c6b7c2;
+  --primary: #b92a3a;
+  --primary-hover: #e04455;
+  --danger: #d13c32;
+  --danger-hover: #f05b4d;
+  --success: #4aa18a;
+  --success-hover: #5cbfa8;
+  --yellow: #c7a446;
+  --yellow-hover: #e0bd61;
+  --night-bg: #090915;
+  --night-accent: #5b2b73;
+  --day-bg: #1b0f08;
+  --day-accent: #b55c24;
 
   /* Camps */
-  --camp-village: #2ea043;
-  --camp-werewolves: #da3633;
-  --camp-lovers: #f27cb0;
-  --camp-lone_wolf: #8957e5;
-  --camp-neutral: #8b949e;
-  --camp-ambiguous: #d97706;   /* amber — Wolf-Dog, Wild Child */
-  --camp-loner: #9333ea;       /* violet — White Werewolf, Pied Piper, Angel */
+  --camp-village: #4aa18a;
+  --camp-werewolves: #b92a3a;
+  --camp-lovers: #d85c9f;
+  --camp-lone_wolf: #a974f7;
+  --camp-neutral: #a19aa5;
+  --camp-ambiguous: #d88a2f;   /* amber — Wolf-Dog, Wild Child */
+  --camp-loner: #8747c4;       /* violet — White Werewolf, Pied Piper, Angel */
 
-  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --body-font: 'Manrope', system-ui, -apple-system, sans-serif;
+  --display-font: 'Cinzel', 'Times New Roman', serif;
+
+  font-family: var(--body-font);
   font-size: 16px;
   color: var(--text);
   background: var(--bg);
@@ -43,15 +49,26 @@
 }
 
 body {
-  background: var(--bg);
+  background:
+    radial-gradient(120% 95% at 20% 15%, rgba(148,55,90,0.25), transparent 40%),
+    radial-gradient(110% 90% at 80% 0%, rgba(91,43,115,0.32), transparent 45%),
+    linear-gradient(135deg, #06030b 0%, #0a0610 40%, #0c0815 100%);
   color: var(--text);
   min-height: 100vh;
+  letter-spacing: 0.01em;
+  background-attachment: fixed;
 }
 
 #root {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  isolation: isolate;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--display-font);
+  letter-spacing: 0.05em;
 }
 
 /* ===================================================
@@ -60,52 +77,59 @@ body {
 .btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 1.1rem;
+  gap: 0.45rem;
+  padding: 0.58rem 1.2rem;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   font-size: 0.95rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
-  background: var(--bg3);
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s, transform 0.2s;
+  background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
   color: var(--text);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,255,255,0.02);
 }
+.btn:hover:not(:disabled) { transform: translateY(-1px); }
 .btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 .btn-primary {
-  background: var(--primary);
-  border-color: var(--primary);
+  background: linear-gradient(145deg, #c02f3d, #821c2a);
+  border-color: rgba(192,47,61,0.9);
   color: #fff;
+  box-shadow: 0 10px 30px rgba(185,42,58,0.3), 0 0 0 1px rgba(192,47,61,0.3);
 }
-.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.btn-primary:hover:not(:disabled) { background: linear-gradient(145deg, #d94454, #972233); }
 .btn-danger {
-  background: var(--danger);
-  border-color: var(--danger);
+  background: linear-gradient(145deg, #b1202f, #6b141e);
+  border-color: rgba(177,32,47,0.9);
   color: #fff;
+  box-shadow: 0 10px 30px rgba(209,60,50,0.25), 0 0 0 1px rgba(209,60,50,0.25);
 }
-.btn-danger:hover:not(:disabled) { background: var(--danger-hover); }
+.btn-danger:hover:not(:disabled) { background: linear-gradient(145deg, #d33644, #821c2a); }
 .btn-green {
-  background: var(--success);
-  border-color: var(--success);
-  color: #fff;
+  background: linear-gradient(145deg, #449273, #204f42);
+  border-color: #3a8066;
+  color: #e6fff2;
 }
-.btn-green:hover:not(:disabled) { background: var(--success-hover); }
+.btn-green:hover:not(:disabled) { background: linear-gradient(145deg, #55a485, #2c6a56); }
 .btn-yellow {
-  background: var(--yellow);
-  border-color: var(--yellow);
-  color: #fff;
+  background: linear-gradient(145deg, #c7a446, #7c6223);
+  border-color: #c7a446;
+  color: #fff8e1;
 }
-.btn-yellow:hover:not(:disabled) { background: var(--yellow-hover); }
+.btn-yellow:hover:not(:disabled) { background: linear-gradient(145deg, #e0bd61, #8f7230); }
 .btn-ghost {
-  background: transparent;
+  background: rgba(255,255,255,0.02);
   border-color: var(--border);
+  color: var(--text);
 }
-.btn-ghost:hover:not(:disabled) { background: var(--bg3); }
-.btn-sm { padding: 0.3rem 0.7rem; font-size: 0.82rem; }
-.btn-large { padding: 0.75rem 1.5rem; font-size: 1.05rem; width: 100%; justify-content: center; }
+.btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.05); }
+.btn-sm { padding: 0.35rem 0.75rem; font-size: 0.82rem; border-radius: 6px; }
+.btn-large { padding: 0.85rem 1.6rem; font-size: 1.05rem; width: 100%; justify-content: center; }
 
 /* ===================================================
    Camp Colours
@@ -120,11 +144,13 @@ body {
 
 .camp-tag {
   font-size: 0.72rem;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 999px;
-  font-weight: 700;
+  font-weight: 800;
   text-transform: uppercase;
   color: #fff;
+  letter-spacing: 0.05em;
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.25);
 }
 .camp-tag.camp-village { background: var(--camp-village); }
 .camp-tag.camp-werewolves { background: var(--camp-werewolves); }
@@ -139,10 +165,11 @@ body {
    =================================================== */
 .badge {
   font-size: 0.72rem;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 999px;
   font-weight: 700;
+  letter-spacing: 0.04em;
 }
 .badge-mayor { background: #6e4c08; color: #f0c040; }
 .badge-lover { background: #4a1a2e; color: #f27cb0; }
-.badge-once  { background: #1a2a4a; color: #7cb3f2; }
+.badge-once  { background: #221b2e; color: #c8b7ff; }

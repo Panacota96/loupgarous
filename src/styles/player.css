@@ -1,20 +1,18 @@
 /* Player Card */
 .player-card {
-  background: var(--bg2);
+  background: linear-gradient(140deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
   border: 1.5px solid var(--border);
-  border-radius: 10px;
-  padding: 0.8rem 1rem;
+  border-radius: 12px;
+  padding: 0.9rem 1.05rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
-  transition: border-color 0.2s, opacity 0.2s;
+  transition: border-color 0.2s, opacity 0.2s, transform 0.2s;
+  box-shadow: 0 12px 26px rgba(0,0,0,0.35);
 }
-.player-card.dead {
-  opacity: 0.45;
-  border-style: dashed;
-}
-.player-card.mayor { border-color: #c9a227; }
-.player-card.lover { border-color: var(--camp-lovers); }
+.player-card.dead { opacity: 0.45; border-style: dashed; }
+.player-card.mayor { border-color: #c9a227; box-shadow: 0 0 0 1px rgba(201,162,39,0.2); }
+.player-card.lover { border-color: var(--camp-lovers); box-shadow: 0 0 0 1px rgba(216,92,159,0.18); }
 
 .player-card-header {
   display: flex;
@@ -34,9 +32,9 @@
   align-items: flex-start;
   gap: 0.5rem;
   font-size: 0.88rem;
-  background: var(--bg3);
-  border-radius: 6px;
-  padding: 0.4rem 0.6rem;
+  background: rgba(255,255,255,0.03);
+  border-radius: 8px;
+  padding: 0.45rem 0.65rem;
   border-left: 3px solid var(--border);
   flex-wrap: wrap;
 }
