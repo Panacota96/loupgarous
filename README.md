@@ -1,6 +1,6 @@
 # 🐺 Loup-Garous GM Assistant
 
-A **Game Master (DM) assistant** for Loup-Garous / Werewolf, built as a **React PWA** that runs in any browser and can be installed as a native app on Android via the Play Store (using a PWA wrapper like Bubblewrap/TWA).
+A **Game Master (DM) assistant** for Loup-Garous / Werewolf, built as a **React app** with an existing **Capacitor Android wrapper**. The web app remains the source of truth, and the `android/` folder is the Android Studio project used to run the app on a device or emulator.
 
 ---
 
@@ -25,6 +25,7 @@ A **Game Master (DM) assistant** for Loup-Garous / Werewolf, built as a **React 
 | **Role reference** | Filterable by Night / Day; shows all actions and triggers |
 | **Game log** | Chronological event history |
 | **Optional rules** | Per-game toggles for Elder, Scapegoat, etc. |
+| **Android wrapper** | Existing Capacitor project opens directly in Android Studio |
 | **PWA** | Installable on Android and iOS via the browser's "Add to Home Screen" prompt |
 | **Persistent state** | Game state saved to localStorage, survives page reload |
 
@@ -56,15 +57,43 @@ npm run test:e2e
 
 The test spins up the Vite dev server, runs a 6-player (2 wolves, 4 villagers) round, verifies roles display, phases transition, and captures artifacts if a crash/black screen occurs.
 
-## 📱 Android / Play Store
+## 📱 Android Studio Workflow
 
-This app ships a **Web App Manifest** (`public/manifest.json`), making it a PWA.
+This repository already includes the Android Studio project in `android/`. Do not create a second native app for local development.
 
-To publish on Google Play:
+### First-time setup
 
-1. Build the app: `npm run build`
-2. Use **[Bubblewrap](https://github.com/GoogleChromeLabs/bubblewrap)** or **[PWA Builder](https://www.pwabuilder.com/)** to wrap the hosted URL as a Trusted Web Activity (TWA).
-3. Upload the generated `.aab` to the Play Console.
+```bash
+npm install
+npm run cap:sync
+```
+
+`npm run cap:sync` builds the web app into `dist/` and copies those assets into the Capacitor Android project.
+
+### Open in Android Studio
+
+1. Open the `android/` folder in Android Studio.
+2. Let Gradle sync complete.
+3. If Android Studio asks for an SDK path, let it create `android/local.properties` or point it to your installed Android SDK.
+4. Select an emulator or device and press Run.
+
+### After web changes
+
+Whenever you change the React app:
+
+```bash
+npm run cap:sync
+```
+
+Then run the app again from Android Studio. The Android shell loads built files from `dist/`; it does not use the Vite dev server.
+
+### Notes
+
+- Android Studio project root: `android/`
+- Local SDK config file: `android/local.properties` (local only, not committed)
+- Capacitor config: `capacitor.config.ts`
+- Android package id: `com.panacota96.loupgarous`
+- More detail: [`docs/android-setup.md`](./docs/android-setup.md)
 
 ---
 
