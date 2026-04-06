@@ -133,3 +133,19 @@
 }
 .night-btn { background: var(--night-accent); border-color: var(--night-accent); }
 .night-btn:hover:not(:disabled) { background: #5055b5; }
+
+.day-enchanted-bar {
+  background: rgba(147,51,234,0.1);
+  border-color: rgba(147,51,234,0.35) !important;
+  color: #c084fc;
+}
+.day-infected-bar {
+  background: rgba(129,44,6,0.12);
+  border-color: rgba(217,119,6,0.35) !important;
+  color: #f0a028;
+}
+.win-alert {
+  font-weight: 800;
+  color: #f0c060;
+  margin-left: 0.5rem;
+}

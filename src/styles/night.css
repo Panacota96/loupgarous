@@ -149,3 +149,77 @@
   text-align: center;
 }
 .night-summary h3 { font-size: 1.2rem; font-weight: 800; }
+
+/* New role elements */
+.role-wake-badges {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+  margin-top: 0.3rem;
+}
+
+.infect-note {
+  background: rgba(217,119,6,0.1);
+  border: 1px solid rgba(217,119,6,0.35);
+  border-radius: 6px;
+  padding: 0.4rem 0.7rem;
+  font-size: 0.85rem;
+  color: #f0a028;
+  margin-top: 0.4rem;
+}
+
+.used-banner {
+  background: rgba(218,54,51,0.1);
+  border: 1px solid rgba(218,54,51,0.35);
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.88rem;
+  color: #f27070;
+  font-weight: 600;
+}
+
+.choice-buttons {
+  display: flex;
+  gap: 0.7rem;
+  margin-top: 0.4rem;
+}
+
+.choice-btn {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  border: 2px solid var(--border);
+  background: var(--bg3);
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.choice-btn:hover { border-color: var(--primary); }
+.choice-btn.selected-village {
+  border-color: var(--camp-village);
+  background: rgba(46,160,67,0.15);
+  color: #3fb950;
+}
+.choice-btn.selected-wolf {
+  border-color: var(--camp-werewolves);
+  background: rgba(218,54,51,0.15);
+  color: #f85149;
+}
+
+/* Camp badge in seer reveal */
+.camp-badge {
+  font-size: 0.72rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--text-muted);
+}
+.camp-badge.camp-village { background: var(--camp-village); }
+.camp-badge.camp-werewolves { background: var(--camp-werewolves); }
+.camp-badge.camp-lovers { background: var(--camp-lovers); }
+.camp-badge.camp-ambiguous { background: var(--camp-ambiguous); }
+.camp-badge.camp-loner { background: var(--camp-loner); }

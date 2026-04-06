@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
-import { ROLE_MAP } from '../../data/roles';
+import { ROLE_MAP, WOLF_ROLE_IDS } from '../../data/roles';
 import PlayerCard from './PlayerCard';
 import Timer from './Timer';
 import TieBreaker from './TieBreaker';
@@ -11,6 +11,10 @@ export default function DayPhase() {
   const alivePlayers = players.filter((p) => p.isAlive);
   const votes = useGameStore((s) => s.votes);
   const round = useGameStore((s) => s.round);
+  const infectedPlayerIds = useGameStore((s) => s.infectedPlayerIds);
+  const enchantedPlayerIds = useGameStore((s) => s.enchantedPlayerIds);
+  const wildChildTransformed = useGameStore((s) => s.wildChildTransformed);
+  const wolfDogChoice = useGameStore((s) => s.wolfDogChoice);
 
   const setVote = useGameStore((s) => s.setVote);
   const clearVotes = useGameStore((s) => s.clearVotes);
@@ -20,16 +24,20 @@ export default function DayPhase() {
   const [showTieBreaker, setShowTieBreaker] = useState(false);
   const [revealAll, setRevealAll] = useState(false);
 
-  // Bear Tamer morning signal
+  // Bear Tamer morning signal — account for infected players and wolf-aligned
   const bearTamer = players.find((p) => p.isAlive && p.roleId === 'bear_tamer');
   const bearGrowls = (() => {
     if (!bearTamer) return false;
     const idx = alivePlayers.findIndex((p) => p.id === bearTamer.id);
     const left = alivePlayers[(idx - 1 + alivePlayers.length) % alivePlayers.length];
     const right = alivePlayers[(idx + 1) % alivePlayers.length];
-    return (
-      left?.roleId === 'werewolf' || right?.roleId === 'werewolf'
-    );
+    const isWolfSide = (p: typeof alivePlayers[0] | undefined) =>
+      !!p &&
+      (WOLF_ROLE_IDS.includes(p.roleId) ||
+        infectedPlayerIds.includes(p.id) ||
+        (p.roleId === 'wolf_dog' && wolfDogChoice === 'werewolf') ||
+        (p.roleId === 'wild_child' && wildChildTransformed));
+    return isWolfSide(left) || isWolfSide(right);
   })();
 
   // Compute vote totals (extra votes from Raven curse or similar effects)
@@ -86,6 +94,33 @@ export default function DayPhase() {
               {r!.emoji} <strong>{r!.nameFr}:</strong> {r!.dayTrigger}
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Pied Piper enchanted count */}
+      {alivePlayers.some((p) => p.roleId === 'pied_piper') && (() => {
+        const aliveEnchantedCount = enchantedPlayerIds.filter(
+          (id) => players.find((p) => p.id === id && p.isAlive)
+        ).length;
+        const piperWins = aliveEnchantedCount >= alivePlayers.length - 1;
+        return (
+          <div className="day-trigger-item day-enchanted-bar">
+            🎶 <strong>Pied Piper enchanted:</strong>{' '}
+            {aliveEnchantedCount} / {alivePlayers.length - 1} players
+            {piperWins && <span className="win-alert"> ⭐ PIED PIPER WINS!</span>}
+          </div>
+        );
+      })()}
+
+      {/* Infected players (DM-only info) */}
+      {infectedPlayerIds.length > 0 && (
+        <div className="day-trigger-item day-infected-bar">
+          🦠 <strong>Secret wolves (infected):</strong>{' '}
+          {infectedPlayerIds
+            .map((id) => players.find((p) => p.id === id))
+            .filter(Boolean)
+            .map((p) => p!.name)
+            .join(', ')}
         </div>
       )}
 

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Player, GameState, NightStep } from '../types/game.types';
-import { getNightOrder } from '../data/roles';
+import { getNightOrder, WOLF_ROLE_IDS } from '../data/roles';
 
 interface SetupState {
   playerNames: string[];
@@ -11,18 +11,18 @@ interface SetupState {
 }
 
 interface StoreActions {
-  // Setup
   setSetup: (s: SetupState) => void;
   startGame: () => void;
   resetGame: () => void;
-
-  // Night
   completeNightStep: () => void;
   setEliminatedThisNight: (ids: string[]) => void;
   useGameAbility: (key: string) => void;
   applyNightResults: () => void;
-
-  // Day
+  setWildChildModel: (id: string) => void;
+  setWolfDogChoice: (choice: 'villager' | 'werewolf') => void;
+  addEnchanted: (ids: string[]) => void;
+  infectPlayer: (id: string) => void;
+  setAngelWon: (val: boolean) => void;
   togglePhase: () => void;
   startTimer: () => void;
   stopTimer: () => void;
@@ -62,17 +62,20 @@ const defaultGame: GameState = {
   log: [],
   usedGameAbilities: [],
   optionalRules: {},
+  wildChildModelId: null,
+  wildChildTransformed: false,
+  wolfDogChoice: null,
+  enchantedPlayerIds: [],
+  infectedPlayerIds: [],
+  angelWon: false,
 };
 
 function buildNightSteps(roleIds: string[], round: number): NightStep[] {
-  const ordered = getNightOrder(roleIds);
-  return ordered
-    .filter((r) => {
-      if (r.firstNightOnly && round > 1) return false;
-      if (r.everyOtherNight && round % 2 !== 0) return false;
-      return true;
-    })
-    .map((r, i) => ({ roleId: r.id, stepIndex: i, completed: false }));
+  return getNightOrder(roleIds, round).map((r, i) => ({
+    roleId: r.id,
+    stepIndex: i,
+    completed: false,
+  }));
 }
 
 export const useGameStore = create<GameStore>()(
@@ -116,41 +119,88 @@ export const useGameStore = create<GameStore>()(
           log: [`Game started with ${players.length} players.`],
           usedGameAbilities: [],
           optionalRules,
+          wildChildModelId: null,
+          wildChildTransformed: false,
+          wolfDogChoice: null,
+          enchantedPlayerIds: [],
+          infectedPlayerIds: [],
+          angelWon: false,
         });
       },
 
-      resetGame: () =>
-        set({ ...defaultSetup, ...defaultGame }),
+      resetGame: () => set({ ...defaultSetup, ...defaultGame }),
 
       completeNightStep: () => {
         const { nightSteps, currentNightStepIndex } = get();
         const updated = nightSteps.map((s, i) =>
           i === currentNightStepIndex ? { ...s, completed: true } : s
         );
-        set({
-          nightSteps: updated,
-          currentNightStepIndex: currentNightStepIndex + 1,
-        });
+        set({ nightSteps: updated, currentNightStepIndex: currentNightStepIndex + 1 });
       },
 
       setEliminatedThisNight: (ids) => set({ eliminatedThisNight: ids }),
 
       useGameAbility: (key) =>
+        set((s) => ({ usedGameAbilities: [...s.usedGameAbilities, key] })),
+
+      setWildChildModel: (id) => set({ wildChildModelId: id }),
+      setWolfDogChoice: (choice) => set({ wolfDogChoice: choice }),
+      addEnchanted: (ids) =>
+        set((s) => ({ enchantedPlayerIds: [...new Set([...s.enchantedPlayerIds, ...ids])] })),
+      infectPlayer: (id) =>
         set((s) => ({
-          usedGameAbilities: [...s.usedGameAbilities, key],
+          eliminatedThisNight: s.eliminatedThisNight.filter((eid) => eid !== id),
+          infectedPlayerIds: [...new Set([...s.infectedPlayerIds, id])],
+          usedGameAbilities: [...s.usedGameAbilities, 'infect_pere'],
         })),
+      setAngelWon: (val) => set({ angelWon: val }),
 
       applyNightResults: () => {
-        const { players, eliminatedThisNight, round, discussionTimeSeconds, optionalRules } =
-          get();
+        const {
+          players, eliminatedThisNight, round, discussionTimeSeconds, optionalRules,
+          infectedPlayerIds, wildChildModelId, wildChildTransformed, log,
+        } = get();
+
+        // Knight with Rusty Sword: if Knight was killed by wolves,
+        // the first wolf to their LEFT (seating order) dies at dawn.
+        const finalEliminated = [...eliminatedThisNight];
+        let extraLog = '';
+        const knightPlayer = players.find((p) => p.isAlive && p.roleId === 'knight');
+        if (knightPlayer && finalEliminated.includes(knightPlayer.id)) {
+          const total = players.length;
+          const knightIdx = players.findIndex((p) => p.id === knightPlayer.id);
+          for (let offset = 1; offset < total; offset++) {
+            const candidate = players[(knightIdx - offset + total) % total];
+            if (!candidate.isAlive) continue;
+            if (
+              WOLF_ROLE_IDS.includes(candidate.roleId) ||
+              infectedPlayerIds.includes(candidate.id)
+            ) {
+              if (!finalEliminated.includes(candidate.id)) {
+                finalEliminated.push(candidate.id);
+                extraLog = ` ⚔️ Knight's rusty sword: ${candidate.name} dies of tetanus!`;
+              }
+              break;
+            }
+          }
+        }
+
         const updated = players.map((p) =>
-          eliminatedThisNight.includes(p.id)
-            ? { ...p, isAlive: false }
-            : p
+          finalEliminated.includes(p.id) ? { ...p, isAlive: false } : p
         );
-        const roleIds = [...new Set(updated.filter(p => p.isAlive).map((p) => p.roleId))];
+
+        const newWildChildTransformed =
+          wildChildTransformed ||
+          (wildChildModelId !== null && finalEliminated.includes(wildChildModelId));
+
+        const roleIds = [...new Set(updated.filter((p) => p.isAlive).map((p) => p.roleId))];
         const newRound = round + 1;
         const nightSteps = buildNightSteps(roleIds, newRound);
+
+        const nightMsg = finalEliminated.length
+          ? `Night ${round}: ${finalEliminated.map((id) => updated.find((p) => p.id === id)?.name).join(', ')} were eliminated.${extraLog}`
+          : `Night ${round}: No one was eliminated (peaceful night).`;
+
         set({
           players: updated,
           phase: 'day',
@@ -158,39 +208,24 @@ export const useGameStore = create<GameStore>()(
           nightSteps,
           currentNightStepIndex: 0,
           timerRemaining: discussionTimeSeconds,
-          log: [
-            ...get().log,
-            eliminatedThisNight.length
-              ? `Night ${round}: ${eliminatedThisNight
-                  .map((id) => updated.find((p) => p.id === id)?.name)
-                  .join(', ')} were eliminated.`
-              : `Night ${round}: No one was eliminated (peaceful night).`,
-          ],
+          log: [...log, nightMsg],
           optionalRules,
+          wildChildTransformed: newWildChildTransformed,
         });
       },
 
       togglePhase: () => {
         const { phase, round, players, discussionTimeSeconds, optionalRules } = get();
         if (phase === 'day') {
-          const roleIds = [...new Set(players.filter(p => p.isAlive).map((p) => p.roleId))];
+          const roleIds = [...new Set(players.filter((p) => p.isAlive).map((p) => p.roleId))];
           const newRound = round + 1;
           const nightSteps = buildNightSteps(roleIds, newRound);
           set({
-            phase: 'night',
-            round: newRound,
-            nightSteps,
-            currentNightStepIndex: 0,
-            eliminatedThisNight: [],
-            votes: [],
-            optionalRules,
+            phase: 'night', round: newRound, nightSteps,
+            currentNightStepIndex: 0, eliminatedThisNight: [], votes: [], optionalRules,
           });
         } else {
-          set({
-            phase: 'day',
-            timerRemaining: discussionTimeSeconds,
-            votes: [],
-          });
+          set({ phase: 'day', timerRemaining: discussionTimeSeconds, votes: [] });
         }
       },
 
@@ -211,11 +246,7 @@ export const useGameStore = create<GameStore>()(
         set((s) => {
           const existing = s.votes.find((v) => v.targetId === targetId);
           if (existing) {
-            return {
-              votes: s.votes.map((v) =>
-                v.targetId === targetId ? { ...v, count } : v
-              ),
-            };
+            return { votes: s.votes.map((v) => v.targetId === targetId ? { ...v, count } : v) };
           }
           return { votes: [...s.votes, { targetId, count }] };
         }),
@@ -223,50 +254,39 @@ export const useGameStore = create<GameStore>()(
       clearVotes: () => set({ votes: [] }),
 
       eliminatePlayer: (id) => {
-        const { players, loversIds, log, round } = get();
+        const { players, loversIds, log, round, wildChildModelId, wildChildTransformed } = get();
         const toElim = [id];
-        // lover chain
         if (loversIds && loversIds.includes(id)) {
           const other = loversIds.find((lid) => lid !== id);
           if (other) toElim.push(other);
         }
-        const updated = players.map((p) =>
-          toElim.includes(p.id) ? { ...p, isAlive: false } : p
-        );
+        const updated = players.map((p) => toElim.includes(p.id) ? { ...p, isAlive: false } : p);
+        const newWildChildTransformed =
+          wildChildTransformed ||
+          (wildChildModelId !== null && toElim.includes(wildChildModelId));
         set({
           players: updated,
+          wildChildTransformed: newWildChildTransformed,
           log: [
             ...log,
-            `Day ${round}: ${toElim
-              .map((eid) => players.find((p) => p.id === eid)?.name)
-              .join(' & ')} eliminated.`,
+            `Day ${round}: ${toElim.map((eid) => players.find((p) => p.id === eid)?.name).join(' & ')} eliminated.`,
           ],
         });
       },
 
       revealPlayer: (id) =>
-        set((s) => ({
-          players: s.players.map((p) =>
-            p.id === id ? { ...p, isRevealed: true } : p
-          ),
-        })),
+        set((s) => ({ players: s.players.map((p) => p.id === id ? { ...p, isRevealed: true } : p) })),
 
       electMayor: (id) =>
         set((s) => ({
           mayorId: id,
-          players: s.players.map((p) => ({
-            ...p,
-            isMayor: p.id === id,
-          })),
+          players: s.players.map((p) => ({ ...p, isMayor: p.id === id })),
         })),
 
       setLovers: (id1, id2) =>
         set((s) => ({
           loversIds: [id1, id2],
-          players: s.players.map((p) => ({
-            ...p,
-            isLover: p.id === id1 || p.id === id2,
-          })),
+          players: s.players.map((p) => ({ ...p, isLover: p.id === id1 || p.id === id2 })),
         })),
 
       addLog: (message) =>

@@ -27,6 +27,8 @@
   --camp-lovers: #f27cb0;
   --camp-lone_wolf: #8957e5;
   --camp-neutral: #8b949e;
+  --camp-ambiguous: #d97706;   /* amber — Wolf-Dog, Wild Child */
+  --camp-loner: #9333ea;       /* violet — White Werewolf, Pied Piper, Angel */
 
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
   font-size: 16px;
@@ -113,6 +115,8 @@ body {
 .camp-lovers { border-color: var(--camp-lovers) !important; }
 .camp-lone_wolf { border-color: var(--camp-lone_wolf) !important; }
 .camp-neutral { border-color: var(--camp-neutral) !important; }
+.camp-ambiguous { border-color: var(--camp-ambiguous) !important; }
+.camp-loner { border-color: var(--camp-loner) !important; }
 
 .camp-tag {
   font-size: 0.72rem;
@@ -127,6 +131,8 @@ body {
 .camp-tag.camp-lovers { background: var(--camp-lovers); }
 .camp-tag.camp-lone_wolf { background: var(--camp-lone_wolf); }
 .camp-tag.camp-neutral { background: var(--camp-neutral); }
+.camp-tag.camp-ambiguous { background: var(--camp-ambiguous); }
+.camp-tag.camp-loner { background: var(--camp-loner); }
 
 /* ===================================================
    Badges
