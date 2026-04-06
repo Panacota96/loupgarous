@@ -12,6 +12,7 @@ export default function NightPhase() {
   const usedGameAbilities = useGameStore((s) => s.usedGameAbilities);
   const round = useGameStore((s) => s.round);
   const infectedPlayerIds = useGameStore((s) => s.infectedPlayerIds);
+  const wolfVictimId = useGameStore((s) => s.wolfVictimId);
 
   const completeNightStep = useGameStore((s) => s.completeNightStep);
   const setEliminatedThisNight = useGameStore((s) => s.setEliminatedThisNight);
@@ -22,6 +23,8 @@ export default function NightPhase() {
   const setWolfDogChoiceStore = useGameStore((s) => s.setWolfDogChoice);
   const addEnchanted = useGameStore((s) => s.addEnchanted);
   const infectPlayer = useGameStore((s) => s.infectPlayer);
+  const setWolfVictimIdStore = useGameStore((s) => s.setWolfVictimId);
+  const setRavenCursed = useGameStore((s) => s.setRavenCursed);
 
   const [witchSave, setWitchSave] = useState(false);
   const [witchKill, setWitchKill] = useState('');
@@ -36,6 +39,7 @@ export default function NightPhase() {
   const [pipedP1, setPipedP1] = useState('');
   const [pipedP2, setPipedP2] = useState('');
   const [infectTarget, setInfectTarget] = useState('');
+  const [ravenTarget, setRavenTarget] = useState('');
 
   const allStepsDone = currentNightStepIndex >= nightSteps.length;
   const currentStep = nightSteps[currentNightStepIndex];
@@ -69,13 +73,18 @@ export default function NightPhase() {
     setInfectTarget('');
     setLoversP1('');
     setLoversP2('');
+    setRavenTarget('');
   };
 
   const handleCompleteStep = () => {
     if (!currentRole) return;
 
-    if (currentRole.id === 'werewolf' && wolfVictim)
-      setEliminatedThisNight([...eliminatedThisNight.filter((id) => id !== wolfVictim), wolfVictim]);
+    if (currentRole.id === 'werewolf') {
+      if (wolfVictim) {
+        setEliminatedThisNight([...eliminatedThisNight.filter((id) => id !== wolfVictim), wolfVictim]);
+        setWolfVictimIdStore(wolfVictim);
+      }
+    }
 
     if (currentRole.id === 'big_bad_wolf' && bigBadWolfExtra && !anyWolfEliminated)
       setEliminatedThisNight([...eliminatedThisNight.filter((id) => id !== bigBadWolfExtra), bigBadWolfExtra]);
@@ -87,15 +96,20 @@ export default function NightPhase() {
       setEliminatedThisNight([...eliminatedThisNight.filter((id) => id !== whiteWolfTarget), whiteWolfTarget]);
 
     if (currentRole.id === 'witch') {
+      // Use the persisted wolfVictimId from store — wolfVictim local state is empty at this step
+      const victimToSave = wolfVictimId ?? '';
       if (witchSave && !witchHealUsed) {
         recordAbilityUsed('witch_heal');
-        setEliminatedThisNight(eliminatedThisNight.filter((id) => id !== wolfVictim));
+        setEliminatedThisNight(eliminatedThisNight.filter((id) => id !== victimToSave));
       }
       if (witchKill && !witchPoisonUsed) {
         recordAbilityUsed('witch_poison');
         setEliminatedThisNight([...eliminatedThisNight, witchKill]);
       }
     }
+
+    if (currentRole.id === 'raven' && ravenTarget)
+      setRavenCursed(ravenTarget);
 
     if (currentRole.id === 'cupid' && loversP1 && loversP2 && round === 1)
       setLovers(loversP1, loversP2);
@@ -118,7 +132,7 @@ export default function NightPhase() {
   const renderStepContent = () => {
     if (!currentRole) return null;
 
-    const currentVictimId = wolfVictim || eliminatedThisNight[0] || '';
+    const currentVictimId = wolfVictim || wolfVictimId || eliminatedThisNight[0] || '';
     const currentVictimName = currentVictimId
       ? (allPlayers.find((p) => p.id === currentVictimId)?.name ?? 'Unknown')
       : null;
@@ -334,6 +348,25 @@ export default function NightPhase() {
               </select>
             </div>
             <p className="infect-note">Enchanted players acknowledge secretly (e.g. thumb up under the table).</p>
+          </div>
+        )}
+
+        {/* Raven: curse a player (+2 votes next day) */}
+        {currentRole.id === 'raven' && (
+          <div className="night-input">
+            <label>&#129413; Raven places a curse on (optional):</label>
+            <select value={ravenTarget} onChange={(e) => setRavenTarget(e.target.value)}>
+              <option value="">&mdash; No curse this night &mdash;</option>
+              {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            {ravenTarget && (() => {
+              const cursedName = players.find((p) => p.id === ravenTarget)?.name;
+              return (
+                <p className="infect-note">
+                  &#9760;&#65039; <strong>{cursedName}</strong> will have +2 votes against them tomorrow.
+                </p>
+              );
+            })()}
           </div>
         )}
       </div>

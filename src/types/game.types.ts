@@ -90,4 +90,6 @@ export interface GameState {
   enchantedPlayerIds: string[];          // players enchanted by Pied Piper
   infectedPlayerIds: string[];           // players infected by Infect Père (secret wolves)
   angelWon: boolean;                     // true if Angel was first Day-1 execution
+  wolfVictimId: string | null;           // wolf's chosen victim for this night (persists across steps for Witch)
+  ravenCursedId: string | null;          // player cursed by Raven last night (+2 votes)
 }

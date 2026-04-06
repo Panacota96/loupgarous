@@ -15,6 +15,7 @@ export default function DayPhase() {
   const enchantedPlayerIds = useGameStore((s) => s.enchantedPlayerIds);
   const wildChildTransformed = useGameStore((s) => s.wildChildTransformed);
   const wolfDogChoice = useGameStore((s) => s.wolfDogChoice);
+  const ravenCursedId = useGameStore((s) => s.ravenCursedId);
 
   const setVote = useGameStore((s) => s.setVote);
   const clearVotes = useGameStore((s) => s.clearVotes);
@@ -23,35 +24,58 @@ export default function DayPhase() {
 
   const [showTieBreaker, setShowTieBreaker] = useState(false);
   const [revealAll, setRevealAll] = useState(false);
+  // Mayor bonus: track which player the Mayor voted for (adds +1 to their total)
+  const [mayorVoteTarget, setMayorVoteTarget] = useState('');
 
-  // Bear Tamer morning signal — account for infected players and wolf-aligned
+  // Bear Tamer morning signal: use full player list (stable seating order)
+  // and scan for the nearest alive neighbor on each side
   const bearTamer = players.find((p) => p.isAlive && p.roleId === 'bear_tamer');
   const bearGrowls = (() => {
-    if (!bearTamer) return false;
-    const idx = alivePlayers.findIndex((p) => p.id === bearTamer.id);
-    const left = alivePlayers[(idx - 1 + alivePlayers.length) % alivePlayers.length];
-    const right = alivePlayers[(idx + 1) % alivePlayers.length];
-    const isWolfSide = (p: typeof alivePlayers[0] | undefined) =>
+    if (!bearTamer || players.length < 2) return false;
+    const total = players.length;
+    const idx = players.findIndex((p) => p.id === bearTamer.id);
+    if (idx === -1) return false;
+
+    const isWolfSide = (p: typeof players[0] | undefined) =>
       !!p &&
       (WOLF_ROLE_IDS.includes(p.roleId) ||
         infectedPlayerIds.includes(p.id) ||
         (p.roleId === 'wolf_dog' && wolfDogChoice === 'werewolf') ||
         (p.roleId === 'wild_child' && wildChildTransformed));
-    return isWolfSide(left) || isWolfSide(right);
+
+    // Find nearest alive neighbor to the LEFT
+    let leftNeighbor: typeof players[0] | undefined;
+    for (let offset = 1; offset < total; offset++) {
+      const candidate = players[(idx - offset + total) % total];
+      if (candidate.isAlive) { leftNeighbor = candidate; break; }
+    }
+    // Find nearest alive neighbor to the RIGHT
+    let rightNeighbor: typeof players[0] | undefined;
+    for (let offset = 1; offset < total; offset++) {
+      const candidate = players[(idx + offset) % total];
+      if (candidate.isAlive) { rightNeighbor = candidate; break; }
+    }
+    return isWolfSide(leftNeighbor) || isWolfSide(rightNeighbor);
   })();
 
-  // Compute vote totals (extra votes from Raven curse or similar effects)
+  // Compute vote totals:
+  // base = manually counted votes, +2 for Raven-cursed player, +1 for Mayor's chosen target
+  const mayorAlive = players.find((p) => p.isAlive && p.isMayor);
   const voteMap: Record<string, number> = {};
   alivePlayers.forEach((p) => {
-    const voteEntry = votes.find((v) => v.targetId === p.id);
-    const base = voteEntry?.count ?? 0;
-    const extra = p.extraVotes ?? 0;
-    voteMap[p.id] = base + extra;
+    const base = votes.find((v) => v.targetId === p.id)?.count ?? 0;
+    const ravenBonus = ravenCursedId === p.id ? 2 : 0;
+    const mayorBonus = mayorAlive && mayorVoteTarget === p.id ? 1 : 0;
+    voteMap[p.id] = base + ravenBonus + mayorBonus;
   });
 
   const maxVotes = Math.max(0, ...Object.values(voteMap));
   const topPlayers = alivePlayers.filter((p) => voteMap[p.id] === maxVotes && maxVotes > 0);
   const isTie = topPlayers.length > 1;
+
+  const ravenCursedName = ravenCursedId
+    ? (players.find((p) => p.id === ravenCursedId)?.name ?? null)
+    : null;
 
   const executeTop = () => {
     if (topPlayers.length === 1) {
@@ -141,10 +165,36 @@ export default function DayPhase() {
       <section className="voting-section">
         <div className="voting-header">
           <h3>🗳️ Voting</h3>
-          <button className="btn btn-ghost btn-sm" onClick={clearVotes}>
+          <button className="btn btn-ghost btn-sm" onClick={() => { clearVotes(); setMayorVoteTarget(''); }}>
             🔄 Reset Votes
           </button>
         </div>
+
+        {/* Raven curse reminder */}
+        {ravenCursedName && (
+          <div className="raven-curse-bar">
+            🦅 Raven curse: <strong>{ravenCursedName}</strong> has +2 votes today.
+          </div>
+        )}
+
+        {/* Mayor bonus vote */}
+        {mayorAlive && (
+          <div className="mayor-vote-bar">
+            🎖️ Mayor <strong>{mayorAlive.name}</strong> votes for:&nbsp;
+            <select
+              className="mayor-vote-select"
+              value={mayorVoteTarget}
+              onChange={(e) => setMayorVoteTarget(e.target.value)}
+            >
+              <option value="">&mdash; No bonus vote &mdash;</option>
+              {alivePlayers
+                .filter((p) => !p.isMayor)
+                .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+            {mayorVoteTarget && <span className="extra-votes">+1 Mayor bonus</span>}
+          </div>
+        )}
+
         <div className="vote-list">
           {alivePlayers.map((p) => {
             const count = votes.find((v) => v.targetId === p.id)?.count ?? 0;
@@ -153,9 +203,8 @@ export default function DayPhase() {
                 <span className="vote-name">
                   {p.name}
                   {p.isMayor && ' 🎖️'}
-                  {p.extraVotes > 0 && (
-                    <span className="extra-votes">+{p.extraVotes} extra</span>
-                  )}
+                  {ravenCursedId === p.id && <span className="extra-votes">+2 cursed</span>}
+                  {mayorAlive && mayorVoteTarget === p.id && <span className="extra-votes">+1 mayor</span>}
                 </span>
                 <div className="vote-controls">
                   <button

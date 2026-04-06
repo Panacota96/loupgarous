@@ -23,6 +23,8 @@ interface StoreActions {
   addEnchanted: (ids: string[]) => void;
   infectPlayer: (id: string) => void;
   setAngelWon: (val: boolean) => void;
+  setWolfVictimId: (id: string | null) => void;
+  setRavenCursed: (id: string | null) => void;
   togglePhase: () => void;
   startTimer: () => void;
   stopTimer: () => void;
@@ -68,6 +70,8 @@ const defaultGame: GameState = {
   enchantedPlayerIds: [],
   infectedPlayerIds: [],
   angelWon: false,
+  wolfVictimId: null,
+  ravenCursedId: null,
 };
 
 function buildNightSteps(roleIds: string[], round: number): NightStep[] {
@@ -125,6 +129,8 @@ export const useGameStore = create<GameStore>()(
           enchantedPlayerIds: [],
           infectedPlayerIds: [],
           angelWon: false,
+          wolfVictimId: null,
+          ravenCursedId: null,
         });
       },
 
@@ -154,6 +160,8 @@ export const useGameStore = create<GameStore>()(
           usedGameAbilities: [...s.usedGameAbilities, 'infect_pere'],
         })),
       setAngelWon: (val) => set({ angelWon: val }),
+      setWolfVictimId: (id) => set({ wolfVictimId: id }),
+      setRavenCursed: (id) => set({ ravenCursedId: id }),
 
       applyNightResults: () => {
         const {
@@ -211,6 +219,7 @@ export const useGameStore = create<GameStore>()(
           log: [...log, nightMsg],
           optionalRules,
           wildChildTransformed: newWildChildTransformed,
+          wolfVictimId: null,
         });
       },
 
@@ -223,6 +232,7 @@ export const useGameStore = create<GameStore>()(
           set({
             phase: 'night', round: newRound, nightSteps,
             currentNightStepIndex: 0, eliminatedThisNight: [], votes: [], optionalRules,
+            ravenCursedId: null,
           });
         } else {
           set({ phase: 'day', timerRemaining: discussionTimeSeconds, votes: [] });

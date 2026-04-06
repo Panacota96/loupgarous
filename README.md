@@ -25,7 +25,7 @@ A **Game Master (DM) assistant** for Loup-Garous / Werewolf, built as a **React 
 | **Role reference** | Filterable by Night / Day; shows all actions and triggers |
 | **Game log** | Chronological event history |
 | **Optional rules** | Per-game toggles for Elder, Scapegoat, etc. |
-| **PWA** | Installable on Android and iOS; works offline |
+| **PWA** | Installable on Android and iOS via the browser's "Add to Home Screen" prompt |
 | **Persistent state** | Game state saved to localStorage, survives page reload |
 
 ---
@@ -90,7 +90,7 @@ Setup → Night (ordered role steps) → Day (timer + vote + tie-break) → Nigh
 - **Zustand** (persistent state via localStorage)
 - Pure CSS (dark werewolf theme, mobile-first)
 
-## �� Project Structure
+## 🏗️ Project Structure
 
 ```
 src/
