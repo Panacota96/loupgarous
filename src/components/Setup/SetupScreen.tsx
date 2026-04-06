@@ -6,6 +6,8 @@ import '../../styles/setup.css';
 
 const MIN_PLAYERS = 5;
 const MAX_PLAYERS = 20;
+const RULEBOOK_URL =
+  'https://media.play-in.com/pdf/rules_games/best_of__les_loups-garous_de_thiercelieux_regles_fr.pdf';
 
 export default function SetupScreen() {
   const setSetup = useGameStore((s) => s.setSetup);
@@ -98,6 +100,14 @@ export default function SetupScreen() {
         <span className="moon-icon">🌕</span>
         <h1>Loup-Garous</h1>
         <p className="subtitle">Game Master Assistant</p>
+        <a
+          className="btn btn-primary btn-sm rulebook-btn"
+          href={RULEBOOK_URL}
+          target="_blank"
+          rel="noreferrer"
+        >
+          📖 Règles complètes (PDF)
+        </a>
       </div>
 
       <div className="setup-tabs">
