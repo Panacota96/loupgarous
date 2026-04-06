@@ -17,6 +17,12 @@ test('base 6-player game flow stays visible and interactive', async ({ page }, t
     await page.goto('/');
     await expect(page.getByRole('heading', { name: 'Loup-Garous' })).toBeVisible();
 
+    // DM can review role reference before assigning
+    await page.getByTestId('setup-tab-roles').click();
+    await expect(page.getByTestId('setup-roles-tab')).toBeVisible();
+    await expect(page.getByRole('heading', { name: /Role Reference/i })).toBeVisible();
+    await page.getByTestId('setup-tab-setup').click();
+
     for (const [index, roleId] of ROLE_PRESET.entries()) {
       const row = page.getByTestId(`player-row-${index}`);
       await row.getByTestId('role-select').selectOption(roleId);
