@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { ROLES } from '../../data/roles';
-import RoleReference from '../Roles/RoleReference';
+import QuickGuide from './QuickGuide';
 import '../../styles/setup.css';
 
 const MIN_PLAYERS = 5;

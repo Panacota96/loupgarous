@@ -1,11 +1,11 @@
 /* Role Reference */
 .role-reference {
-  padding: 1rem;
+  padding: 1.1rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
 }
-.role-reference h3 { font-size: 1rem; font-weight: 700; }
+.role-reference h3 { font-size: 1rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
 
 .role-filter-tabs {
   display: flex;
@@ -37,13 +37,14 @@
 }
 
 .role-ref-card {
-  background: var(--bg2);
+  background: linear-gradient(140deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
   border: 1.5px solid var(--border);
-  border-radius: 10px;
-  padding: 0.9rem 1.1rem;
+  border-radius: 12px;
+  padding: 1rem 1.15rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.34);
 }
 .role-ref-card.camp-village { border-left: 4px solid var(--camp-village); }
 .role-ref-card.camp-werewolves { border-left: 4px solid var(--camp-werewolves); }
@@ -58,20 +59,20 @@
   flex-wrap: wrap;
 }
 .rrc-emoji { font-size: 1.5rem; }
-.rrc-name-en { font-size: 0.82rem; color: var(--text-muted); }
+.rrc-name-en { font-size: 0.82rem; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; }
 .rrc-header > *:last-child { margin-left: auto; }
 
 .rrc-desc {
-  font-size: 0.88rem;
+  font-size: 0.9rem;
   color: var(--text-muted);
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
 .rrc-action {
   font-size: 0.87rem;
   line-height: 1.5;
   padding: 0.4rem 0.7rem;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 .night-action {
   background: rgba(61,63,143,0.15);
