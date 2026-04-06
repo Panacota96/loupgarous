@@ -1,0 +1,63 @@
+/* Player Card */
+.player-card {
+  background: var(--bg2);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  transition: border-color 0.2s, opacity 0.2s;
+}
+.player-card.dead {
+  opacity: 0.45;
+  border-style: dashed;
+}
+.player-card.mayor { border-color: #c9a227; }
+.player-card.lover { border-color: var(--camp-lovers); }
+
+.player-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.player-emoji { font-size: 1.3rem; }
+.player-card-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  flex: 1;
+}
+.player-badges { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+
+.player-role {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  background: var(--bg3);
+  border-radius: 6px;
+  padding: 0.4rem 0.6rem;
+  border-left: 3px solid var(--border);
+  flex-wrap: wrap;
+}
+.player-role.camp-village { border-left-color: var(--camp-village); }
+.player-role.camp-werewolves { border-left-color: var(--camp-werewolves); }
+.player-role.camp-lovers { border-left-color: var(--camp-lovers); }
+.player-role.camp-neutral { border-left-color: var(--camp-neutral); }
+
+.reveal-trigger {
+  width: 100%;
+  margin-top: 0.3rem;
+  background: rgba(218,54,51,0.1);
+  border: 1px solid var(--danger);
+  border-radius: 5px;
+  padding: 0.3rem 0.5rem;
+  font-size: 0.82rem;
+  color: #f85149;
+}
+
+.player-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
