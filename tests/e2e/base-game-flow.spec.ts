@@ -2,6 +2,15 @@ import { test, expect } from '@playwright/test';
 
 const ROLE_PRESET = ['werewolf', 'werewolf', 'villager', 'villager', 'villager', 'villager'];
 
+test.beforeEach(async ({ page }) => {
+  await page.route('https://fonts.googleapis.com/*', (route) =>
+    route.fulfill({ status: 200, contentType: 'text/css', body: '' })
+  );
+  await page.route('https://fonts.gstatic.com/*', (route) =>
+    route.fulfill({ status: 200, body: '' })
+  );
+});
+
 test('base 6-player game flow stays visible and interactive', async ({ page }, testInfo) => {
   const consoleErrors: string[] = [];
   const pageErrors: string[] = [];
