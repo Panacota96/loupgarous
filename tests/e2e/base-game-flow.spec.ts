@@ -4,9 +4,14 @@ const ROLE_PRESET = ['werewolf', 'werewolf', 'villager', 'villager', 'villager',
 
 test('base 6-player game flow stays visible and interactive', async ({ page }, testInfo) => {
   const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  const failedRequests: string[] = [];
+
   page.on('console', (msg) => {
     if (msg.type() === 'error') consoleErrors.push(msg.text());
   });
+  page.on('pageerror', (err) => pageErrors.push(err.message));
+  page.on('requestfailed', (req) => failedRequests.push(`${req.method()} ${req.url()} — ${req.failure()?.errorText}`));
 
   await test.step('setup 6 players with 2 wolves', async () => {
     await page.goto('/');
@@ -57,7 +62,23 @@ test('base 6-player game flow stays visible and interactive', async ({ page }, t
       });
     }
 
-    expect(consoleErrors).toEqual([]);
+    if (pageErrors.length > 0) {
+      await testInfo.attach('page-errors', {
+        body: pageErrors.join('\n'),
+        contentType: 'text/plain',
+      });
+    }
+
+    if (failedRequests.length > 0) {
+      await testInfo.attach('failed-requests', {
+        body: failedRequests.join('\n'),
+        contentType: 'text/plain',
+      });
+    }
+
+    expect(consoleErrors, 'console errors detected').toEqual([]);
+    expect(pageErrors, 'uncaught page errors detected').toEqual([]);
+    expect(failedRequests, 'failed network requests detected').toEqual([]);
 
     await testInfo.attach('final-state', {
       body: await page.screenshot({ fullPage: true }),
