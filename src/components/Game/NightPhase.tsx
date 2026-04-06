@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { ROLE_MAP, WOLF_ROLE_IDS } from '../../data/roles';
 import '../../styles/night.css';
@@ -7,8 +7,8 @@ export default function NightPhase() {
   const nightSteps = useGameStore((s) => s.nightSteps);
   const currentNightStepIndex = useGameStore((s) => s.currentNightStepIndex);
   const eliminatedThisNight = useGameStore((s) => s.eliminatedThisNight);
-  const players = useGameStore((s) => s.players.filter((p) => p.isAlive));
   const allPlayers = useGameStore((s) => s.players);
+  const players = useMemo(() => allPlayers.filter((p) => p.isAlive), [allPlayers]);
   const usedGameAbilities = useGameStore((s) => s.usedGameAbilities);
   const round = useGameStore((s) => s.round);
   const infectedPlayerIds = useGameStore((s) => s.infectedPlayerIds);
@@ -374,7 +374,7 @@ export default function NightPhase() {
   };
 
   return (
-    <div className="night-phase">
+    <div className="night-phase" data-testid="night-phase">
       <div className="night-header">
         <span className="phase-icon">&#127769;</span>
         <div>
@@ -401,7 +401,11 @@ export default function NightPhase() {
       {!allStepsDone ? (
         <>
           {renderStepContent()}
-          <button className="btn btn-primary btn-large" onClick={handleCompleteStep}>
+          <button
+            className="btn btn-primary btn-large"
+            data-testid="night-next"
+            onClick={handleCompleteStep}
+          >
             &#9989; Done &mdash; Next
           </button>
         </>
@@ -420,7 +424,11 @@ export default function NightPhase() {
               </strong>
             </p>
           )}
-          <button className="btn btn-primary btn-large" onClick={applyNightResults}>
+          <button
+            className="btn btn-primary btn-large"
+            data-testid="reveal-day"
+            onClick={applyNightResults}
+          >
             &#127748; Reveal Day
           </button>
         </div>

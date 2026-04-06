@@ -46,6 +46,16 @@ npm run build
 # Output is in dist/
 ```
 
+## ✅ End-to-End Test (Playwright)
+
+Automated flow to reproduce the reported black-screen issue:
+
+```bash
+npm run test:e2e
+```
+
+The test spins up the Vite dev server, runs a 6-player (2 wolves, 4 villagers) round, verifies roles display, phases transition, and captures artifacts if a crash/black screen occurs.
+
 ## 📱 Android / Play Store
 
 This app ships a **Web App Manifest** (`public/manifest.json`), making it a PWA.
