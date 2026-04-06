@@ -1,0 +1,184 @@
+/* Day Phase */
+.day-phase {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 1rem;
+}
+
+.day-header {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.day-subtitle { color: var(--text-muted); font-size: 0.88rem; }
+.day-header > *:last-child { margin-left: auto; }
+
+/* Bear signal */
+.bear-signal {
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-size: 0.92rem;
+  border: 1px solid var(--border);
+  background: var(--bg2);
+}
+.bear-signal.growl {
+  background: rgba(218,54,51,0.1);
+  border-color: var(--danger);
+  color: #f85149;
+}
+.bear-signal.silent { color: var(--text-muted); }
+
+/* Day triggers */
+.day-triggers {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.day-triggers h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.2rem; }
+.day-trigger-item {
+  font-size: 0.88rem;
+  line-height: 1.5;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg3);
+  border-radius: 6px;
+  border-left: 3px solid var(--day-accent);
+}
+
+/* Players grid */
+.day-players h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.7rem; }
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.7rem;
+}
+
+/* Voting */
+.voting-section {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1rem 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+.voting-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.voting-header h3 { font-size: 1rem; font-weight: 700; }
+
+.vote-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.vote-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.6rem;
+  border-radius: 7px;
+  background: var(--bg3);
+  transition: background 0.15s;
+}
+.vote-row.vote-top { background: rgba(218,54,51,0.12); border: 1px solid rgba(218,54,51,0.4); }
+.vote-name { flex: 1; font-size: 0.92rem; }
+.extra-votes { font-size: 0.72rem; color: var(--yellow); margin-left: 0.4rem; }
+.vote-controls { display: flex; align-items: center; gap: 0.4rem; }
+.vote-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg2);
+  color: var(--text);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.vote-btn:hover { background: var(--bg3); }
+.vote-count {
+  min-width: 28px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1rem;
+}
+
+.vote-result { margin-top: 0.4rem; }
+.tie-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  padding: 0.6rem;
+  background: rgba(210,153,34,0.1);
+  border: 1px solid var(--yellow);
+  border-radius: 8px;
+  font-size: 0.92rem;
+  color: var(--yellow-hover);
+  font-weight: 600;
+}
+
+.day-footer {
+  padding-bottom: 1rem;
+}
+.night-btn { background: var(--night-accent); border-color: var(--night-accent); }
+.night-btn:hover:not(:disabled) { background: #5055b5; }
+
+.day-enchanted-bar {
+  background: rgba(147,51,234,0.1);
+  border-color: rgba(147,51,234,0.35) !important;
+  color: #c084fc;
+}
+.day-infected-bar {
+  background: rgba(129,44,6,0.12);
+  border-color: rgba(217,119,6,0.35) !important;
+  color: #f0a028;
+}
+.win-alert {
+  font-weight: 800;
+  color: #f0c060;
+  margin-left: 0.5rem;
+}
+
+.raven-curse-bar {
+  background: rgba(100,65,165,0.12);
+  border: 1px solid rgba(100,65,165,0.4);
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.88rem;
+  color: #c4a0f7;
+  margin-bottom: 0.5rem;
+}
+
+.mayor-vote-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  background: rgba(110,76,8,0.12);
+  border: 1px solid rgba(110,76,8,0.4);
+  border-radius: 6px;
+  padding: 0.5rem 0.8rem;
+  font-size: 0.88rem;
+  color: #f0c040;
+  margin-bottom: 0.5rem;
+}
+
+.mayor-vote-select {
+  background: var(--bg3);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.85rem;
+}

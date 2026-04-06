@@ -1,0 +1,148 @@
+/* ===================================================
+   Global / Base Styles
+   =================================================== */
+:root {
+  --bg: #0d1117;
+  --bg2: #161b22;
+  --bg3: #21262d;
+  --border: #30363d;
+  --text: #e6edf3;
+  --text-muted: #8b949e;
+  --primary: #388bfd;
+  --primary-hover: #58a6ff;
+  --danger: #da3633;
+  --danger-hover: #f85149;
+  --success: #2ea043;
+  --success-hover: #3fb950;
+  --yellow: #d29922;
+  --yellow-hover: #e3b341;
+  --night-bg: #0a0d16;
+  --night-accent: #3d3f8f;
+  --day-bg: #16120a;
+  --day-accent: #8f7f3d;
+
+  /* Camps */
+  --camp-village: #2ea043;
+  --camp-werewolves: #da3633;
+  --camp-lovers: #f27cb0;
+  --camp-lone_wolf: #8957e5;
+  --camp-neutral: #8b949e;
+  --camp-ambiguous: #d97706;   /* amber — Wolf-Dog, Wild Child */
+  --camp-loner: #9333ea;       /* violet — White Werewolf, Pied Piper, Angel */
+
+  font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ===================================================
+   Utility Buttons
+   =================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, opacity 0.15s;
+  background: var(--bg3);
+  color: var(--text);
+}
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.btn-primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.btn-danger {
+  background: var(--danger);
+  border-color: var(--danger);
+  color: #fff;
+}
+.btn-danger:hover:not(:disabled) { background: var(--danger-hover); }
+.btn-green {
+  background: var(--success);
+  border-color: var(--success);
+  color: #fff;
+}
+.btn-green:hover:not(:disabled) { background: var(--success-hover); }
+.btn-yellow {
+  background: var(--yellow);
+  border-color: var(--yellow);
+  color: #fff;
+}
+.btn-yellow:hover:not(:disabled) { background: var(--yellow-hover); }
+.btn-ghost {
+  background: transparent;
+  border-color: var(--border);
+}
+.btn-ghost:hover:not(:disabled) { background: var(--bg3); }
+.btn-sm { padding: 0.3rem 0.7rem; font-size: 0.82rem; }
+.btn-large { padding: 0.75rem 1.5rem; font-size: 1.05rem; width: 100%; justify-content: center; }
+
+/* ===================================================
+   Camp Colours
+   =================================================== */
+.camp-village { border-color: var(--camp-village) !important; }
+.camp-werewolves { border-color: var(--camp-werewolves) !important; }
+.camp-lovers { border-color: var(--camp-lovers) !important; }
+.camp-lone_wolf { border-color: var(--camp-lone_wolf) !important; }
+.camp-neutral { border-color: var(--camp-neutral) !important; }
+.camp-ambiguous { border-color: var(--camp-ambiguous) !important; }
+.camp-loner { border-color: var(--camp-loner) !important; }
+
+.camp-tag {
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #fff;
+}
+.camp-tag.camp-village { background: var(--camp-village); }
+.camp-tag.camp-werewolves { background: var(--camp-werewolves); }
+.camp-tag.camp-lovers { background: var(--camp-lovers); }
+.camp-tag.camp-lone_wolf { background: var(--camp-lone_wolf); }
+.camp-tag.camp-neutral { background: var(--camp-neutral); }
+.camp-tag.camp-ambiguous { background: var(--camp-ambiguous); }
+.camp-tag.camp-loner { background: var(--camp-loner); }
+
+/* ===================================================
+   Badges
+   =================================================== */
+.badge {
+  font-size: 0.72rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+  font-weight: 700;
+}
+.badge-mayor { background: #6e4c08; color: #f0c040; }
+.badge-lover { background: #4a1a2e; color: #f27cb0; }
+.badge-once  { background: #1a2a4a; color: #7cb3f2; }

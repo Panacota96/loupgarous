@@ -1,0 +1,107 @@
+/* Game Board */
+.gameboard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.gameboard.night { background: linear-gradient(160deg, #070a12, #0d1117 60%); }
+.gameboard.day   { background: linear-gradient(160deg, #130e04, #0d1117 60%); }
+
+/* Top bar */
+.gameboard-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding: 0.6rem 1rem;
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar-left { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+
+.phase-chip {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.alive-chip, .wolf-chip {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  gap: 0.2rem;
+  padding: 0.6rem 1rem 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg2);
+}
+.tab-btn {
+  padding: 0.45rem 0.9rem;
+  border: none;
+  border-radius: 6px 6px 0 0;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s;
+}
+.tab-btn:hover { color: var(--text); background: var(--bg3); }
+.tab-btn.active { color: var(--text); background: var(--bg); border: 1px solid var(--border); border-bottom-color: var(--bg); }
+
+.tab-content {
+  flex: 1;
+  overflow-y: auto;
+  max-width: 740px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Game Log */
+.game-log {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.game-log h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.3rem; }
+.log-empty { color: var(--text-muted); font-size: 0.88rem; }
+.log-entry {
+  padding: 0.4rem 0.8rem;
+  background: var(--bg2);
+  border-left: 3px solid var(--border);
+  border-radius: 0 6px 6px 0;
+  font-size: 0.87rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+.log-entry:first-of-type { color: var(--text); border-left-color: var(--primary); }
+
+/* Win Screen */
+.win-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  text-align: center;
+  gap: 1rem;
+  flex: 1;
+}
+.win-emoji { font-size: 5rem; }
+.win-screen h2 { font-size: 2rem; font-weight: 800; }
+.win-village h2 { color: var(--camp-village); }
+.win-werewolves h2 { color: var(--camp-werewolves); }
+.win-pied_piper h2 { color: var(--camp-loner); }
+.win-white_werewolf h2 { color: #e0e0e0; }
+.win-angel h2 { color: #f0c060; }
+.win-screen p { color: var(--text-muted); font-size: 1rem; }

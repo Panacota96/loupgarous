@@ -1,0 +1,173 @@
+/* Setup Screen */
+.setup-screen {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.setup-header {
+  text-align: center;
+  padding: 1.5rem 0 0.5rem;
+}
+.setup-header .moon-icon { font-size: 3rem; }
+.setup-header h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--primary-hover);
+}
+.setup-header .subtitle {
+  color: var(--text-muted);
+  font-size: 1rem;
+}
+
+.setup-section {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1.2rem 1.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+.setup-section h2 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+}
+
+/* Player count row */
+.player-count-row,
+.timer-config {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+.count-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text);
+  font-size: 1.3rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.count-btn:hover:not(:disabled) { background: var(--primary); }
+.count-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.count-display {
+  font-size: 1.6rem;
+  font-weight: 700;
+  min-width: 60px;
+  text-align: center;
+}
+
+/* Player list */
+.player-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.player-num {
+  width: 24px;
+  text-align: right;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+.player-name-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.4rem 0.7rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+.player-name-input:focus { outline: none; border-color: var(--primary); }
+.role-select {
+  width: 220px;
+  flex-shrink: 0;
+  padding: 0.4rem 0.6rem;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.85rem;
+}
+.role-select:focus { outline: none; border-color: var(--primary); }
+
+/* Role summary */
+.role-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.role-badge {
+  padding: 0.3rem 0.7rem;
+  border-radius: 999px;
+  border: 1.5px solid;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+/* Optional rules */
+.optional-rule {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+.optional-rule input { margin-top: 3px; flex-shrink: 0; }
+
+/* Errors */
+.setup-errors {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.error-msg {
+  background: rgba(218,54,51,0.12);
+  border: 1px solid var(--danger);
+  border-radius: 6px;
+  padding: 0.5rem 0.9rem;
+  font-size: 0.9rem;
+  color: #f85149;
+}
+
+/* Start button */
+.start-btn {
+  padding: 0.9rem 1.5rem;
+  font-size: 1.15rem;
+  font-weight: 700;
+  background: var(--primary);
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s;
+  width: 100%;
+}
+.start-btn:hover:not(:disabled) { background: var(--primary-hover); }
+.start-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+@media (max-width: 600px) {
+  .player-row { flex-wrap: wrap; }
+  .role-select { width: 100%; }
+}
