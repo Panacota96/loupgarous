@@ -13,6 +13,8 @@ export default function NightPhase() {
   const round = useGameStore((s) => s.round);
   const infectedPlayerIds = useGameStore((s) => s.infectedPlayerIds);
   const wolfVictimId = useGameStore((s) => s.wolfVictimId);
+  const wolfDogChoiceStore = useGameStore((s) => s.wolfDogChoice);
+  const wildChildTransformed = useGameStore((s) => s.wildChildTransformed);
 
   const completeNightStep = useGameStore((s) => s.completeNightStep);
   const setEliminatedThisNight = useGameStore((s) => s.setEliminatedThisNight);
@@ -59,6 +61,16 @@ export default function NightPhase() {
     (p) => WOLF_ROLE_IDS.includes(p.roleId) && p.roleId !== 'white_werewolf'
   );
 
+  const isWolfAligned = (p: typeof players[0]) =>
+    WOLF_ROLE_IDS.includes(p.roleId) ||
+    (p.roleId === 'wolf_dog' && wolfDogChoiceStore === 'werewolf') ||
+    (p.roleId === 'wild_child' && wildChildTransformed) ||
+    infectedPlayerIds.includes(p.id);
+
+  const wolfTargets = players.filter((p) => !isWolfAligned(p));
+  const cupidIds = players.filter((p) => p.roleId === 'cupid').map((p) => p.id);
+  const wildChildId = players.find((p) => p.roleId === 'wild_child')?.id ?? null;
+
   const resetLocalState = () => {
     setWolfVictim('');
     setBigBadWolfExtra('');
@@ -80,17 +92,25 @@ export default function NightPhase() {
     if (!currentRole) return;
 
     if (currentRole.id === 'werewolf') {
-      if (wolfVictim) {
+      const target = players.find((p) => p.id === wolfVictim);
+      if (target && !isWolfAligned(target)) {
         setEliminatedThisNight([...eliminatedThisNight.filter((id) => id !== wolfVictim), wolfVictim]);
         setWolfVictimIdStore(wolfVictim);
+      } else {
+        setWolfVictimIdStore(null);
       }
     }
 
-    if (currentRole.id === 'big_bad_wolf' && bigBadWolfExtra && !anyWolfEliminated)
-      setEliminatedThisNight([...eliminatedThisNight.filter((id) => id !== bigBadWolfExtra), bigBadWolfExtra]);
+    if (currentRole.id === 'big_bad_wolf' && bigBadWolfExtra && !anyWolfEliminated) {
+      const target = players.find((p) => p.id === bigBadWolfExtra);
+      if (target && !isWolfAligned(target))
+        setEliminatedThisNight([...eliminatedThisNight.filter((id) => id !== bigBadWolfExtra), bigBadWolfExtra]);
+    }
 
-    if (currentRole.id === 'infect_pere' && infectTarget && !infectPereUsed)
-      infectPlayer(infectTarget);
+    if (currentRole.id === 'infect_pere' && infectTarget && !infectPereUsed) {
+      const target = players.find((p) => p.id === infectTarget);
+      if (target && !isWolfAligned(target)) infectPlayer(infectTarget);
+    }
 
     if (currentRole.id === 'white_werewolf' && whiteWolfTarget)
       setEliminatedThisNight([...eliminatedThisNight.filter((id) => id !== whiteWolfTarget), whiteWolfTarget]);
@@ -111,11 +131,15 @@ export default function NightPhase() {
     if (currentRole.id === 'raven' && ravenTarget)
       setRavenCursed(ravenTarget);
 
-    if (currentRole.id === 'cupid' && loversP1 && loversP2 && round === 1)
-      setLovers(loversP1, loversP2);
+    if (currentRole.id === 'cupid' && loversP1 && loversP2 && round === 1) {
+      const invalidLover =
+        loversP1 === loversP2 || cupidIds.includes(loversP1) || cupidIds.includes(loversP2);
+      if (!invalidLover) setLovers(loversP1, loversP2);
+    }
 
-    if (currentRole.id === 'wild_child' && wildChildModel)
-      setWildChildModelStore(wildChildModel);
+    if (currentRole.id === 'wild_child' && wildChildModel) {
+      if (wildChildModel !== wildChildId) setWildChildModelStore(wildChildModel);
+    }
 
     if (currentRole.id === 'wolf_dog' && wolfDogChoice)
       setWolfDogChoiceStore(wolfDogChoice);
@@ -160,7 +184,7 @@ export default function NightPhase() {
             <label>&#127919; Wolves choose their victim:</label>
             <select value={wolfVictim} onChange={(e) => setWolfVictim(e.target.value)}>
               <option value="">&mdash; Select target (optional) &mdash;</option>
-              {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              {wolfTargets.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
         )}
@@ -178,7 +202,7 @@ export default function NightPhase() {
                 <label>&#129440; Infect instead of killing (ONCE PER GAME):</label>
                 <select value={infectTarget} onChange={(e) => setInfectTarget(e.target.value)}>
                   <option value="">&mdash; Do not infect &mdash;</option>
-                  {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  {wolfTargets.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
                 {infectTarget && (
                   <p className="infect-note">
@@ -201,7 +225,7 @@ export default function NightPhase() {
                 <select value={bigBadWolfExtra} onChange={(e) => setBigBadWolfExtra(e.target.value)}>
                   <option value="">&mdash; Skip extra kill &mdash;</option>
                   {players
-                    .filter((p) => p.id !== wolfVictim && !eliminatedThisNight.includes(p.id))
+                    .filter((p) => p.id !== wolfVictim && !eliminatedThisNight.includes(p.id) && !isWolfAligned(p))
                     .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </>
@@ -272,12 +296,16 @@ export default function NightPhase() {
             <div className="lovers-row">
               <select value={loversP1} onChange={(e) => setLoversP1(e.target.value)}>
                 <option value="">&mdash; Player 1 &mdash;</option>
-                {players.filter((p) => p.id !== loversP2).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                {players
+                  .filter((p) => p.id !== loversP2 && !cupidIds.includes(p.id))
+                  .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
               <span>&#128152;</span>
               <select value={loversP2} onChange={(e) => setLoversP2(e.target.value)}>
                 <option value="">&mdash; Player 2 &mdash;</option>
-                {players.filter((p) => p.id !== loversP1).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                {players
+                  .filter((p) => p.id !== loversP1 && !cupidIds.includes(p.id))
+                  .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
           </div>
@@ -309,7 +337,7 @@ export default function NightPhase() {
             <label>&#129536; Wild Child secretly points to their Role Model:</label>
             <select value={wildChildModel} onChange={(e) => setWildChildModelLocal(e.target.value)}>
               <option value="">&mdash; Select model &mdash;</option>
-              {players.filter((p) => p.roleId !== 'wild_child').map((p) => (
+              {players.filter((p) => p.id !== wildChildId).map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
