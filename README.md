@@ -94,6 +94,23 @@ Setup → Night (ordered role steps) → Day (timer + vote + tie-break) → Nigh
 
 ---
 
+## 🧭 Quick Balance Guide
+
+- **Wolf ratio**: 1 wolf for 4–5 players is a good starting point.
+  - 5–6 players → 1 wolf
+  - 7–9 players → 2 wolves
+  - 10–12 players → 3 wolves
+  - 13–16 players → 4 wolves
+  - 17–20 players → 4–5 wolves (depending on how many swingy roles you add)
+- **Beginner-friendly roles**: Seer, Protector, Witch, Hunter, Mayor/Captain.
+- **Advanced / swingy roles**: Little Girl, Big Bad Wolf, Infect Père des Loups, Village Idiot, Scapegoat, Bear Tamer, Raven, Fox, Cupid.
+- **Balancing tips**:
+  - Keep at least as many plain Villagers as special roles so deduction still matters.
+  - Add only 1–2 chaotic roles (Raven, Fox, Cupid) at a time.
+  - If you include many info roles, increase wolves by +1 to keep nights threatening.
+
+---
+
 ## 🛠️ Tech Stack
 
 - **React 19** + **TypeScript** + **Vite**

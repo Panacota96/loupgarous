@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { ROLES } from '../../data/roles';
+import QuickGuide from './QuickGuide';
 import '../../styles/setup.css';
 
 const MIN_PLAYERS = 5;
@@ -97,6 +98,8 @@ export default function SetupScreen() {
         <h1>Loup-Garous</h1>
         <p className="subtitle">Game Master Assistant</p>
       </div>
+
+      <QuickGuide />
 
       {/* Player Count */}
       <section className="setup-section">
