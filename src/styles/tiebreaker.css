@@ -1,13 +1,14 @@
 /* Tie Breaker */
 .tiebreaker {
-  background: var(--bg3);
+  background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
   border: 1.5px solid var(--yellow);
-  border-radius: 10px;
-  padding: 1rem 1.2rem;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
-  margin-top: 0.6rem;
+  margin-top: 0.65rem;
+  box-shadow: 0 12px 26px rgba(0,0,0,0.32);
 }
 .tiebreaker h3 { font-size: 1rem; font-weight: 700; }
 .tb-hint { font-size: 0.85rem; color: var(--text-muted); }
@@ -22,16 +23,17 @@
   align-items: center;
   gap: 0.4rem;
   padding: 0.3rem 0.7rem;
-  border-radius: 6px;
+  border-radius: 8px;
   border: 1.5px solid var(--border);
-  background: var(--bg2);
+  background: rgba(255,255,255,0.03);
   cursor: pointer;
   font-size: 0.88rem;
-  transition: border-color 0.15s, background 0.15s;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s;
 }
 .tb-player.selected {
   border-color: var(--yellow);
-  background: rgba(210,153,34,0.12);
+  background: rgba(210,153,34,0.16);
+  transform: translateY(-1px);
 }
 .tb-player input { cursor: pointer; }
 
@@ -41,7 +43,7 @@
   gap: 0.6rem;
   background: rgba(218,54,51,0.08);
   border: 1px solid var(--danger);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 0.7rem;
 }
 .tb-result p { font-size: 0.95rem; }

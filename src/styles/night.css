@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
-  padding: 1rem;
+  padding: 1.1rem;
 }
 
 .night-header {
@@ -12,8 +12,8 @@
   gap: 0.9rem;
 }
 .phase-icon { font-size: 2.2rem; }
-.night-header h2 { font-size: 1.3rem; font-weight: 800; }
-.night-subtitle { color: var(--text-muted); font-size: 0.88rem; }
+.night-header h2 { font-size: 1.35rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
+.night-subtitle { color: var(--text-muted); font-size: 0.9rem; }
 
 /* Step pip bar */
 .night-steps-bar {
@@ -31,22 +31,23 @@
   align-items: center;
   justify-content: center;
   font-size: 1.15rem;
-  background: var(--bg3);
-  transition: border-color 0.2s, background 0.2s;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04), rgba(255,255,255,0));
+  transition: border-color 0.2s, background 0.2s, transform 0.2s;
   cursor: default;
 }
 .step-pip.done { background: var(--bg2); border-color: var(--success); opacity: 0.6; }
-.step-pip.active { border-color: var(--primary); background: rgba(56,139,253,0.15); box-shadow: 0 0 0 3px rgba(56,139,253,0.2); }
+.step-pip.active { border-color: var(--primary); background: rgba(185,42,58,0.15); box-shadow: 0 0 0 3px rgba(185,42,58,0.2); transform: translateY(-1px); }
 
 /* Night step content */
 .night-step-content {
-  background: var(--bg2);
+  background: linear-gradient(140deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
   border: 1.5px solid var(--night-accent);
-  border-radius: 10px;
-  padding: 1.2rem;
+  border-radius: 14px;
+  padding: 1.3rem;
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  box-shadow: 0 14px 36px rgba(0,0,0,0.4);
 }
 
 .role-wake {
@@ -55,15 +56,15 @@
   gap: 0.9rem;
 }
 .role-wake-emoji { font-size: 2.4rem; }
-.role-wake h3 { font-size: 1.2rem; font-weight: 800; }
+.role-wake h3 { font-size: 1.22rem; font-weight: 800; letter-spacing: 0.06em; }
 
 .night-instruction {
-  background: var(--bg3);
+  background: rgba(255,255,255,0.03);
   border-left: 3px solid var(--night-accent);
-  padding: 0.7rem 1rem;
-  border-radius: 0 6px 6px 0;
-  font-size: 0.93rem;
-  line-height: 1.55;
+  padding: 0.75rem 1rem;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.95rem;
+  line-height: 1.6;
   color: var(--text);
 }
 
@@ -82,18 +83,19 @@
   padding: 0.45rem 0.7rem;
   background: var(--bg3);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: 8px;
   color: var(--text);
   font-size: 0.9rem;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.03);
 }
-.night-input select:focus { outline: none; border-color: var(--primary); }
+.night-input select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(185,42,58,0.2); }
 
 .seer-reveal {
   background: rgba(56,139,253,0.1);
   border: 1px solid var(--primary);
-  border-radius: 6px;
-  padding: 0.5rem 0.8rem;
-  font-size: 0.9rem;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.92rem;
 }
 .camp-badge {
   font-size: 0.75rem;
@@ -107,9 +109,9 @@
 .witch-victim-info {
   background: rgba(218,54,51,0.08);
   border: 1px solid #3a1a1a;
-  border-radius: 6px;
-  padding: 0.5rem 0.8rem;
-  font-size: 0.9rem;
+  border-radius: 8px;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.92rem;
 }
 .witch-option {
   display: flex;
@@ -139,14 +141,15 @@
 
 /* Night summary */
 .night-summary {
-  background: var(--bg2);
+  background: linear-gradient(140deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
   border: 1.5px solid var(--border);
-  border-radius: 10px;
-  padding: 1.2rem;
+  border-radius: 12px;
+  padding: 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.8rem;
   text-align: center;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.38);
 }
 .night-summary h3 { font-size: 1.2rem; font-weight: 800; }
 
