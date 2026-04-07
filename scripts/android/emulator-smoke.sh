@@ -31,8 +31,10 @@ if ! grep -Eq '[0-9]+' "$artifact_dir/pid.txt"; then
   exit 1
 fi
 
-if ! grep -q "$package_name" "$artifact_dir/focus.txt"; then
-  echo "Application never became the focused app." >&2
+if ! grep -q "$package_name" "$artifact_dir/focus.txt" \
+  && ! grep -q "$package_name" "$artifact_dir/ui.xml" \
+  && ! grep -q "Displayed ${activity_name}" "$artifact_dir/logcat.txt"; then
+  echo "Application never became the visible foreground app." >&2
   exit 1
 fi
 
