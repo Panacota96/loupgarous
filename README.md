@@ -97,6 +97,14 @@ Then run the app again from Android Studio. The Android shell loads built files 
 
 ---
 
+## 🚨 Release, Incident & Rollback Runbook
+
+Operational guidance for releasing, responding to incidents, rolling back the web app, stopping an Android staged rollout, and creating emergency hotfix branches is documented in:
+
+[`docs/release-runbook.md`](./docs/release-runbook.md)
+
+---
+
 ## 🎮 Game Flow
 
 ```
