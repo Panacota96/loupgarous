@@ -1,0 +1,26 @@
+name: Web Release Task
+description: Public web deployment, GitHub Pages, DNS, or web-only release work.
+title: "[web] "
+labels:
+  - platform:web
+  - enhancement
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the web release work required.
+      placeholder: Configure the production Pages deploy to emit a CNAME file from the repository variable.
+    validations:
+      required: true
+  - type: textarea
+    id: rollout
+    attributes:
+      label: Rollout / validation
+      description: Define the smoke test or release validation that will prove the change is correct.
+      placeholder: |
+        - Deploy from `release/web`.
+        - Confirm HTTPS and DNS resolution.
+        - Run Playwright smoke against the live URL.
+    validations:
+      required: true

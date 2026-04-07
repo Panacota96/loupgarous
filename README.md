@@ -146,6 +146,14 @@ Setup → Night (ordered role steps) → Day (timer + vote + tie-break) → Nigh
 - **Zustand** (persistent state via localStorage)
 - Pure CSS (dark werewolf theme, mobile-first)
 
+## 🚢 Release Tracks
+
+- `main`: integration branch for shared code
+- `release/web`: protected branch for GitHub Pages deployments
+- `release/mobile`: protected branch for Android QA and Google Play releases
+
+Release runbooks and setup docs live in [`docs/release/branching-model.md`](./docs/release/branching-model.md), [`docs/release/web-release.md`](./docs/release/web-release.md), [`docs/release/android-release.md`](./docs/release/android-release.md), [`docs/release/android-qa-checklist.md`](./docs/release/android-qa-checklist.md), [`docs/release/google-play-launch-checklist.md`](./docs/release/google-play-launch-checklist.md), and [`docs/release/runbooks.md`](./docs/release/runbooks.md).
+
 ## 🏗️ Project Structure
 
 ```
