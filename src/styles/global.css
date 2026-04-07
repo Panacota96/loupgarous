@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Manrope:wght@400;600;700&display=swap');
-
 /* ===================================================
    Global / Base Styles
    =================================================== */
@@ -33,8 +31,8 @@
   --camp-ambiguous: #d88a2f;   /* amber — Wolf-Dog, Wild Child */
   --camp-loner: #8747c4;       /* violet — White Werewolf, Pied Piper, Angel */
 
-  --body-font: 'Manrope', system-ui, -apple-system, sans-serif;
-  --display-font: 'Cinzel', 'Times New Roman', serif;
+  --body-font: 'Aptos', 'Segoe UI', 'Trebuchet MS', sans-serif;
+  --display-font: 'Palatino Linotype', 'Book Antiqua', Georgia, serif;
 
   font-family: var(--body-font);
   font-size: 16px;
