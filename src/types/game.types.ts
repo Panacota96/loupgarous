@@ -55,7 +55,6 @@ export interface Player {
   name: string;
   roleId: string;
   isAlive: boolean;
-  isRevealed: boolean;
   isMayor: boolean;
   isLover: boolean;
   extraVotes: number;

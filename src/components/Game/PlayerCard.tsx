@@ -13,7 +13,6 @@ export default function PlayerCard({ playerId, showRole = false }: Props) {
   const { language, t } = useI18n();
   const player = useGameStore((s) => s.players.find((p) => p.id === playerId));
   const eliminatePlayer = useGameStore((s) => s.eliminatePlayer);
-  const revealPlayer = useGameStore((s) => s.revealPlayer);
   const electMayor = useGameStore((s) => s.electMayor);
 
   if (!player) return null;
@@ -21,7 +20,7 @@ export default function PlayerCard({ playerId, showRole = false }: Props) {
   const role = ROLE_MAP[player.roleId];
   const roleTexts = role ? getRoleTexts(role, language) : null;
   const roleName = role ? getRoleName(role, language) : '';
-  const isRevealed = player.isRevealed || showRole;
+  const shouldShowRole = showRole;
 
   return (
     <div
@@ -38,7 +37,7 @@ export default function PlayerCard({ playerId, showRole = false }: Props) {
         </div>
       </div>
 
-      {isRevealed && role && (
+      {shouldShowRole && role && (
         <div className={`player-role camp-${role.camp}`}>
           <span>{role.emoji}</span>
           <span>{roleName}</span>
@@ -50,15 +49,6 @@ export default function PlayerCard({ playerId, showRole = false }: Props) {
 
       {player.isAlive && (
         <div className="player-actions">
-          {!player.isRevealed && (
-            <button
-              className="btn btn-sm btn-ghost"
-              onClick={() => revealPlayer(player.id)}
-              title={t.playerCard.revealTitle}
-            >
-              {t.playerCard.reveal}
-            </button>
-          )}
           {!player.isMayor && (
             <button
               className="btn btn-sm btn-ghost"
