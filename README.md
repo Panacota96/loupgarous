@@ -10,8 +10,9 @@ Run setup, role assignment, night actions, day voting, and trigger-heavy table f
 [![Deploy Web](https://img.shields.io/github/actions/workflow/status/Panacota96/loupgarous/deploy-web.yml?label=Deploy%20Web)](https://github.com/Panacota96/loupgarous/actions/workflows/deploy-web.yml)
 [![Android QA](https://img.shields.io/github/actions/workflow/status/Panacota96/loupgarous/android-qa.yml?label=Android%20QA)](https://github.com/Panacota96/loupgarous/actions/workflows/android-qa.yml)
 [![Live Site](https://img.shields.io/badge/live-GitHub%20Pages-b51f35)](https://panacota96.github.io/loupgarous/)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-FFDD00?logo=buymeacoffee&logoColor=000000)](https://buymeacoffee.com/santiagogow)
 
-[Live Web App](https://panacota96.github.io/loupgarous/) · [Android Setup](./docs/android-setup.md) · [Web Release](./docs/release/web-release.md) · [Issues](https://github.com/Panacota96/loupgarous/issues) · [Buy Me a Coffee](https://buymeacoffee.com/santiagogow)
+[Live Web App](https://panacota96.github.io/loupgarous/) · [Android Setup](./docs/android-setup.md) · [Web Release](./docs/release/web-release.md) · [Issues](https://github.com/Panacota96/loupgarous/issues)
 
 </div>
 
@@ -61,13 +62,14 @@ Supported role coverage includes villagers, werewolves, Seer, Witch, Hunter, Cup
 
 These screenshots come from Playwright-driven app states so the README stays aligned with real UI behavior.
 
-| Setup | Role reference |
-| --- | --- |
-| ![Setup screen with player count, role assignment, timer, and optional rules](./docs/readme/setup-screen.png) | ![Role reference panel showing role cards and triggers](./docs/readme/roles-reference.png) |
-
-| Day phase | Night phase |
-| --- | --- |
-| ![Day phase screen with timer, player actions, and vote controls](./docs/readme/day-phase.png) | ![Night phase screen during round two](./docs/readme/night-round-2.png) |
+<p align="center">
+  <img src="./docs/assets/readme/setup-screen.png" alt="Setup screen with player count, role assignment, timer, and optional rules" width="420" />
+  <img src="./docs/assets/readme/roles-reference.png" alt="Role reference panel showing role cards and triggers" width="420" />
+</p>
+<p align="center">
+  <img src="./docs/assets/readme/day-phase.png" alt="Day phase screen with timer, player actions, and vote controls" width="420" />
+  <img src="./docs/assets/readme/night-phase.png" alt="Night phase screen during a guided moderator turn" width="420" />
+</p>
 
 ## Quick Start
 
