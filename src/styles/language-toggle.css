@@ -1,25 +1,18 @@
 .language-toggle {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  padding: 0.3rem 0.45rem;
-  background: var(--bg3);
+  gap: 0.25rem;
+  padding: 0.25rem 0.35rem;
+  background: rgba(0, 0, 0, 0.25);
   border: 1px solid var(--border);
   border-radius: 10px;
   box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
 }
 
 .language-toggle.compact {
-  padding: 0.2rem 0.35rem;
-  background: transparent;
+  padding: 0.18rem 0.32rem;
+  background: rgba(0, 0, 0, 0.18);
   box-shadow: none;
-}
-
-.language-toggle__label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  letter-spacing: 0.04em;
 }
 
 .language-toggle__buttons {
@@ -33,10 +26,11 @@
   color: var(--text);
   padding: 0.25rem 0.6rem;
   border-radius: 8px;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s, transform 0.15s, color 0.15s;
+  letter-spacing: 0.08em;
 }
 
 .language-toggle__btn:hover {
@@ -56,6 +50,24 @@
   outline-offset: 2px;
 }
 
-.language-toggle.compact .language-toggle__label {
-  display: none;
+.corner-actions {
+  position: fixed;
+  top: 0.75rem;
+  right: 0.75rem;
+  display: flex;
+  gap: 0.45rem;
+  align-items: center;
+  z-index: 50;
+}
+
+.corner-actions--game {
+  top: 0.65rem;
+}
+
+@media (max-width: 600px) {
+  .corner-actions {
+    top: 0.6rem;
+    right: 0.6rem;
+    gap: 0.35rem;
+  }
 }

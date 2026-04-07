@@ -100,18 +100,19 @@ export default function SetupScreen() {
 
   return (
     <div className="setup-screen">
+      <div className="corner-actions">
+        <LanguageToggle compact />
+        <a
+          className="btn btn-primary btn-sm rulebook-btn"
+          href={RULEBOOK_URL}
+          target="_blank"
+          rel="noreferrer"
+          aria-label={t.rulebook}
+        >
+          <span aria-hidden="true">📖</span>
+        </a>
+      </div>
       <div className="setup-header">
-        <div className="setup-header-actions">
-          <LanguageToggle />
-          <a
-            className="btn btn-primary btn-sm rulebook-btn"
-            href={RULEBOOK_URL}
-            target="_blank"
-            rel="noreferrer"
-          >
-            {t.rulebook}
-          </a>
-        </div>
         <span className="moon-icon">🌕</span>
         <h1>{t.appTitle}</h1>
         <p className="subtitle">{t.appSubtitle}</p>

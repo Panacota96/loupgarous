@@ -178,8 +178,8 @@ interface Strings {
 }
 
 export const LANGUAGE_OPTIONS: { code: Language; label: string }[] = [
-  { code: 'en', label: 'English' },
-  { code: 'fr', label: 'Français' },
+  { code: 'en', label: 'EN' },
+  { code: 'fr', label: 'FR' },
 ];
 
 const campLabels: Record<Language, Record<Camp, string>> = {
@@ -208,7 +208,7 @@ const translations: Record<Language, Strings> = {
     languageLabel: 'Language',
     appTitle: 'Loup-Garous',
     appSubtitle: 'Game Master Assistant',
-    rulebook: '📖 Full rules (PDF)',
+    rulebook: 'Rulebook',
     tabs: {
       setup: 'Setup',
       roles: 'Roles',
@@ -218,7 +218,7 @@ const translations: Record<Language, Strings> = {
     setup: {
       numberOfPlayers: 'Number of Players',
       assignRoles: 'Assign Roles',
-      viewRoleDescriptions: 'View role descriptions',
+      viewRoleDescriptions: 'Roles',
       roleSummary: 'Role Summary',
       discussionTimer: 'Discussion Timer',
       optionalRules: 'Optional Rules',
@@ -421,7 +421,7 @@ const translations: Record<Language, Strings> = {
     languageLabel: 'Langue',
     appTitle: 'Loup-Garous',
     appSubtitle: 'Assistant Maître du Jeu',
-    rulebook: '📖 Règles complètes (PDF)',
+    rulebook: 'Livret de règles',
     tabs: {
       setup: 'Préparation',
       roles: 'Rôles',
@@ -431,7 +431,7 @@ const translations: Record<Language, Strings> = {
     setup: {
       numberOfPlayers: 'Nombre de joueurs',
       assignRoles: 'Attribuer les rôles',
-      viewRoleDescriptions: 'Voir les descriptions des rôles',
+      viewRoleDescriptions: 'Rôles',
       roleSummary: 'Résumé des rôles',
       discussionTimer: 'Minuteur de discussion',
       optionalRules: 'Règles optionnelles',

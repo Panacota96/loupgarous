@@ -3,15 +3,19 @@ import '../styles/language-toggle.css';
 
 interface Props {
   compact?: boolean;
+  className?: string;
 }
 
-export default function LanguageToggle({ compact = false }: Props) {
+export default function LanguageToggle({ compact = false, className = '' }: Props) {
   const { language, setLanguage, t } = useI18n();
 
   return (
-    <div className={`language-toggle ${compact ? 'compact' : ''}`}>
-      <span className="language-toggle__label">{t.languageLabel}</span>
-      <div className="language-toggle__buttons" role="group" aria-label={t.languageLabel}>
+    <div
+      className={`language-toggle ${compact ? 'compact' : ''} ${className}`.trim()}
+      role="group"
+      aria-label={t.languageLabel}
+    >
+      <div className="language-toggle__buttons">
         {LANGUAGE_OPTIONS.map((opt) => (
           <button
             key={opt.code}
