@@ -1,0 +1,128 @@
+name: Deploy Web
+
+on:
+  push:
+    branches:
+      - release/web
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: deploy-web
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Web Release Build
+    runs-on: ubuntu-latest
+    outputs:
+      release_version: ${{ steps.release_meta.outputs.release_version }}
+      release_notes_file: ${{ steps.release_meta.outputs.release_notes_file }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compute release metadata
+        id: release_meta
+        run: node scripts/release/compute-release-metadata.mjs
+
+      - name: Resolve public base path
+        id: base_path
+        env:
+          PAGES_CUSTOM_DOMAIN: ${{ vars.PAGES_CUSTOM_DOMAIN }}
+        run: |
+          if [ -n "${PAGES_CUSTOM_DOMAIN:-}" ]; then
+            echo "base_path=/" >> "$GITHUB_OUTPUT"
+            printf '%s\n' "$PAGES_CUSTOM_DOMAIN" > public/CNAME
+          else
+            echo "base_path=/${GITHUB_REPOSITORY#*/}/" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build static site
+        env:
+          VITE_PUBLIC_BASE_PATH: ${{ steps.base_path.outputs.base_path }}
+        run: npm run build
+
+      - name: Add static hosting markers
+        run: |
+          touch dist/.nojekyll
+          if [ -f public/CNAME ]; then
+            cp public/CNAME dist/CNAME
+          fi
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Upload release notes
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-release-notes
+          path: ${{ steps.release_meta.outputs.release_notes_file }}
+
+  deploy:
+    name: Deploy to GitHub Pages
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: web-production
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy site
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  smoke-test:
+    name: Live Web Smoke
+    runs-on: ubuntu-latest
+    needs: deploy
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run live smoke flow
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ needs.deploy.outputs.page_url }}
+          PLAYWRIGHT_SKIP_WEBSERVER: '1'
+        run: npm run test:e2e -- --grep "base 6-player game flow stays visible and interactive"
+
+      - name: Upload smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: live-web-smoke
+          path: |
+            playwright-report
+            test-results
+          if-no-files-found: ignore

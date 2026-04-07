@@ -11,6 +11,15 @@ node_modules
 dist
 dist-ssr
 *.local
+.eslintcache
+
+# Android / Capacitor local and generated files
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/captures/
+android/artifacts/
 
 # Editor directories and files
 .vscode/*
@@ -25,3 +34,4 @@ dist-ssr
 playwright-report
 test-results
 blob-report
+release-notes.md

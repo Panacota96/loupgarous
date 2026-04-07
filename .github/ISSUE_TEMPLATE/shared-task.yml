@@ -1,0 +1,34 @@
+name: Shared Platform Task
+description: Shared code, governance, or CI/CD work that affects both release tracks.
+title: "[shared] "
+labels:
+  - shared
+  - enhancement
+body:
+  - type: textarea
+    id: summary
+    attributes:
+      label: Summary
+      description: Describe the shared change and why it matters.
+      placeholder: Add branch protections and required status checks for all protected branches.
+    validations:
+      required: true
+  - type: checkboxes
+    id: release_impact
+    attributes:
+      label: Release impact
+      options:
+        - label: Affects `main`
+        - label: Affects `release/web`
+        - label: Affects `release/mobile`
+        - label: Requires documentation updates
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List the concrete outcomes that must be true when this issue is complete.
+      placeholder: |
+        - CI workflows pass on the new branch model.
+        - Protected branch rules are documented and enforced.
+    validations:
+      required: true

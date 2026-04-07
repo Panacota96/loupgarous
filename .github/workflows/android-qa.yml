@@ -1,0 +1,116 @@
+name: Android QA
+
+on:
+  pull_request:
+    branches:
+      - main
+      - release/mobile
+  push:
+    branches:
+      - release/mobile
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-qa-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  PACKAGE_NAME: com.panacota96.loupgarous
+  MAIN_ACTIVITY: com.panacota96.loupgarous/.MainActivity
+
+jobs:
+  android-build:
+    name: Android Release Build Smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Sync Capacitor Android assets
+        run: npm run cap:sync
+
+      - name: Ensure Gradle wrapper is executable
+        run: chmod +x android/gradlew
+
+      - name: Build Android variants and unit tests
+        working-directory: android
+        run: ./gradlew testDebugUnitTest assembleDebug bundleRelease --stacktrace
+
+      - name: Upload Android build outputs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-build-artifacts
+          path: |
+            android/app/build/outputs/apk/debug/app-debug.apk
+            android/app/build/outputs/bundle/release/app-release.aab
+            android/app/build/reports/tests/testDebugUnitTest
+            android/build/reports/problems/problems-report.html
+          if-no-files-found: ignore
+
+  android-emulator-smoke:
+    name: Android Emulator Smoke
+    runs-on: ubuntu-latest
+    needs: android-build
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Download Android build outputs
+        uses: actions/download-artifact@v4
+        with:
+          name: android-build-artifacts
+          path: .
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Run emulator smoke workflow
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_7
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          disable-animations: true
+          script: bash ./scripts/android/emulator-smoke.sh
+        env:
+          APK_PATH: android/app/build/outputs/apk/debug/app-debug.apk
+          PACKAGE_NAME: ${{ env.PACKAGE_NAME }}
+          ACTIVITY_NAME: ${{ env.MAIN_ACTIVITY }}
+          ANDROID_SMOKE_ARTIFACT_DIR: android/artifacts
+
+      - name: Upload emulator smoke artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-emulator-smoke
+          path: android/artifacts
+          if-no-files-found: ignore
