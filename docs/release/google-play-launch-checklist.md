@@ -25,3 +25,4 @@
 - Closed-track rollout approved after internal QA
 - Release notes prepared from the workflow artifact
 - Support contact email and website confirmed
+- Latest record: [Google Play internal readiness (2026-04-07)](./google-play-internal-readiness-2026-04-07.md) — crash-free emulator smoke recorded; Play upload currently blocked pending credentials.
