@@ -28,3 +28,11 @@
 - Re-run `deploy-web.yml` on the last known-good commit, or revert the bad commit on `release/web`.
 - If DNS or TLS is the problem, keep `release/web` frozen until the custom domain is healthy again.
 - Use the runbook in [`runbooks.md`](./runbooks.md) for emergency steps.
+
+## Production endpoint verification (2026-04-07)
+
+- Target URL: `https://panacota96.github.io/loupgarous/` (Pages fallback; `PAGES_CUSTOM_DOMAIN` is currently unset).
+- DNS/HTTPS: External check returned HTTP 200 over TLS with no mixed-content warnings.
+- Mixed content guard: `npm run build` followed by `rg "http://" dist` shows only SVG namespace strings—no runtime assets load over HTTP.
+- Public reachability: Page responds without authentication via the Pages fallback URL.
+- Re-run: After setting `PAGES_CUSTOM_DOMAIN`, re-verify with `curl -I https://<domain>` and re-run `rg "http://" dist` after a fresh `npm run build`.
