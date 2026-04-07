@@ -213,6 +213,10 @@ If you are shipping mobile, the deeper checklists and rehearsal notes are in [`d
 - Collaboration expectations are documented in [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md)
 - Security vulnerabilities should be reported privately as described in [SECURITY.md](./SECURITY.md)
 
+## License
+
+This project is licensed under the Apache License 2.0. See [LICENSE](./LICENSE).
+
 ## Project Structure
 
 ```text
