@@ -65,6 +65,9 @@ export default function GameBoard() {
 
   return (
     <div className={`gameboard ${phase}`}>
+      <div className="corner-actions corner-actions--game">
+        <LanguageToggle compact />
+      </div>
       {/* Top bar */}
       <div className="gameboard-topbar">
         <div className="topbar-left">
@@ -75,7 +78,6 @@ export default function GameBoard() {
           <span className="wolf-chip">{t.game.wolves(wolfCount)}</span>
         </div>
         <div className="topbar-right">
-          <LanguageToggle compact />
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => {

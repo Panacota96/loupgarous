@@ -12,7 +12,7 @@ test('language switch toggles UI text and persists across reloads', async ({ pag
   await expect(page.getByText('Game Master Assistant')).toBeVisible();
 
   // Switch to French and verify UI strings change
-  await page.getByRole('button', { name: 'Français' }).click();
+  await page.getByRole('button', { name: 'FR' }).click();
   await expect(page.getByText('Assistant Maître du Jeu')).toBeVisible();
   await expect(page.getByTestId('start-game')).toHaveText(/Lancer la partie/i);
 
