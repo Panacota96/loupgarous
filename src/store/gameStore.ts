@@ -34,7 +34,6 @@ interface StoreActions {
   setVote: (targetId: string, count: number) => void;
   clearVotes: () => void;
   eliminatePlayer: (id: string) => void;
-  revealPlayer: (id: string) => void;
   electMayor: (id: string) => void;
   setLovers: (id1: string, id2: string) => void;
   addLog: (message: string) => void;
@@ -101,7 +100,6 @@ export const useGameStore = create<GameStore>()(
           name,
           roleId: roleIds[i] ?? 'villager',
           isAlive: true,
-          isRevealed: false,
           isMayor: false,
           isLover: false,
           extraVotes: 0,
@@ -301,9 +299,6 @@ export const useGameStore = create<GameStore>()(
           ],
         });
       },
-
-      revealPlayer: (id) =>
-        set((s) => ({ players: s.players.map((p) => p.id === id ? { ...p, isRevealed: true } : p) })),
 
       electMayor: (id) =>
         set((s) => ({

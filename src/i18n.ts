@@ -154,10 +154,8 @@ interface Strings {
   playerCard: {
     mayor: string;
     lover: string;
-    reveal: string;
     makeMayor: string;
     eliminate: string;
-    revealTitle: string;
     mayorTitle: string;
     eliminateTitle: string;
   };
@@ -396,10 +394,8 @@ const translations: Record<Language, Strings> = {
     playerCard: {
       mayor: '🎖️ Mayor',
       lover: '💘 Lover',
-      reveal: '👁 Reveal',
       makeMayor: '🎖️ Mayor',
       eliminate: '☠️ Elim.',
-      revealTitle: 'Reveal role',
       mayorTitle: 'Make Mayor',
       eliminateTitle: 'Eliminate',
     },
@@ -611,10 +607,8 @@ const translations: Record<Language, Strings> = {
     playerCard: {
       mayor: '🎖️ Maire',
       lover: '💘 Amoureux',
-      reveal: '👁 Révéler',
       makeMayor: '🎖️ Maire',
       eliminate: '☠️ Élim.',
-      revealTitle: 'Révéler le rôle',
       mayorTitle: 'Nommer Maire',
       eliminateTitle: 'Éliminer',
     },
