@@ -8,9 +8,9 @@ Examples of expected behavior:
 
 - use clear and actionable technical communication
 - assume good intent and discuss disagreements on the merits
-- keep bug reports and change requests specific and reproducible
+- keep issues, bug reports, and change requests specific and reproducible
 - document risk, rollout impact, and verification steps when relevant
-- help keep issues, pull requests, and reviews focused on the work
+- keep pull requests and reviews focused on the work being proposed
 
 Examples of unacceptable behavior:
 
@@ -26,6 +26,7 @@ This code of conduct applies to:
 
 - GitHub issues
 - pull requests and review threads
+- issue triage and change-request discussions
 - release coordination and documentation updates
 - other project spaces used to discuss or maintain this repository
 
@@ -34,8 +35,9 @@ This code of conduct applies to:
 If you experience or witness unacceptable behavior, contact the maintainer:
 
 - GitHub: https://github.com/Panacota96
-- Support page: https://buymeacoffee.com/santiagogow
 
 ## Project Governance
 
 The maintainer may edit, hide, lock, or remove content that does not meet this standard, and may restrict participation for repeated or severe violations.
+
+Normal product, documentation, and workflow changes should be requested through GitHub Issues rather than informal side channels.
