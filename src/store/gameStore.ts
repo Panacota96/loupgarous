@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Player, GameState, NightStep } from '../types/game.types';
+import type { Player, GameState, NightStep, Language } from '../types/game.types';
 import { getNightOrder, WOLF_ROLE_IDS } from '../data/roles';
+import { getStrings } from '../i18n';
 
 interface SetupState {
   playerNames: string[];
@@ -37,6 +38,7 @@ interface StoreActions {
   electMayor: (id: string) => void;
   setLovers: (id1: string, id2: string) => void;
   addLog: (message: string) => void;
+  setLanguage: (lang: Language) => void;
 }
 
 export type GameStore = SetupState & GameState & StoreActions;
@@ -72,6 +74,7 @@ const defaultGame: GameState = {
   angelWon: false,
   wolfVictimId: null,
   ravenCursedId: null,
+  language: 'en',
 };
 
 function buildNightSteps(roleIds: string[], round: number): NightStep[] {
@@ -91,7 +94,8 @@ export const useGameStore = create<GameStore>()(
       setSetup: (s) => set({ ...s }),
 
       startGame: () => {
-        const { playerNames, roleIds, discussionTime, optionalRules } = get();
+        const { playerNames, roleIds, discussionTime, optionalRules, language } = get();
+        const strings = getStrings(language);
         const players: Player[] = playerNames.map((name, i) => ({
           id: `p${i}`,
           name,
@@ -120,7 +124,7 @@ export const useGameStore = create<GameStore>()(
           votes: [],
           loversIds: null,
           mayorId: null,
-          log: [`Game started with ${players.length} players.`],
+          log: [strings.logs.gameStarted(players.length)],
           usedGameAbilities: [],
           optionalRules,
           wildChildModelId: null,
@@ -131,10 +135,11 @@ export const useGameStore = create<GameStore>()(
           angelWon: false,
           wolfVictimId: null,
           ravenCursedId: null,
+          language: language ?? 'en',
         });
       },
 
-      resetGame: () => set({ ...defaultSetup, ...defaultGame }),
+      resetGame: () => set((s) => ({ ...defaultSetup, ...defaultGame, language: s.language })),
 
       completeNightStep: () => {
         const { nightSteps, currentNightStepIndex } = get();
@@ -168,6 +173,7 @@ export const useGameStore = create<GameStore>()(
           players, eliminatedThisNight, round, discussionTimeSeconds, optionalRules,
           infectedPlayerIds, wildChildModelId, wildChildTransformed, log,
         } = get();
+        const strings = getStrings(get().language);
 
         // Knight with Rusty Sword: if Knight was killed by wolves,
         // the first wolf to their LEFT (seating order) dies at dawn.
@@ -186,7 +192,7 @@ export const useGameStore = create<GameStore>()(
             ) {
               if (!finalEliminated.includes(candidate.id)) {
                 finalEliminated.push(candidate.id);
-                extraLog = ` ⚔️ Knight's rusty sword: ${candidate.name} dies of tetanus!`;
+                extraLog = strings.logs.knightRustySword(candidate.name);
               }
               break;
             }
@@ -205,9 +211,16 @@ export const useGameStore = create<GameStore>()(
         const newRound = round + 1;
         const nightSteps = buildNightSteps(roleIds, newRound);
 
-        const nightMsg = finalEliminated.length
-          ? `Night ${round}: ${finalEliminated.map((id) => updated.find((p) => p.id === id)?.name).join(', ')} were eliminated.${extraLog}`
-          : `Night ${round}: No one was eliminated (peaceful night).`;
+        const eliminatedNames = finalEliminated
+          .map((id) => updated.find((p) => p.id === id)?.name)
+          .filter(Boolean)
+          .join(', ');
+
+        const nightMsg = strings.logs.nightSummary(
+          round,
+          eliminatedNames || null,
+          extraLog
+        );
 
         set({
           players: updated,
@@ -265,6 +278,7 @@ export const useGameStore = create<GameStore>()(
 
       eliminatePlayer: (id) => {
         const { players, loversIds, log, round, wildChildModelId, wildChildTransformed } = get();
+        const strings = getStrings(get().language);
         const toElim = [id];
         if (loversIds && loversIds.includes(id)) {
           const other = loversIds.find((lid) => lid !== id);
@@ -274,12 +288,16 @@ export const useGameStore = create<GameStore>()(
         const newWildChildTransformed =
           wildChildTransformed ||
           (wildChildModelId !== null && toElim.includes(wildChildModelId));
+        const elimNames = toElim
+          .map((eid) => players.find((p) => p.id === eid)?.name)
+          .filter(Boolean)
+          .join(' & ');
         set({
           players: updated,
           wildChildTransformed: newWildChildTransformed,
           log: [
             ...log,
-            `Day ${round}: ${toElim.map((eid) => players.find((p) => p.id === eid)?.name).join(' & ')} eliminated.`,
+            strings.logs.dayElimination(round, elimNames),
           ],
         });
       },
@@ -301,6 +319,8 @@ export const useGameStore = create<GameStore>()(
 
       addLog: (message) =>
         set((s) => ({ log: [...s.log, message] })),
+
+      setLanguage: (lang) => set({ language: lang }),
     }),
     { name: 'loupgarous-game' }
   )

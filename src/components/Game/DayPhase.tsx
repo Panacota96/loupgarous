@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
-import { ROLE_MAP, WOLF_ROLE_IDS } from '../../data/roles';
+import { ROLE_MAP, WOLF_ROLE_IDS, getRoleTexts, getRoleName } from '../../data/roles';
+import { useI18n } from '../../i18n';
 import PlayerCard from './PlayerCard';
 import Timer from './Timer';
 import TieBreaker from './TieBreaker';
 import '../../styles/day.css';
 
 export default function DayPhase() {
+  const { language, t } = useI18n();
   const players = useGameStore((s) => s.players);
   const alivePlayers = players.filter((p) => p.isAlive);
   const votes = useGameStore((s) => s.votes);
@@ -94,33 +96,39 @@ export default function DayPhase() {
       <div className="day-header">
         <span className="phase-icon">☀️</span>
         <div>
-          <h2>Day Phase — Round {round}</h2>
-          <p className="day-subtitle">All players open their eyes.</p>
+          <h2>{t.day.title(round)}</h2>
+          <p className="day-subtitle">{t.day.subtitle}</p>
         </div>
         <button
           className="btn btn-ghost btn-sm"
           data-testid="dm-view-toggle"
           onClick={() => setRevealAll((r) => !r)}
         >
-          {revealAll ? '🙈 Hide Roles' : '👁 DM View'}
+          {revealAll ? t.day.dmView.hide : t.day.dmView.show}
         </button>
       </div>
 
       {/* Bear Tamer Signal */}
       {bearTamer && (
         <div className={`bear-signal ${bearGrowls ? 'growl' : 'silent'}`}>
-          🐻 Bear signal: <strong>{bearGrowls ? '🔊 GROWLS (wolf nearby!)' : '🤫 Silent'}</strong>
+          <strong>{t.day.bearSignal(bearGrowls)}</strong>
         </div>
       )}
 
       {/* Day Triggers */}
       {dayTriggers.length > 0 && (
         <div className="day-triggers">
-          <h3>📋 DM Reminders</h3>
+          <h3>{t.day.dmReminders}</h3>
           {dayTriggers.map((r) => (
-            <div key={r!.id} className="day-trigger-item">
-              {r!.emoji} <strong>{r!.nameFr}:</strong> {r!.dayTrigger}
-            </div>
+            (() => {
+              const dayText = getRoleTexts(r!, language).dayTrigger;
+              if (!dayText) return null;
+              return (
+                <div key={r!.id} className="day-trigger-item">
+                  {r!.emoji} <strong>{getRoleName(r!, language)}:</strong> {dayText}
+                </div>
+              );
+            })()
           ))}
         </div>
       )}
@@ -133,9 +141,8 @@ export default function DayPhase() {
         const piperWins = aliveEnchantedCount >= alivePlayers.length - 1;
         return (
           <div className="day-trigger-item day-enchanted-bar">
-            🎶 <strong>Pied Piper enchanted:</strong>{' '}
-            {aliveEnchantedCount} / {alivePlayers.length - 1} players
-            {piperWins && <span className="win-alert"> ⭐ PIED PIPER WINS!</span>}
+            {t.day.piedPiperBar(aliveEnchantedCount, alivePlayers.length - 1)}
+            {piperWins && <span className="win-alert"> {t.day.piedPiperWins}</span>}
           </div>
         );
       })()}
@@ -143,7 +150,7 @@ export default function DayPhase() {
       {/* Infected players (DM-only info) */}
       {infectedPlayerIds.length > 0 && (
         <div className="day-trigger-item day-infected-bar">
-          🦠 <strong>Secret wolves (infected):</strong>{' '}
+          {t.day.infectedBar}{' '}
           {infectedPlayerIds
             .map((id) => players.find((p) => p.id === id))
             .filter(Boolean)
@@ -157,7 +164,7 @@ export default function DayPhase() {
 
       {/* Players Grid */}
       <section className="day-players">
-        <h3>👥 Players ({alivePlayers.length} alive)</h3>
+        <h3>{t.day.playersTitle(alivePlayers.length)}</h3>
         <div className="players-grid">
           {players.map((p) => (
             <PlayerCard key={p.id} playerId={p.id} showRole={revealAll} />
@@ -168,34 +175,34 @@ export default function DayPhase() {
       {/* Voting */}
       <section className="voting-section">
         <div className="voting-header">
-          <h3>🗳️ Voting</h3>
+          <h3>{t.day.votingTitle}</h3>
           <button className="btn btn-ghost btn-sm" onClick={() => { clearVotes(); setMayorVoteTarget(''); }}>
-            🔄 Reset Votes
+            {t.day.resetVotes}
           </button>
         </div>
 
         {/* Raven curse reminder */}
         {ravenCursedName && (
           <div className="raven-curse-bar">
-            🦅 Raven curse: <strong>{ravenCursedName}</strong> has +2 votes today.
+            {t.day.ravenCurse(ravenCursedName)}
           </div>
         )}
 
         {/* Mayor bonus vote */}
         {mayorAlive && (
           <div className="mayor-vote-bar">
-            🎖️ Mayor <strong>{mayorAlive.name}</strong> votes for:&nbsp;
+            {t.day.mayorVotes(mayorAlive.name)}&nbsp;
             <select
               className="mayor-vote-select"
               value={mayorVoteTarget}
               onChange={(e) => setMayorVoteTarget(e.target.value)}
             >
-              <option value="">&mdash; No bonus vote &mdash;</option>
+              <option value="">&mdash; {t.day.noBonus} &mdash;</option>
               {alivePlayers
                 .filter((p) => !p.isMayor)
                 .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
-            {mayorVoteTarget && <span className="extra-votes">+1 Mayor bonus</span>}
+            {mayorVoteTarget && <span className="extra-votes">{t.day.mayorBonus}</span>}
           </div>
         )}
 
@@ -207,8 +214,8 @@ export default function DayPhase() {
                 <span className="vote-name">
                   {p.name}
                   {p.isMayor && ' 🎖️'}
-                  {ravenCursedId === p.id && <span className="extra-votes">+2 cursed</span>}
-                  {mayorAlive && mayorVoteTarget === p.id && <span className="extra-votes">+1 mayor</span>}
+                  {ravenCursedId === p.id && <span className="extra-votes">{t.day.cursedBonus}</span>}
+                  {mayorAlive && mayorVoteTarget === p.id && <span className="extra-votes">{t.day.mayorBonus}</span>}
                 </span>
                 <div className="vote-controls">
                   <button
@@ -235,17 +242,17 @@ export default function DayPhase() {
           <div className="vote-result">
             {isTie ? (
               <div className="tie-warning">
-                ⚖️ TIE between {topPlayers.map((p) => p.name).join(' & ')}!
+                {t.day.tieWarning(topPlayers.map((p) => p.name).join(' & '))}
                 <button
                   className="btn btn-yellow"
                   onClick={() => setShowTieBreaker(true)}
                 >
-                  ⚖️ Tie-Breaker
+                  {t.day.tieBreaker}
                 </button>
               </div>
             ) : (
               <button className="btn btn-danger btn-large" onClick={executeTop}>
-                ☠️ Execute {topPlayers[0]?.name}
+                {t.day.execute(topPlayers[0]?.name)}
               </button>
             )}
           </div>
@@ -257,7 +264,7 @@ export default function DayPhase() {
       {/* Night transition */}
       <section className="day-footer">
         <button className="btn btn-primary btn-large night-btn" onClick={togglePhase}>
-          🌙 Start Night Phase
+          {t.day.nightButton}
         </button>
       </section>
     </div>

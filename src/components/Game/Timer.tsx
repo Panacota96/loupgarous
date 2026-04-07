@@ -1,8 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { useGameStore } from '../../store/gameStore';
+import { useI18n } from '../../i18n';
 import '../../styles/timer.css';
 
 export default function Timer() {
+  const { t } = useI18n();
   const timerRunning = useGameStore((s) => s.timerRunning);
   const timerRemaining = useGameStore((s) => s.timerRemaining);
   const discussionTimeSeconds = useGameStore((s) => s.discussionTimeSeconds);
@@ -34,7 +36,7 @@ export default function Timer() {
 
   return (
     <div className={`timer-widget ${isDanger ? 'danger' : isWarning ? 'warning' : ''}`}>
-      <div className="timer-label">⏱️ Discussion Timer</div>
+      <div className="timer-label">{t.timer.label}</div>
       <div className="timer-display">
         {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
       </div>
@@ -47,19 +49,19 @@ export default function Timer() {
       <div className="timer-controls">
         {!timerRunning ? (
           <button className="btn btn-green" onClick={startTimer} disabled={timerRemaining === 0}>
-            ▶ Start
+            {t.timer.start}
           </button>
         ) : (
           <button className="btn btn-yellow" onClick={stopTimer}>
-            ⏸ Pause
+            {t.timer.pause}
           </button>
         )}
         <button className="btn btn-ghost" onClick={resetTimer}>
-          🔄 Reset
+          {t.timer.reset}
         </button>
       </div>
       {timerRemaining === 0 && (
-        <div className="timer-alert">⏰ Time's up! Vote now!</div>
+        <div className="timer-alert">{t.timer.alert}</div>
       )}
     </div>
   );
