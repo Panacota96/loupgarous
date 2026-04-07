@@ -47,6 +47,16 @@ npm run build
 # Output is in dist/
 ```
 
+## 🌐 Publish to GitHub Pages
+
+Local builds default to `/` so they work for Android packaging and local static hosting.
+
+The production Pages base path is injected by the web release workflow through `VITE_PUBLIC_BASE_PATH`. When no custom domain is configured, the fallback endpoint is:
+
+`https://panacota96.github.io/loupgarous/`
+
+Web publishing runs from `release/web` via [`.github/workflows/deploy-web.yml`](./.github/workflows/deploy-web.yml). The full DNS, custom-domain, and rollback flow is documented in [`docs/release/web-release.md`](./docs/release/web-release.md).
+
 ## ✅ End-to-End Test (Playwright)
 
 Automated flow to reproduce the reported black-screen issue:
