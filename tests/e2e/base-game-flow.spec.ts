@@ -14,7 +14,7 @@ test('base 6-player game flow stays visible and interactive', async ({ page }, t
   page.on('requestfailed', (req) => failedRequests.push(`${req.method()} ${req.url()} — ${req.failure()?.errorText}`));
 
   await test.step('setup 6 players with 2 wolves', async () => {
-    await page.goto('/');
+    await page.goto('./');
     await expect(page.getByRole('heading', { name: 'Loup-Garous' })).toBeVisible();
 
     // DM can review role reference before assigning
