@@ -1,4 +1,5 @@
 export type Phase = 'setup' | 'night' | 'day';
+export type Language = 'en' | 'fr';
 export type Camp =
   | 'village'
   | 'werewolves'
@@ -14,6 +15,8 @@ export interface RoleAction {
   isOneTime?: boolean;
   /** Used by game state to track if this one-time action was spent */
   key?: string;
+  /** Localized description (French) */
+  descriptionFr?: string;
 }
 
 export interface RoleDefinition {
@@ -32,8 +35,12 @@ export interface RoleDefinition {
   nightAction: RoleAction | null;
   dayTrigger: string | null;       // tooltip shown to DM on day phase
   revealTrigger: string | null;    // what happens when this role is revealed/dies
+  dayTriggerFr?: string | null;
+  revealTriggerFr?: string | null;
   optionalRule?: string;
+  optionalRuleFr?: string;
   description: string;
+  descriptionFr?: string;
   emoji: string;
 }
 
@@ -92,4 +99,5 @@ export interface GameState {
   angelWon: boolean;                     // true if Angel was first Day-1 execution
   wolfVictimId: string | null;           // wolf's chosen victim for this night (persists across steps for Witch)
   ravenCursedId: string | null;          // player cursed by Raven last night (+2 votes)
+  language: Language;
 }

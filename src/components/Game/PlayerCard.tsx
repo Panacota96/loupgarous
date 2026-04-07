@@ -1,6 +1,7 @@
 
 import { useGameStore } from '../../store/gameStore';
-import { ROLE_MAP } from '../../data/roles';
+import { ROLE_MAP, getRoleName, getRoleTexts } from '../../data/roles';
+import { useI18n } from '../../i18n';
 import '../../styles/player.css';
 
 interface Props {
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export default function PlayerCard({ playerId, showRole = false }: Props) {
+  const { language, t } = useI18n();
   const player = useGameStore((s) => s.players.find((p) => p.id === playerId));
   const eliminatePlayer = useGameStore((s) => s.eliminatePlayer);
   const revealPlayer = useGameStore((s) => s.revealPlayer);
@@ -17,6 +19,8 @@ export default function PlayerCard({ playerId, showRole = false }: Props) {
   if (!player) return null;
 
   const role = ROLE_MAP[player.roleId];
+  const roleTexts = role ? getRoleTexts(role, language) : null;
+  const roleName = role ? getRoleName(role, language) : '';
   const isRevealed = player.isRevealed || showRole;
 
   return (
@@ -29,17 +33,17 @@ export default function PlayerCard({ playerId, showRole = false }: Props) {
         <span className="player-emoji">{player.isAlive ? '🙂' : '💀'}</span>
         <span className="player-card-name">{player.name}</span>
         <div className="player-badges">
-          {player.isMayor && <span className="badge badge-mayor">🎖️ Mayor</span>}
-          {player.isLover && <span className="badge badge-lover">💘 Lover</span>}
+          {player.isMayor && <span className="badge badge-mayor">{t.playerCard.mayor}</span>}
+          {player.isLover && <span className="badge badge-lover">{t.playerCard.lover}</span>}
         </div>
       </div>
 
       {isRevealed && role && (
         <div className={`player-role camp-${role.camp}`}>
           <span>{role.emoji}</span>
-          <span>{role.nameFr}</span>
-          {role.revealTrigger && (
-            <div className="reveal-trigger">⚡ {role.revealTrigger}</div>
+          <span>{roleName}</span>
+          {roleTexts?.revealTrigger && (
+            <div className="reveal-trigger">⚡ {roleTexts.revealTrigger}</div>
           )}
         </div>
       )}
@@ -50,26 +54,26 @@ export default function PlayerCard({ playerId, showRole = false }: Props) {
             <button
               className="btn btn-sm btn-ghost"
               onClick={() => revealPlayer(player.id)}
-              title="Reveal role"
+              title={t.playerCard.revealTitle}
             >
-              👁 Reveal
+              {t.playerCard.reveal}
             </button>
           )}
           {!player.isMayor && (
             <button
               className="btn btn-sm btn-ghost"
               onClick={() => electMayor(player.id)}
-              title="Make Mayor"
+              title={t.playerCard.mayorTitle}
             >
-              🎖️ Mayor
+              {t.playerCard.makeMayor}
             </button>
           )}
           <button
             className="btn btn-sm btn-danger"
             onClick={() => eliminatePlayer(player.id)}
-            title="Eliminate"
+            title={t.playerCard.eliminateTitle}
           >
-            ☠️ Elim.
+            {t.playerCard.eliminate}
           </button>
         </div>
       )}

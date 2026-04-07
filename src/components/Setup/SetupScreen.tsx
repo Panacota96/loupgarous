@@ -1,7 +1,9 @@
 import { useState, useCallback } from 'react';
 import { useGameStore } from '../../store/gameStore';
-import { ROLES } from '../../data/roles';
+import { ROLES, getRoleName, getRoleTexts } from '../../data/roles';
 import RoleReference from '../Roles/RoleReference';
+import LanguageToggle from '../LanguageToggle';
+import { useI18n } from '../../i18n';
 import '../../styles/setup.css';
 
 const MIN_PLAYERS = 5;
@@ -10,13 +12,14 @@ const RULEBOOK_URL =
   'https://media.play-in.com/pdf/rules_games/best_of__les_loups-garous_de_thiercelieux_regles_fr.pdf';
 
 export default function SetupScreen() {
+  const { language, t } = useI18n();
   const setSetup = useGameStore((s) => s.setSetup);
   const startGame = useGameStore((s) => s.startGame);
 
   const [tab, setTab] = useState<'setup' | 'roles'>('setup');
   const [playerCount, setPlayerCount] = useState(6);
   const [playerNames, setPlayerNames] = useState<string[]>(
-    Array.from({ length: 6 }, (_, i) => `Joueur ${i + 1}`)
+    Array.from({ length: 6 }, (_, i) => t.setup.playerNamePlaceholder(i + 1))
   );
   const [roleAssignment, setRoleAssignment] = useState<string[]>(
     Array(6).fill('villager')
@@ -30,7 +33,7 @@ export default function SetupScreen() {
       setPlayerCount(c);
       setPlayerNames((prev) => {
         const next = [...prev];
-        while (next.length < c) next.push(`Joueur ${next.length + 1}`);
+        while (next.length < c) next.push(t.setup.playerNamePlaceholder(next.length + 1));
         return next.slice(0, c);
       });
       setRoleAssignment((prev) => {
@@ -39,7 +42,7 @@ export default function SetupScreen() {
         return next.slice(0, c);
       });
     },
-    []
+    [t]
   );
 
   const handleNameChange = (i: number, value: string) => {
@@ -69,14 +72,15 @@ export default function SetupScreen() {
   Object.entries(roleCounts).forEach(([id, count]) => {
     const def = ROLES.find((r) => r.id === id);
     if (!def) return;
+    const roleLabel = getRoleName(def, language);
     if (count > def.maxCount)
-      errors.push(`Too many "${def.name}" (max ${def.maxCount}).`);
+      errors.push(t.setup.errors.tooMany(roleLabel, def.maxCount));
     if (count < def.minCount)
-      errors.push(`Not enough "${def.name}" (min ${def.minCount}).`);
+      errors.push(t.setup.errors.notEnough(roleLabel, def.minCount));
   });
   const wolfCount = roleCounts['werewolf'] ?? 0;
   if (wolfCount === 0)
-    errors.push('You must have at least 1 Werewolf.');
+    errors.push(t.setup.errors.needWolf);
 
   const canStart = errors.length === 0;
 
@@ -97,17 +101,20 @@ export default function SetupScreen() {
   return (
     <div className="setup-screen">
       <div className="setup-header">
+        <div className="setup-header-actions">
+          <LanguageToggle />
+          <a
+            className="btn btn-primary btn-sm rulebook-btn"
+            href={RULEBOOK_URL}
+            target="_blank"
+            rel="noreferrer"
+          >
+            {t.rulebook}
+          </a>
+        </div>
         <span className="moon-icon">🌕</span>
-        <h1>Loup-Garous</h1>
-        <p className="subtitle">Game Master Assistant</p>
-        <a
-          className="btn btn-primary btn-sm rulebook-btn"
-          href={RULEBOOK_URL}
-          target="_blank"
-          rel="noreferrer"
-        >
-          📖 Règles complètes (PDF)
-        </a>
+        <h1>{t.appTitle}</h1>
+        <p className="subtitle">{t.appSubtitle}</p>
       </div>
 
       <div className="setup-tabs">
@@ -116,14 +123,14 @@ export default function SetupScreen() {
           onClick={() => setTab('setup')}
           data-testid="setup-tab-setup"
         >
-          ⚙️ Setup
+          ⚙️ {t.tabs.setup}
         </button>
         <button
           className={`tab-btn ${tab === 'roles' ? 'active' : ''}`}
           onClick={() => setTab('roles')}
           data-testid="setup-tab-roles"
         >
-          📚 Roles
+          📚 {t.tabs.roles}
         </button>
       </div>
 
@@ -131,7 +138,7 @@ export default function SetupScreen() {
         <>
           {/* Player Count */}
           <section className="setup-section">
-            <h2>👥 Number of Players</h2>
+            <h2>👥 {t.setup.numberOfPlayers}</h2>
             <div className="player-count-row">
               <button
                 className="count-btn"
@@ -154,9 +161,9 @@ export default function SetupScreen() {
           {/* Player Names & Role Assignment */}
           <section className="setup-section">
             <div className="setup-section-header">
-              <h2>🃏 Assign Roles</h2>
+              <h2>🃏 {t.setup.assignRoles}</h2>
               <button className="btn btn-ghost btn-sm" onClick={() => setTab('roles')}>
-                📚 View role descriptions
+                📚 {t.setup.viewRoleDescriptions}
               </button>
             </div>
             <div className="player-list">
@@ -165,9 +172,9 @@ export default function SetupScreen() {
                   <span className="player-num">{i + 1}</span>
                   <input
                     className="player-name-input"
-                    value={playerNames[i] ?? `Joueur ${i + 1}`}
+                    value={playerNames[i] ?? ''}
                     onChange={(e) => handleNameChange(i, e.target.value)}
-                    placeholder={`Player ${i + 1}`}
+                    placeholder={t.setup.playerNamePlaceholder(i + 1)}
                   />
                   <select
                     className="role-select"
@@ -177,7 +184,7 @@ export default function SetupScreen() {
                   >
                     {ROLES.map((r) => (
                       <option key={r.id} value={r.id}>
-                        {r.emoji} {r.nameFr} / {r.name}
+                        {r.emoji} {getRoleName(r, language)}
                       </option>
                     ))}
                   </select>
@@ -188,14 +195,14 @@ export default function SetupScreen() {
 
           {/* Role Summary */}
           <section className="setup-section">
-            <h2>📊 Role Summary</h2>
+            <h2>📊 {t.setup.roleSummary}</h2>
             <div className="role-summary">
               {Object.entries(roleCounts).map(([id, count]) => {
                 const def = ROLES.find((r) => r.id === id);
                 if (!def) return null;
                 return (
                   <div key={id} className={`role-badge camp-${def.camp}`}>
-                    {def.emoji} {def.nameFr} ×{count}
+                    {def.emoji} {getRoleName(def, language)} ×{count}
                   </div>
                 );
               })}
@@ -204,7 +211,7 @@ export default function SetupScreen() {
 
           {/* Discussion Timer */}
           <section className="setup-section">
-            <h2>⏱️ Discussion Timer</h2>
+            <h2>⏱️ {t.setup.discussionTimer}</h2>
             <div className="timer-config">
               <button
                 className="count-btn"
@@ -227,7 +234,7 @@ export default function SetupScreen() {
           {/* Optional Rules */}
           {optionalRoleRules.length > 0 && (
             <section className="setup-section">
-              <h2>⚙️ Optional Rules</h2>
+              <h2>⚙️ {t.setup.optionalRules}</h2>
               {optionalRoleRules.map((r) => (
                 <label key={r.id} className="optional-rule">
                   <input
@@ -238,7 +245,7 @@ export default function SetupScreen() {
                     }
                   />
                   <span>
-                    {r.emoji} <strong>{r.nameFr}</strong>: {r.optionalRule}
+                    {r.emoji} <strong>{getRoleName(r, language)}</strong>: {getRoleTexts(r, language).optionalRule}
                   </span>
                 </label>
               ))}
@@ -262,18 +269,16 @@ export default function SetupScreen() {
             onClick={handleStart}
             disabled={!canStart}
           >
-            🐺 Start Game
+            {t.setup.startGame}
           </button>
         </>
       ) : (
         <section className="roles-tab-panel" data-testid="setup-roles-tab">
-          <p className="roles-tab-hint">
-            Review what each role does before you assign them to players.
-          </p>
+          <p className="roles-tab-hint">{t.setup.rolesTabHint}</p>
           <RoleReference />
           <div className="roles-tab-actions">
             <button className="btn btn-primary btn-large" onClick={() => setTab('setup')}>
-              ↩️ Back to setup
+              {t.setup.backToSetup}
             </button>
           </div>
         </section>
