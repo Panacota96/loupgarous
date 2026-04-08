@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { ROLE_MAP, WOLF_ROLE_IDS, getRoleTexts, getRoleName } from '../../data/roles';
 import { useI18n } from '../../i18n';
@@ -11,8 +11,6 @@ export default function DayPhase() {
   const { language, t } = useI18n();
   const players = useGameStore((s) => s.players);
   const alivePlayers = players.filter((p) => p.isAlive);
-  const aliveCount = alivePlayers.length;
-  const votes = useGameStore((s) => s.votes);
   const round = useGameStore((s) => s.round);
   const infectedPlayerIds = useGameStore((s) => s.infectedPlayerIds);
   const enchantedPlayerIds = useGameStore((s) => s.enchantedPlayerIds);
@@ -22,20 +20,19 @@ export default function DayPhase() {
   const foxPowerActive = useGameStore((s) => s.foxPowerActive);
   const usedGameAbilities = useGameStore((s) => s.usedGameAbilities);
 
-  const setVote = useGameStore((s) => s.setVote);
-  const clearVotes = useGameStore((s) => s.clearVotes);
   const eliminatePlayer = useGameStore((s) => s.eliminatePlayer);
   const addLog = useGameStore((s) => s.addLog);
   const togglePhase = useGameStore((s) => s.togglePhase);
 
-  const [showTieBreaker, setShowTieBreaker] = useState(false);
-  const [activeTieSignature, setActiveTieSignature] = useState<string | null>(null);
   const [revealAll, setRevealAll] = useState(false);
-  // Mayor bonus: track which player the Mayor voted for (adds +1 to their total)
-  const [mayorVoteTarget, setMayorVoteTarget] = useState('');
+  const [isTieFlowOpen, setIsTieFlowOpen] = useState(false);
+  const [selectedTieIds, setSelectedTieIds] = useState<string[]>([]);
+  const [showTieBreaker, setShowTieBreaker] = useState(false);
+  const [showScapegoatConfirm, setShowScapegoatConfirm] = useState(false);
+  const [showTieValidation, setShowTieValidation] = useState(false);
 
   // Bear Tamer morning signal: use full player list (stable seating order)
-  // and scan for the nearest alive neighbor on each side
+  // and scan for the nearest alive neighbor on each side.
   const bearTamer = players.find((p) => p.isAlive && p.roleId === 'bear_tamer');
   const bearGrowls = (() => {
     if (!bearTamer || players.length < 2) return false;
@@ -50,43 +47,31 @@ export default function DayPhase() {
         (p.roleId === 'wolf_dog' && wolfDogChoice === 'werewolf') ||
         (p.roleId === 'wild_child' && wildChildTransformed));
 
-    // Find nearest alive neighbor to the LEFT
     let leftNeighbor: typeof players[0] | undefined;
     for (let offset = 1; offset < total; offset++) {
       const candidate = players[(idx - offset + total) % total];
-      if (candidate.isAlive) { leftNeighbor = candidate; break; }
+      if (candidate.isAlive) {
+        leftNeighbor = candidate;
+        break;
+      }
     }
-    // Find nearest alive neighbor to the RIGHT
+
     let rightNeighbor: typeof players[0] | undefined;
     for (let offset = 1; offset < total; offset++) {
       const candidate = players[(idx + offset) % total];
-      if (candidate.isAlive) { rightNeighbor = candidate; break; }
+      if (candidate.isAlive) {
+        rightNeighbor = candidate;
+        break;
+      }
     }
+
     return isWolfSide(leftNeighbor) || isWolfSide(rightNeighbor);
   })();
 
-  // Compute vote totals:
-  // base = manually counted votes, +2 for Raven-cursed player, +1 for Mayor's chosen target
-  const mayorAlive = players.find((p) => p.isAlive && p.isMayor);
-  const baseVotes: Record<string, number> = {};
-  const voteMap: Record<string, number> = {};
-  alivePlayers.forEach((p) => {
-    const rawCount = votes.find((v) => v.targetId === p.id)?.count ?? 0;
-    const base = Math.max(0, Math.min(rawCount, aliveCount));
-    baseVotes[p.id] = base;
-    const ravenBonus = ravenCursedId === p.id ? 2 : 0;
-    const mayorBonus = mayorAlive && mayorVoteTarget === p.id ? 1 : 0;
-    voteMap[p.id] = base + ravenBonus + mayorBonus;
-  });
-
-  const maxVotes = Math.max(0, ...Object.values(voteMap));
-  const topPlayers = alivePlayers.filter((p) => voteMap[p.id] === maxVotes && maxVotes > 0);
-  const tiedPlayerIds = topPlayers.map((p) => p.id);
-  const tieSignature = tiedPlayerIds.join('|');
-  const isTie = topPlayers.length > 1;
-
+  const mayorAlive = players.find((p) => p.isAlive && p.isMayor) ?? null;
+  const scapegoatPlayer = alivePlayers.find((p) => p.roleId === 'scapegoat') ?? null;
   const ravenCursedName = ravenCursedId
-    ? (players.find((p) => p.id === ravenCursedId)?.name ?? null)
+    ? players.find((p) => p.id === ravenCursedId)?.name ?? null
     : null;
   const foxInGame = players.some((p) => p.roleId === 'fox');
   const witchInGame = players.some((p) => p.roleId === 'witch' && p.isAlive);
@@ -94,41 +79,61 @@ export default function DayPhase() {
   const witchPoisonUsed = usedGameAbilities.includes('witch_poison');
   const witchPotionsSpent = witchHealUsed && witchPoisonUsed;
 
-  const executeTop = () => {
-    if (topPlayers.length === 1) {
-      eliminatePlayer(topPlayers[0].id);
-      clearVotes();
-    }
+  const activeTieIds = selectedTieIds.filter((id) => alivePlayers.some((p) => p.id === id));
+  const selectedTiePlayers = activeTieIds
+    .map((id) => alivePlayers.find((p) => p.id === id))
+    .filter((player): player is (typeof alivePlayers)[number] => Boolean(player));
+  const selectedTieNames = selectedTiePlayers.map((p) => p.name).join(' & ');
+
+  const resetTieFlow = () => {
+    setIsTieFlowOpen(false);
+    setSelectedTieIds([]);
+    setShowTieBreaker(false);
+    setShowScapegoatConfirm(false);
+    setShowTieValidation(false);
   };
 
-  const closeTieBreaker = useCallback(() => {
+  const startTieFlow = () => {
+    setIsTieFlowOpen(true);
     setShowTieBreaker(false);
-    setActiveTieSignature(null);
-  }, []);
+    setShowScapegoatConfirm(false);
+    setShowTieValidation(false);
+  };
 
-  const openTieBreaker = () => {
-    if (!isTie) return;
-    setActiveTieSignature(tieSignature);
+  const toggleTiePlayer = (playerId: string) => {
+    setShowTieValidation(false);
+    setShowTieBreaker(false);
+    setShowScapegoatConfirm(false);
+    setSelectedTieIds((ids) =>
+      ids.includes(playerId) ? ids.filter((id) => id !== playerId) : [...ids, playerId]
+    );
+  };
+
+  const resolveTie = () => {
+    if (selectedTiePlayers.length < 2) {
+      setShowTieValidation(true);
+      return;
+    }
+
+    if (scapegoatPlayer) {
+      setShowScapegoatConfirm(true);
+      setShowTieBreaker(false);
+      return;
+    }
+
+    setShowTieValidation(false);
+    setShowScapegoatConfirm(false);
     setShowTieBreaker(true);
   };
 
-  const updateVote = (targetId: string, count: number) => {
-    if (showTieBreaker) closeTieBreaker();
-    setVote(targetId, count);
+  const confirmScapegoatTie = () => {
+    if (!scapegoatPlayer) return;
+    eliminatePlayer(scapegoatPlayer.id);
+    addLog(t.logs.scapegoatTie(scapegoatPlayer.name));
+    resetTieFlow();
   };
 
-  const updateMayorVoteTarget = (targetId: string) => {
-    if (showTieBreaker) closeTieBreaker();
-    setMayorVoteTarget(targetId);
-  };
-
-  const resetVotes = () => {
-    if (showTieBreaker) closeTieBreaker();
-    clearVotes();
-    setMayorVoteTarget('');
-  };
-
-  // Day triggers to remind DM
+  // Day triggers to remind DM.
   const dayTriggers = alivePlayers
     .map((p) => ROLE_MAP[p.roleId])
     .filter((r) => r?.dayTrigger);
@@ -150,18 +155,16 @@ export default function DayPhase() {
         </button>
       </div>
 
-      {/* Bear Tamer Signal */}
       {bearTamer && (
         <div className={`bear-signal ${bearGrowls ? 'growl' : 'silent'}`}>
           <strong>{t.day.bearSignal(bearGrowls)}</strong>
         </div>
       )}
 
-      {/* Day Triggers */}
       {dayTriggers.length > 0 && (
         <div className="day-triggers">
           <h3>{t.day.dmReminders}</h3>
-          {dayTriggers.map((r) => (
+          {dayTriggers.map((r) =>
             (() => {
               const dayText = getRoleTexts(r!, language).dayTrigger;
               if (!dayText) return null;
@@ -171,18 +174,16 @@ export default function DayPhase() {
                 </div>
               );
             })()
-          ))}
+          )}
         </div>
       )}
 
-      {/* Fox sniffing power status */}
       {foxInGame && (
         <div className="day-trigger-item">
           {foxPowerActive ? t.day.foxPowerActive : t.day.foxPowerLost}
         </div>
       )}
 
-      {/* Witch potion status */}
       {witchInGame && (
         <div className="day-trigger-item">
           {t.day.witchPotionsStatus(witchHealUsed, witchPoisonUsed)}
@@ -190,21 +191,20 @@ export default function DayPhase() {
         </div>
       )}
 
-      {/* Pied Piper enchanted count */}
-      {alivePlayers.some((p) => p.roleId === 'pied_piper') && (() => {
-        const aliveEnchantedCount = enchantedPlayerIds.filter(
-          (id) => players.find((p) => p.id === id && p.isAlive)
-        ).length;
-        const piperWins = aliveEnchantedCount >= alivePlayers.length - 1;
-        return (
-          <div className="day-trigger-item day-enchanted-bar">
-            {t.day.piedPiperBar(aliveEnchantedCount, alivePlayers.length - 1)}
-            {piperWins && <span className="win-alert"> {t.day.piedPiperWins}</span>}
-          </div>
-        );
-      })()}
+      {alivePlayers.some((p) => p.roleId === 'pied_piper') &&
+        (() => {
+          const aliveEnchantedCount = enchantedPlayerIds.filter(
+            (id) => players.find((p) => p.id === id && p.isAlive)
+          ).length;
+          const piperWins = aliveEnchantedCount >= alivePlayers.length - 1;
+          return (
+            <div className="day-trigger-item day-enchanted-bar">
+              {t.day.piedPiperBar(aliveEnchantedCount, alivePlayers.length - 1)}
+              {piperWins && <span className="win-alert"> {t.day.piedPiperWins}</span>}
+            </div>
+          );
+        })()}
 
-      {/* Infected players (DM-only info) */}
       {infectedPlayerIds.length > 0 && (
         <div className="day-trigger-item day-infected-bar">
           {t.day.infectedBar}{' '}
@@ -216,10 +216,8 @@ export default function DayPhase() {
         </div>
       )}
 
-      {/* Discussion Timer */}
       <Timer />
 
-      {/* Players Grid */}
       <section className="day-players">
         <h3>{t.day.playersTitle(alivePlayers.length)}</h3>
         <div className="players-grid">
@@ -229,112 +227,104 @@ export default function DayPhase() {
         </div>
       </section>
 
-      {/* Voting */}
-      <section className="voting-section">
+      <section className="voting-section tie-resolution-section" data-testid="tie-resolution-panel">
         <div className="voting-header">
-          <h3>{t.day.votingTitle}</h3>
-          <button className="btn btn-ghost btn-sm" onClick={resetVotes}>
-            {t.day.resetVotes}
-          </button>
+          <h3>{t.day.tieResolutionTitle}</h3>
+          {isTieFlowOpen && (
+            <button className="btn btn-ghost btn-sm" onClick={resetTieFlow}>
+              {t.day.tieResolutionCancel}
+            </button>
+          )}
         </div>
 
-        {/* Raven curse reminder */}
+        <p className="tb-hint">{t.day.tieResolutionHint}</p>
+
         {ravenCursedName && (
           <div className="raven-curse-bar">
             {t.day.ravenCurse(ravenCursedName)}
           </div>
         )}
 
-        {/* Mayor bonus vote */}
         {mayorAlive && (
-          <div className="mayor-vote-bar">
-            {t.day.mayorVotes(mayorAlive.name)}&nbsp;
-            <select
-              className="mayor-vote-select"
-              value={mayorVoteTarget}
-              onChange={(e) => updateMayorVoteTarget(e.target.value)}
-            >
-              <option value="">&mdash; {t.day.noBonus} &mdash;</option>
-              {alivePlayers
-                .filter((p) => !p.isMayor)
-                .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-            {mayorVoteTarget && <span className="extra-votes">{t.day.mayorBonus}</span>}
-          </div>
+          <div className="mayor-vote-bar">{t.day.mayorReminder(mayorAlive.name)}</div>
         )}
 
-        <div className="vote-list">
-          {alivePlayers.map((p) => {
-            const baseCount = baseVotes[p.id] ?? 0;
-            const cappedTotal = voteMap[p.id];
-            const canIncrement = baseCount < aliveCount;
-            return (
-              <div key={p.id} className={`vote-row ${cappedTotal === maxVotes && maxVotes > 0 ? 'vote-top' : ''}`}>
-                <span className="vote-name">
-                  {p.name}
-                  {p.isMayor && ' 🎖️'}
-                  {ravenCursedId === p.id && <span className="extra-votes">{t.day.cursedBonus}</span>}
-                  {mayorAlive && mayorVoteTarget === p.id && <span className="extra-votes">{t.day.mayorBonus}</span>}
-                </span>
-                <div className="vote-controls">
-                  <button
-                    className="vote-btn"
-                    onClick={() => updateVote(p.id, Math.max(0, baseCount - 1))}
-                  >
-                    −
-                  </button>
-                  <span className="vote-count">{cappedTotal}</span>
-                  <button
-                    className="vote-btn"
-                    disabled={!canIncrement}
-                    onClick={() => updateVote(p.id, Math.min(aliveCount, baseCount + 1))}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {!isTieFlowOpen ? (
+          <button
+            className="btn btn-yellow"
+            data-testid="tie-resolution-start"
+            disabled={alivePlayers.length < 2}
+            onClick={startTieFlow}
+          >
+            {t.day.tieResolutionStart}
+          </button>
+        ) : (
+          <>
+            <p className="tie-resolution-copy">{t.day.tieResolutionSelectionHint}</p>
+            <div className="tie-resolution-status">
+              {t.day.tieResolutionSelectedCount(selectedTiePlayers.length)}
+            </div>
 
-        {/* Execute or Tie */}
-        {maxVotes > 0 && (
-          <div className="vote-result">
-            {isTie ? (
-              <div className="tie-warning">
-                {t.day.tieWarning(topPlayers.map((p) => p.name).join(' & '))}
-                <button
-                  className="btn btn-yellow"
-                  onClick={openTieBreaker}
-                >
-                  {t.day.tieBreaker}
-                </button>
+            <div className="tb-player-list">
+              {alivePlayers.map((player) => {
+                const selected = activeTieIds.includes(player.id);
+                return (
+                  <button
+                    key={player.id}
+                    type="button"
+                    className={`tb-player ${selected ? 'selected' : ''}`}
+                    aria-pressed={selected}
+                    onClick={() => toggleTiePlayer(player.id)}
+                  >
+                    {player.name}
+                    {player.isMayor && ' 🎖️'}
+                  </button>
+                );
+              })}
+            </div>
+
+            {showTieValidation && (
+              <div className="tie-resolution-error" data-testid="tie-resolution-error">
+                {t.day.tieResolutionNeedPlayers}
               </div>
-            ) : (
-              <button className="btn btn-danger btn-large" onClick={executeTop}>
-                {t.day.execute(topPlayers[0]?.name)}
+            )}
+
+            {!showTieBreaker && !showScapegoatConfirm && (
+              <button
+                className="btn btn-danger"
+                data-testid="tie-resolution-resolve"
+                onClick={resolveTie}
+              >
+                {t.day.tieResolutionResolve}
               </button>
             )}
-          </div>
-        )}
 
-        {showTieBreaker && isTie && activeTieSignature === tieSignature && (
-          <TieBreaker
-            tiedPlayerIds={tiedPlayerIds}
-            players={alivePlayers}
-            t={t}
-            onLog={addLog}
-            onEliminate={(id) => {
-              eliminatePlayer(id);
-              clearVotes();
-              closeTieBreaker();
-            }}
-            onClose={closeTieBreaker}
-          />
+            {showScapegoatConfirm && scapegoatPlayer && (
+              <div className="tie-warning" data-testid="scapegoat-resolution">
+                <span>{t.day.scapegoatResolution(scapegoatPlayer.name, selectedTieNames)}</span>
+                <button className="btn btn-danger" onClick={confirmScapegoatTie}>
+                  {t.day.confirmScapegoat(scapegoatPlayer.name)}
+                </button>
+              </div>
+            )}
+
+            {showTieBreaker && selectedTiePlayers.length > 1 && !scapegoatPlayer && (
+              <TieBreaker
+                tiedPlayerIds={activeTieIds}
+                players={alivePlayers}
+                t={t}
+                onLog={addLog}
+                onEliminate={(id) => {
+                  eliminatePlayer(id);
+                  resetTieFlow();
+                }}
+                onClose={() => setShowTieBreaker(false)}
+              />
+            )}
+          </>
         )}
       </section>
 
-      {/* Night transition */}
       <section className="day-footer">
         <button className="btn btn-primary btn-large night-btn" onClick={togglePhase}>
           {t.day.nightButton}

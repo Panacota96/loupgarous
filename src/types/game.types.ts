@@ -85,11 +85,6 @@ export interface NightStepState {
   protectorHistory: ProtectorRecord[];
 }
 
-export interface Vote {
-  targetId: string;
-  count: number;
-}
-
 export interface ProtectorRecord {
   round: number;
   targetId: string | null;
@@ -105,7 +100,6 @@ export interface GameState {
   discussionTimeSeconds: number;
   timerRunning: boolean;
   timerRemaining: number;
-  votes: Vote[];
   loversIds: [string, string] | null;
   mayorId: string | null;
   log: string[];

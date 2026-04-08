@@ -4,7 +4,7 @@
 
 Web-first moderator tooling for Loup-Garous / Werewolf.
 
-Run setup, role assignment, night actions, day voting, and trigger-heavy table flow from one interface, then ship the same product to GitHub Pages and Android through Capacitor.
+Run setup, role assignment, night actions, manual day elimination, and trigger-heavy table flow from one interface, then ship the same product to GitHub Pages and Android through Capacitor.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/Panacota96/loupgarous/ci.yml?branch=main&label=CI)](https://github.com/Panacota96/loupgarous/actions/workflows/ci.yml)
 [![Deploy Web](https://img.shields.io/github/actions/workflow/status/Panacota96/loupgarous/deploy-web.yml?label=Deploy%20Web)](https://github.com/Panacota96/loupgarous/actions/workflows/deploy-web.yml)
@@ -50,7 +50,7 @@ That means the same product flow is designed, tested, and released from one code
 
 - Configure 5 to 20 players with names and role assignments
 - Run ordered night actions with DM guidance for each role
-- Manage day flow with timers, vote counting, tie-breakers, and elimination actions
+- Manage day flow with timers, manual elimination, and explicit tie-resolution tools
 - Track one-time abilities, first-night-only behavior, and reveal/death triggers
 - Use a built-in role reference while preparing the table
 - Keep state across reloads with persistent local storage
@@ -179,8 +179,8 @@ Setup -> Night -> Day -> Night -> ... -> Win detection
 1. Bear Tamer signal
 2. Resolve night deaths and triggers
 3. Discussion timer
-4. Voting with mayor and raven modifiers
-5. Execution or tie-breaker resolution
+4. Manual elimination by the DM
+5. Optional tie-breaker or Scapegoat resolution
 6. Transition back to night
 
 ## Release Tracks And Ops
@@ -221,7 +221,7 @@ This project is licensed under the Apache License 2.0. See [LICENSE](./LICENSE).
 
 ```text
 src/
-  components/   Setup, role reference, game board, phases, timer, tie-breaker
+  components/   Setup, role reference, game board, phases, timer, tie resolution
   data/         Role definitions and action metadata
   store/        Zustand game state and persistence
   styles/       Component styling

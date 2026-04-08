@@ -57,9 +57,13 @@ test('base 6-player game flow stays visible and interactive', async ({ page }, t
     await page.getByTestId('dm-view-toggle').click();
     await expect(page.locator('.player-role').filter({ hasText: /Werewolf|Loup-Garou/i })).toHaveCount(2);
 
-    const firstVoteRow = page.locator('.vote-row').first();
-    await firstVoteRow.getByRole('button', { name: '+' }).click();
-    await page.getByRole('button', { name: /Execute/ }).click();
+    await expect(page.locator('.vote-row')).toHaveCount(0);
+    await expect(page.locator('.mayor-vote-select')).toHaveCount(0);
+    await expect(page.getByTestId('tie-resolution-panel')).toBeVisible();
+
+    await page.getByRole('button', { name: '🎖️ Mayor' }).first().click();
+    await page.locator('.player-card').first().getByRole('button', { name: /Elim\./ }).click();
+    await expect(page.locator('.player-card.dead')).toHaveCount(1);
 
     await page.getByRole('button', { name: /Start Night Phase/ }).click();
   });

@@ -168,16 +168,18 @@ interface Strings {
     witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) => string;
     witchPotionsSpent: string;
     playersTitle: (alive: number) => string;
-    votingTitle: string;
-    resetVotes: string;
+    tieResolutionTitle: string;
+    tieResolutionHint: string;
+    tieResolutionStart: string;
+    tieResolutionSelectionHint: string;
+    tieResolutionSelectedCount: (count: number) => string;
+    tieResolutionNeedPlayers: string;
+    tieResolutionResolve: string;
+    tieResolutionCancel: string;
     ravenCurse: (name: string) => string;
-    mayorVotes: (mayorName: string) => string;
-    noBonus: string;
-    mayorBonus: string;
-    cursedBonus: string;
-    execute: (name?: string) => string;
-    tieWarning: (names: string) => string;
-    tieBreaker: string;
+    mayorReminder: (mayorName: string) => string;
+    scapegoatResolution: (scapegoatName: string, tiedNames: string) => string;
+    confirmScapegoat: (scapegoatName: string) => string;
     nightButton: string;
   };
   timer: {
@@ -208,6 +210,7 @@ interface Strings {
     nightSummary: (round: number, names: string | null, extraLog: string) => string;
     dayElimination: (round: number, names: string) => string;
     tieBreaker: (name: string) => string;
+    scapegoatTie: (name: string) => string;
     knightRustySword: (name: string) => string;
     witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) => string;
     witchPotionsSpent: string;
@@ -468,16 +471,20 @@ const translations: Record<Language, Strings> = {
         `🧙‍♀️ Witch potions — Healing: ${healUsed ? 'USED' : 'available'}, Death: ${poisonUsed ? 'USED' : 'available'}.`,
       witchPotionsSpent: '🧙‍♀️ Witch has no potions left (skip future Witch wake-ups).',
       playersTitle: (alive: number) => `👥 Players (${alive} alive)`,
-      votingTitle: '🗳️ Voting',
-      resetVotes: '🔄 Reset Votes',
+      tieResolutionTitle: '⚖️ Tie Resolution',
+      tieResolutionHint: 'Use this only when the real-table vote ends in a tie.',
+      tieResolutionStart: 'Start Tie Resolution',
+      tieResolutionSelectionHint: 'Select the tied players, then resolve the tie.',
+      tieResolutionSelectedCount: (count: number) => `Selected tied players: ${count}`,
+      tieResolutionNeedPlayers: 'Select at least 2 tied players before resolving the tie.',
+      tieResolutionResolve: 'Resolve Tie',
+      tieResolutionCancel: 'Cancel',
       ravenCurse: (name: string) => `🦅 Raven curse: ${name} has +2 votes today.`,
-      mayorVotes: (mayorName: string) => `🎖️ Mayor ${mayorName} votes for:`,
-      noBonus: '— No bonus vote —',
-      mayorBonus: '+1 Mayor bonus',
-      cursedBonus: '+2 cursed',
-      execute: (name: string | undefined) => (name ? `☠️ Execute ${name}` : '☠️ Execute'),
-      tieWarning: (names: string) => `⚖️ TIE between ${names}!`,
-      tieBreaker: '⚖️ Tie-Breaker',
+      mayorReminder: (mayorName: string) =>
+        `🎖️ Mayor reminder: ${mayorName} is still the Mayor at the table.`,
+      scapegoatResolution: (scapegoatName: string, tiedNames: string) =>
+        `🪢 Tie between ${tiedNames}. Scapegoat ${scapegoatName} is eliminated instead.`,
+      confirmScapegoat: (scapegoatName: string) => `☠️ Eliminate ${scapegoatName}`,
       nightButton: '🌙 Start Night Phase',
     },
     timer: {
@@ -497,7 +504,7 @@ const translations: Record<Language, Strings> = {
     },
     tieBreaker: {
       title: '⚖️ Tie-Breaker',
-      hint: 'The tied players were detected automatically. One of them was selected at random.',
+      hint: 'The DM selected the tied players manually. One of them was selected at random.',
       randomPick: '🎲 Random Pick',
       selected: (name: string) => `➡️ ${name} is selected for elimination.`,
       confirm: '☠️ Confirm Elimination',
@@ -509,6 +516,7 @@ const translations: Record<Language, Strings> = {
         names ? `Night ${round}: ${names} were eliminated.${extraLog}` : `Night ${round}: No one was eliminated (peaceful night).`,
       dayElimination: (round: number, names: string) => `Day ${round}: ${names} eliminated.`,
       tieBreaker: (name: string) => `Tie-breaker: ${name} was randomly selected for elimination.`,
+      scapegoatTie: (name: string) => `Scapegoat: ${name} was eliminated because the village vote ended in a tie.`,
       knightRustySword: (name: string) => ` ⚔️ Knight's rusty sword: ${name} dies of tetanus!`,
       witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
         `🧙‍♀️ Witch potions — Healing: ${healUsed ? 'USED' : 'available'}, Death: ${poisonUsed ? 'USED' : 'available'}.`,
@@ -743,16 +751,20 @@ const translations: Record<Language, Strings> = {
         `🧙‍♀️ Potions de la Sorcière — Vie : ${healUsed ? 'UTILISÉE' : 'disponible'}, Mort : ${poisonUsed ? 'UTILISÉE' : 'disponible'}.`,
       witchPotionsSpent: '🧙‍♀️ La Sorcière n’a plus de potions (ne se réveillera plus).',
       playersTitle: (alive: number) => `👥 Joueurs (${alive} vivants)`,
-      votingTitle: '🗳️ Votes',
-      resetVotes: '🔄 Réinitialiser les votes',
+      tieResolutionTitle: '⚖️ Gestion de l’égalité',
+      tieResolutionHint: 'Utilisez ceci uniquement si le vote réel autour de la table finit à égalité.',
+      tieResolutionStart: 'Lancer la résolution',
+      tieResolutionSelectionHint: 'Sélectionnez les joueurs à égalité, puis résolvez l’égalité.',
+      tieResolutionSelectedCount: (count: number) => `Joueurs à égalité sélectionnés : ${count}`,
+      tieResolutionNeedPlayers: 'Sélectionnez au moins 2 joueurs à égalité avant de résoudre.',
+      tieResolutionResolve: 'Résoudre l’égalité',
+      tieResolutionCancel: 'Annuler',
       ravenCurse: (name: string) => `🦅 Malédiction du Corbeau : ${name} a +2 voix aujourd’hui.`,
-      mayorVotes: (mayorName: string) => `🎖️ Maire ${mayorName} vote pour :`,
-      noBonus: '— Pas de vote bonus —',
-      mayorBonus: '+1 bonus Maire',
-      cursedBonus: '+2 maudit',
-      execute: (name: string | undefined) => (name ? `☠️ Exécuter ${name}` : '☠️ Exécuter'),
-      tieWarning: (names: string) => `⚖️ ÉGALITÉ entre ${names} !`,
-      tieBreaker: '⚖️ Bris d’égalité',
+      mayorReminder: (mayorName: string) =>
+        `🎖️ Rappel Maire : ${mayorName} est toujours le Maire à la table.`,
+      scapegoatResolution: (scapegoatName: string, tiedNames: string) =>
+        `🪢 Égalité entre ${tiedNames}. Le Bouc Émissaire ${scapegoatName} est éliminé à la place.`,
+      confirmScapegoat: (scapegoatName: string) => `☠️ Éliminer ${scapegoatName}`,
       nightButton: '🌙 Commencer la nuit',
     },
     timer: {
@@ -772,7 +784,7 @@ const translations: Record<Language, Strings> = {
     },
     tieBreaker: {
       title: '⚖️ Bris d’égalité',
-      hint: 'Les joueurs à égalité ont été détectés automatiquement. L’un d’eux a été tiré au sort.',
+      hint: 'Le MJ a sélectionné manuellement les joueurs à égalité. L’un d’eux a été tiré au sort.',
       randomPick: '🎲 Tirage aléatoire',
       selected: (name: string) => `➡️ ${name} est choisi pour l’élimination.`,
       confirm: '☠️ Confirmer l’élimination',
@@ -784,6 +796,7 @@ const translations: Record<Language, Strings> = {
         names ? `Nuit ${round} : ${names} ont été éliminés.${extraLog}` : `Nuit ${round} : Personne éliminé (nuit paisible).`,
       dayElimination: (round: number, names: string) => `Jour ${round} : ${names} éliminé(s).`,
       tieBreaker: (name: string) => `Bris d’égalité : ${name} a été tiré au sort pour être éliminé.`,
+      scapegoatTie: (name: string) => `Bouc émissaire : ${name} est éliminé car le vote du village s’est terminé à égalité.`,
       knightRustySword: (name: string) => ` ⚔️ Épée rouillée du Chevalier : ${name} meurt du tétanos !`,
       witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
         `🧙‍♀️ Potions de la Sorcière — Vie : ${healUsed ? 'UTILISÉE' : 'disponible'}, Mort : ${poisonUsed ? 'UTILISÉE' : 'disponible'}.`,

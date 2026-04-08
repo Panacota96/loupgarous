@@ -40,8 +40,6 @@ interface StoreActions {
   stopTimer: () => void;
   tickTimer: () => void;
   resetTimer: () => void;
-  setVote: (targetId: string, count: number) => void;
-  clearVotes: () => void;
   eliminatePlayer: (id: string) => void;
   electMayor: (id: string) => void;
   setLovers: (id1: string, id2: string) => void;
@@ -70,7 +68,6 @@ const defaultGame: GameState = {
   discussionTimeSeconds: 180,
   timerRunning: false,
   timerRemaining: 180,
-  votes: [],
   loversIds: null,
   mayorId: null,
   log: [],
@@ -167,7 +164,6 @@ export const useGameStore = create<GameStore>()(
           eliminatedThisNight: [] as string[],
           timerRemaining: discussionTime,
           discussionTimeSeconds: discussionTime,
-          votes: [] as GameState['votes'],
           loversIds: null,
           mayorId: null,
           log: [strings.logs.gameStarted(players.length)],
@@ -368,7 +364,6 @@ export const useGameStore = create<GameStore>()(
             nightSteps,
             currentNightStepIndex: 0,
             eliminatedThisNight: [] as string[],
-            votes: [] as GameState['votes'],
             optionalRules,
             ravenCursedId: null,
           };
@@ -376,7 +371,7 @@ export const useGameStore = create<GameStore>()(
           const nightStepStates = [captureNightState(snapshotBase)];
           set({ ...nextState, nightStepStates });
         } else {
-          set({ phase: 'day', timerRemaining: discussionTimeSeconds, votes: [], nightStepStates: [] });
+          set({ phase: 'day', timerRemaining: discussionTimeSeconds, nightStepStates: [] });
         }
       },
 
@@ -392,23 +387,6 @@ export const useGameStore = create<GameStore>()(
       },
       resetTimer: () =>
         set((s) => ({ timerRemaining: s.discussionTimeSeconds, timerRunning: false })),
-
-      setVote: (targetId, count) =>
-        set((s) => {
-          const aliveCount = s.players.filter((p) => p.isAlive).length;
-          const clampedCount = Math.max(0, Math.min(count, aliveCount));
-          const existing = s.votes.find((v) => v.targetId === targetId);
-          if (existing) {
-            return {
-              votes: s.votes.map((v) =>
-                v.targetId === targetId ? { ...v, count: clampedCount } : v
-              ),
-            };
-          }
-          return { votes: [...s.votes, { targetId, count: clampedCount }] };
-        }),
-
-      clearVotes: () => set({ votes: [] }),
 
       eliminatePlayer: (id) => {
         const { players, loversIds, log, round, wildChildModelId, wildChildTransformed } = get();
@@ -453,6 +431,18 @@ export const useGameStore = create<GameStore>()(
 
       setLanguage: (lang) => set({ language: lang }),
     }),
-    { name: 'loupgarous-game' }
+    {
+      name: 'loupgarous-game',
+      version: 2,
+      migrate: (persistedState: unknown) => {
+        if (!persistedState || typeof persistedState !== 'object') {
+          return persistedState as unknown as GameStore;
+        }
+
+        const rest = { ...(persistedState as Record<string, unknown>) };
+        delete rest.votes;
+        return rest as unknown as GameStore;
+      },
+    }
   )
 );
