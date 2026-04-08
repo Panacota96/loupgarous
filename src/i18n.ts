@@ -8,6 +8,35 @@ interface Strings {
   rulebook: string;
   tabs: { setup: string; roles: string; game: string; log: string };
   setup: {
+    prepareTab: string;
+    prepareTitle: string;
+    prepareSubtitle: string;
+    quickStarts: string;
+    savedSessionsTitle: string;
+    resumeHint: string;
+    sessionNamePlaceholder: string;
+    saveSession: string;
+    noSavedSessions: string;
+    loadSession: string;
+    deleteSession: string;
+    seatOrder: string;
+    seatOrderHint: string;
+    balanceTitle: string;
+    balanceGood: string;
+    balanceNeedsAttention: string;
+    balanceGoodBody: string;
+    defaultSessionName: (count: number) => string;
+    metrics: {
+      players: string;
+      wolfPressure: string;
+      infoRoles: string;
+      chaos: string;
+    };
+    balanceWarnings: {
+      needPressure: string;
+      needInformation: string;
+      tooChaotic: string;
+    };
     numberOfPlayers: string;
     assignRoles: string;
     viewRoleDescriptions: string;
@@ -66,10 +95,27 @@ interface Strings {
     phaseChip: (phase: Phase, round: number) => string;
     alive: (count: number) => string;
     wolves: (count: number) => string;
+    unresolved: (count: number) => string;
     resetConfirm: string;
     reset: string;
+    undo: string;
+    privacyOn: string;
+    privacyOff: string;
+    privacyTitle: string;
+    privacyBody: string;
+    quickPanel: string;
     tabs: { game: string; roles: string; log: string };
     log: { title: string; empty: string };
+    recapTitle: string;
+    exportRecap: string;
+    endReason: string;
+    endReasons: {
+      village: string;
+      werewolves: (wolves: number, village: number) => string;
+      piedPiper: string;
+      whiteWerewolf: string;
+      angel: string;
+    };
     wins: {
       village: { title: string; body: string };
       werewolves: { title: string; body: string };
@@ -160,9 +206,17 @@ interface Strings {
   day: {
     title: (round: number) => string;
     subtitle: string;
+    metrics: {
+      alive: string;
+      pressure: string;
+      unresolved: string;
+      timer: string;
+    };
     dmView: { show: string; hide: string };
     bearSignal: (growls: boolean) => string;
     dmReminders: string;
+    resolutionTitle: string;
+    resolutionHint: string;
     piedPiperBar: (count: number, total: number) => string;
     piedPiperWins: string;
     infectedBar: string;
@@ -170,6 +224,16 @@ interface Strings {
     foxPowerLost: string;
     witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) => string;
     witchPotionsSpent: string;
+    voteAssistTitle: string;
+    voteAssistHint: string;
+    voteAssistEnable: string;
+    voteAssistDisable: string;
+    clearVotes: string;
+    totalVotes: (count: number) => string;
+    mayorPlusTwo: string;
+    noVote: string;
+    allowVote: string;
+    tieDetected: (names: string) => string;
     playersTitle: (alive: number) => string;
     tieResolutionTitle: string;
     tieResolutionHint: string;
@@ -197,8 +261,11 @@ interface Strings {
     lover: string;
     makeMayor: string;
     eliminate: string;
+    revealRole: string;
+    hideRole: string;
     mayorTitle: string;
     eliminateTitle: string;
+    revealTitle: string;
   };
   tieBreaker: {
     title: string;
@@ -262,6 +329,35 @@ const translations: Record<Language, Strings> = {
       log: 'Log',
     },
     setup: {
+      prepareTab: 'Prepare',
+      prepareTitle: 'Prepare The Table',
+      prepareSubtitle: 'Set seats, pressure, and chaos before the first night starts.',
+      quickStarts: 'Quick Starts',
+      savedSessionsTitle: 'Saved Sessions',
+      resumeHint: 'Resume a live table or save the current setup before launching.',
+      sessionNamePlaceholder: 'Session name',
+      saveSession: 'Save Session',
+      noSavedSessions: 'No saved sessions yet.',
+      loadSession: 'Load',
+      deleteSession: 'Delete',
+      seatOrder: 'Seat Order',
+      seatOrderHint: 'Arrange seats here so adjacency roles stay reliable.',
+      balanceTitle: 'Balance Feedback',
+      balanceGood: 'Ready',
+      balanceNeedsAttention: 'Needs attention',
+      balanceGoodBody: 'This lineup has wolves, information, and manageable chaos for a live table.',
+      defaultSessionName: (count: number) => `Table for ${count} players`,
+      metrics: {
+        players: 'Players',
+        wolfPressure: 'Wolf Pressure',
+        infoRoles: 'Info Roles',
+        chaos: 'Chaos',
+      },
+      balanceWarnings: {
+        needPressure: 'Add more wolf-side pressure or the village may snowball too easily.',
+        needInformation: 'Add at least one information or protection role so the village has direction.',
+        tooChaotic: 'This setup stacks many swingy roles. Expect a high-variance game.',
+      },
       numberOfPlayers: 'Number of Players',
       assignRoles: 'Assign Roles',
       viewRoleDescriptions: 'Roles',
@@ -352,16 +448,34 @@ const translations: Record<Language, Strings> = {
         `${phase === 'night' ? '🌙 Night' : '☀️ Day'} — Round ${round}`,
       alive: (count: number) => `🫀 ${count} alive`,
       wolves: (count: number) => `🐺 ${count} wolves`,
+      unresolved: (count: number) => `📌 ${count} unresolved`,
       resetConfirm: 'Reset game and return to setup?',
       reset: '🏠 Setup',
+      undo: '↩ Undo',
+      privacyOn: '🙈 Privacy',
+      privacyOff: '👁 Reveal',
+      privacyTitle: 'Privacy mode is active',
+      privacyBody: 'Use this when passing the phone or hiding live GM information.',
+      quickPanel: 'GM Quick Panel',
       tabs: {
-        game: '🎮 Game',
-        roles: '📚 Roles',
+        game: '🎮 Run',
+        roles: '📚 Reference',
         log: '📜 Log',
       },
       log: {
         title: '📜 Game Log',
         empty: 'No events yet.',
+      },
+      recapTitle: 'Session Recap',
+      exportRecap: 'Export Recap',
+      endReason: 'Why the game ended',
+      endReasons: {
+        village: 'The village wins because no pack wolves and no White Werewolf remain alive.',
+        werewolves: (wolves: number, village: number) =>
+          `The wolves reached parity with ${wolves} wolf-side players against ${village} village-side players.`,
+        piedPiper: 'The Pied Piper wins because every other living player is enchanted.',
+        whiteWerewolf: 'The White Werewolf wins because they are the sole survivor.',
+        angel: 'The Angel wins because they were the first execution on Day 1.',
       },
       wins: {
         village: { title: 'Village Wins!', body: 'All werewolves have been eliminated.' },
@@ -463,10 +577,18 @@ const translations: Record<Language, Strings> = {
     day: {
       title: (round: number) => `Day Phase — Round ${round}`,
       subtitle: 'All players open their eyes.',
+      metrics: {
+        alive: 'Alive',
+        pressure: 'Wolf Pressure',
+        unresolved: 'Unresolved',
+        timer: 'Timer',
+      },
       dmView: { show: '👁 DM View', hide: '🙈 Hide Roles' },
       bearSignal: (growls: boolean) =>
         growls ? '🐻 Bear signal: 🔊 GROWLS (wolf nearby!)' : '🐻 Bear signal: 🤫 Silent',
       dmReminders: '📋 DM Reminders',
+      resolutionTitle: 'Dawn Resolution Queue',
+      resolutionHint: 'Resolve deaths, chains, and public reminders in order before the vote settles.',
       piedPiperBar: (count: number, total: number) =>
         `🎶 Pied Piper enchanted: ${count} / ${total} players`,
       piedPiperWins: '⭐ PIED PIPER WINS!',
@@ -476,6 +598,16 @@ const translations: Record<Language, Strings> = {
       witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
         `🧙‍♀️ Witch potions — Healing: ${healUsed ? 'USED' : 'available'}, Death: ${poisonUsed ? 'USED' : 'available'}.`,
       witchPotionsSpent: '🧙‍♀️ Witch has no potions left (skip future Witch wake-ups).',
+      voteAssistTitle: 'Vote Assist',
+      voteAssistHint: 'Track the table vote here, while keeping manual overrides available.',
+      voteAssistEnable: 'Start Vote Assist',
+      voteAssistDisable: 'Hide Vote Assist',
+      clearVotes: 'Clear Votes',
+      totalVotes: (count: number) => `Total against: ${count}`,
+      mayorPlusTwo: 'Mayor +2',
+      noVote: 'No vote',
+      allowVote: 'Allow vote',
+      tieDetected: (names: string) => `Tie detected between: ${names}`,
       playersTitle: (alive: number) => `👥 Players (${alive} alive)`,
       tieResolutionTitle: '⚖️ Tie Resolution',
       tieResolutionHint: 'Use this only when the real-table vote ends in a tie.',
@@ -505,8 +637,11 @@ const translations: Record<Language, Strings> = {
       lover: '💘 Lover',
       makeMayor: '🎖️ Mayor',
       eliminate: '☠️ Elim.',
+      revealRole: '👁 Reveal',
+      hideRole: '🙈 Hide',
       mayorTitle: 'Make Mayor',
       eliminateTitle: 'Eliminate',
+      revealTitle: 'Toggle role reveal',
     },
     tieBreaker: {
       title: '⚖️ Tie-Breaker',
@@ -544,6 +679,35 @@ const translations: Record<Language, Strings> = {
       log: 'Journal',
     },
     setup: {
+      prepareTab: 'Préparer',
+      prepareTitle: 'Préparer La Table',
+      prepareSubtitle: 'Réglez les sièges, la pression des loups et le niveau de chaos avant la première nuit.',
+      quickStarts: 'Démarrages rapides',
+      savedSessionsTitle: 'Sessions enregistrées',
+      resumeHint: 'Reprenez une table en cours ou sauvegardez votre préparation.',
+      sessionNamePlaceholder: 'Nom de la session',
+      saveSession: 'Enregistrer',
+      noSavedSessions: 'Aucune session enregistrée.',
+      loadSession: 'Charger',
+      deleteSession: 'Supprimer',
+      seatOrder: 'Ordre des sièges',
+      seatOrderHint: 'Organisez les sièges ici pour fiabiliser les rôles d’adjacence.',
+      balanceTitle: 'Retour sur l’équilibre',
+      balanceGood: 'Prêt',
+      balanceNeedsAttention: 'À surveiller',
+      balanceGoodBody: 'Cette composition garde des loups, de l’information et un chaos encore gérable à la table.',
+      defaultSessionName: (count: number) => `Table de ${count} joueurs`,
+      metrics: {
+        players: 'Joueurs',
+        wolfPressure: 'Pression des loups',
+        infoRoles: 'Rôles d’info',
+        chaos: 'Chaos',
+      },
+      balanceWarnings: {
+        needPressure: 'Ajoutez plus de pression côté loups sinon le village risque de dérouler trop facilement.',
+        needInformation: 'Ajoutez au moins un rôle d’information ou de protection pour donner une direction au village.',
+        tooChaotic: 'Cette composition empile beaucoup de rôles swingy. Attendez-vous à une partie très variable.',
+      },
       numberOfPlayers: 'Nombre de joueurs',
       assignRoles: 'Attribuer les rôles',
       viewRoleDescriptions: 'Rôles',
@@ -634,16 +798,34 @@ const translations: Record<Language, Strings> = {
         `${phase === 'night' ? '🌙 Nuit' : '☀️ Jour'} — Manche ${round}`,
       alive: (count: number) => `🫀 ${count} vivants`,
       wolves: (count: number) => `🐺 ${count} loups`,
+      unresolved: (count: number) => `📌 ${count} en attente`,
       resetConfirm: 'Réinitialiser et revenir à la préparation ?',
       reset: '🏠 Préparation',
+      undo: '↩ Annuler',
+      privacyOn: '🙈 Privé',
+      privacyOff: '👁 Révéler',
+      privacyTitle: 'Le mode confidentialité est actif',
+      privacyBody: 'Utilisez-le pour passer le téléphone ou masquer les informations MJ en direct.',
+      quickPanel: 'Panneau MJ',
       tabs: {
-        game: '🎮 Partie',
-        roles: '📚 Rôles',
+        game: '🎮 Conduite',
+        roles: '📚 Référence',
         log: '📜 Journal',
       },
       log: {
         title: '📜 Journal de partie',
         empty: 'Aucun événement pour le moment.',
+      },
+      recapTitle: 'Récapitulatif',
+      exportRecap: 'Exporter le récap',
+      endReason: 'Pourquoi la partie se termine',
+      endReasons: {
+        village: 'Le village gagne car aucun loup de meute ni Loup-Garou Blanc n’est encore en vie.',
+        werewolves: (wolves: number, village: number) =>
+          `Les loups atteignent la parité avec ${wolves} joueurs côté loups contre ${village} côté village.`,
+        piedPiper: 'Le Joueur de Flûte gagne car tous les autres joueurs vivants sont envoûtés.',
+        whiteWerewolf: 'Le Loup-Garou Blanc gagne car il est le seul survivant.',
+        angel: 'L’Ange gagne car il a été la première exécution du Jour 1.',
       },
       wins: {
         village: { title: 'Victoire du village !', body: 'Tous les loups-garous sont éliminés.' },
@@ -746,10 +928,18 @@ const translations: Record<Language, Strings> = {
     day: {
       title: (round: number) => `Phase de jour — Manche ${round}`,
       subtitle: 'Tous les joueurs ouvrent les yeux.',
+      metrics: {
+        alive: 'Vivants',
+        pressure: 'Pression des loups',
+        unresolved: 'En attente',
+        timer: 'Timer',
+      },
       dmView: { show: '👁 Vue MJ', hide: '🙈 Masquer les rôles' },
       bearSignal: (growls: boolean) =>
         growls ? '🐻 Signal de l’ours : 🔊 GROGNE (loup voisin !)' : '🐻 Signal de l’ours : 🤫 Silencieux',
       dmReminders: '📋 Rappels MJ',
+      resolutionTitle: 'File de résolution de l’aube',
+      resolutionHint: 'Résolvez les morts, chaînes et rappels publics dans l’ordre avant de clore le vote.',
       piedPiperBar: (count: number, total: number) =>
         `🎶 Envoûtés par le Joueur de Flûte : ${count} / ${total} joueurs`,
       piedPiperWins: '⭐ VICTOIRE DU JOUEUR DE FLÛTE !',
@@ -759,6 +949,16 @@ const translations: Record<Language, Strings> = {
       witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
         `🧙‍♀️ Potions de la Sorcière — Vie : ${healUsed ? 'UTILISÉE' : 'disponible'}, Mort : ${poisonUsed ? 'UTILISÉE' : 'disponible'}.`,
       witchPotionsSpent: '🧙‍♀️ La Sorcière n’a plus de potions (ne se réveillera plus).',
+      voteAssistTitle: 'Assistant de vote',
+      voteAssistHint: 'Suivez le vote de table ici, tout en gardant la main pour corriger manuellement.',
+      voteAssistEnable: 'Démarrer le suivi',
+      voteAssistDisable: 'Masquer le suivi',
+      clearVotes: 'Effacer les votes',
+      totalVotes: (count: number) => `Total contre : ${count}`,
+      mayorPlusTwo: 'Maire +2',
+      noVote: 'Sans vote',
+      allowVote: 'Autoriser',
+      tieDetected: (names: string) => `Égalité détectée entre : ${names}`,
       playersTitle: (alive: number) => `👥 Joueurs (${alive} vivants)`,
       tieResolutionTitle: '⚖️ Gestion de l’égalité',
       tieResolutionHint: 'Utilisez ceci uniquement si le vote réel autour de la table finit à égalité.',
@@ -788,8 +988,11 @@ const translations: Record<Language, Strings> = {
       lover: '💘 Amoureux',
       makeMayor: '🎖️ Maire',
       eliminate: '☠️ Élim.',
+      revealRole: '👁 Révéler',
+      hideRole: '🙈 Masquer',
       mayorTitle: 'Nommer Maire',
       eliminateTitle: 'Éliminer',
+      revealTitle: 'Afficher ou masquer le rôle',
     },
     tieBreaker: {
       title: '⚖️ Bris d’égalité',
