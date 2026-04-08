@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 const ROLE_PRESET = ['raven', 'werewolf', 'villager', 'villager', 'villager', 'villager'];
 
-test('day vote totals cap at alive count plus mayor/raven bonuses', async ({ page }) => {
+test('day phase removes vote counting controls but keeps DM reminders and manual elimination', async ({ page }) => {
   await page.goto('./');
   await expect(page.getByRole('heading', { name: 'Loup-Garous' })).toBeVisible();
 
@@ -14,7 +14,6 @@ test('day vote totals cap at alive count plus mayor/raven bonuses', async ({ pag
   await page.getByTestId('start-game').click();
   await expect(page.getByTestId('night-phase')).toBeVisible();
 
-  // Werewolves skip a kill, Raven curses Player 2
   await page.getByTestId('night-next').click();
   const ravenSelect = page.locator('.night-input select').first();
   await ravenSelect.selectOption({ label: 'Player 2' });
@@ -23,22 +22,16 @@ test('day vote totals cap at alive count plus mayor/raven bonuses', async ({ pag
   await page.getByTestId('reveal-day').click();
   await expect(page.getByTestId('day-phase')).toBeVisible();
 
-  // Elect Player 1 as Mayor and have them vote against Player 2 (also Raven-cursed)
+  await expect(page.locator('.vote-row')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Execute/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /Reset Votes|Réinitialiser les votes/ })).toHaveCount(0);
+  await expect(page.locator('.mayor-vote-select')).toHaveCount(0);
+
+  await expect(page.getByText(/Raven curse: Player 2 has \+2 votes today\./)).toBeVisible();
+
   await page.getByRole('button', { name: '🎖️ Mayor' }).first().click();
-  await expect(page.locator('.mayor-vote-select')).toBeVisible();
-  await page.locator('.mayor-vote-select').selectOption({ label: 'Player 2' });
+  await expect(page.getByText(/Mayor reminder: Player 1 is still the Mayor at the table\./)).toBeVisible();
 
-  const cursedRow = page.locator('.vote-row', { hasText: 'Player 2' });
-  const cursedPlus = cursedRow.getByRole('button', { name: '+' });
-  const cursedCount = cursedRow.locator('.vote-count');
-  for (let i = 0; i < 6; i++) await cursedPlus.click();
-  await expect(cursedCount).toHaveText('9');
-  await expect(cursedPlus).toBeDisabled();
-
-  const plainRow = page.locator('.vote-row', { hasText: 'Player 3' });
-  const plainPlus = plainRow.getByRole('button', { name: '+' });
-  const plainCount = plainRow.locator('.vote-count');
-  for (let i = 0; i < 6; i++) await plainPlus.click();
-  await expect(plainCount).toHaveText('6');
-  await expect(plainPlus).toBeDisabled();
+  await page.locator('.player-card').first().getByRole('button', { name: /Elim\./ }).click();
+  await expect(page.locator('.player-card.dead')).toHaveCount(1);
 });

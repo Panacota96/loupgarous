@@ -59,7 +59,7 @@
   gap: 0.7rem;
 }
 
-/* Voting */
+/* Tie resolution */
 .voting-section {
   background: linear-gradient(120deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
   border: 1px solid var(--border);
@@ -76,49 +76,23 @@
   justify-content: space-between;
 }
 .voting-header h3 { font-size: 1rem; font-weight: 700; }
-
-.vote-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
+.tie-resolution-copy {
+  font-size: 0.88rem;
+  color: var(--text-muted);
 }
-.vote-row {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.4rem 0.6rem;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.02);
-  transition: background 0.2s, border-color 0.2s, transform 0.2s;
-  border: 1px solid rgba(255,255,255,0.03);
+.tie-resolution-status {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--yellow-hover);
 }
-.vote-row.vote-top { background: rgba(218,54,51,0.12); border: 1px solid rgba(218,54,51,0.4); transform: translateY(-1px); }
-.vote-name { flex: 1; font-size: 0.92rem; }
-.extra-votes { font-size: 0.72rem; color: var(--yellow); margin-left: 0.4rem; }
-.vote-controls { display: flex; align-items: center; gap: 0.4rem; }
-.vote-btn {
-  width: 30px;
-  height: 30px;
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--bg2);
-  color: var(--text);
-  font-size: 1.1rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s, border-color 0.2s;
+.tie-resolution-error {
+  padding: 0.6rem;
+  background: rgba(218,54,51,0.12);
+  border: 1px solid rgba(218,54,51,0.45);
+  border-radius: 8px;
+  color: #f85149;
+  font-size: 0.88rem;
 }
-.vote-btn:hover { background: var(--bg3); border-color: var(--primary); }
-.vote-count {
-  min-width: 28px;
-  text-align: center;
-  font-weight: 700;
-  font-size: 1rem;
-}
-
-.vote-result { margin-top: 0.4rem; }
 .tie-warning {
   display: flex;
   align-items: center;
@@ -177,13 +151,4 @@
   font-size: 0.9rem;
   color: #f7cf5e;
   margin-bottom: 0.6rem;
-}
-
-.mayor-vote-select {
-  background: var(--bg3);
-  color: var(--text);
-  border: 1px solid var(--border);
-  border-radius: 5px;
-  padding: 0.25rem 0.5rem;
-  font-size: 0.85rem;
 }
