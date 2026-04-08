@@ -1,46 +1,105 @@
-export default function QuickGuide() {
+import { useI18n } from '../../i18n';
+import { ROLE_MAP, getRoleName } from '../../data/roles';
+
+type StarterPreset = {
+  id: string;
+  title: string;
+  description: string;
+  players: number;
+  roles: string[];
+};
+
+interface QuickGuideProps {
+  onApplyPreset?: (preset: StarterPreset) => void;
+}
+
+export default function QuickGuide({ onApplyPreset }: QuickGuideProps) {
+  const { t, language } = useI18n();
+  const starterSets = t.quickGuide.starterSets as StarterPreset[];
+
+  const renderPresetRoles = (preset: StarterPreset) => {
+    const counts: Record<string, number> = {};
+    preset.roles.forEach((id) => { counts[id] = (counts[id] ?? 0) + 1; });
+    return Object.entries(counts)
+      .map(([roleId, count]) => {
+        const def = ROLE_MAP[roleId];
+        if (!def) return null;
+        const label = `${getRoleName(def, language)}${count > 1 ? ` ×${count}` : ''}`;
+        return (
+          <span key={roleId} className={`role-pill camp-${def.camp}`}>
+            {def.emoji} {label}
+          </span>
+        );
+      })
+      .filter(Boolean);
+  };
+
   return (
     <section className="setup-section quick-guide">
       <div className="guide-header">
         <div>
-          <h2>📘 Quick Guide</h2>
-          <p className="guide-subtitle">Fast reminders to keep setups balanced.</p>
+          <h2>{t.quickGuide.title}</h2>
+          <p className="guide-subtitle">{t.quickGuide.subtitle}</p>
         </div>
       </div>
 
       <div className="guide-grid">
         <div className="guide-card">
-          <h3>Balance tips</h3>
+          <h3>{t.quickGuide.balanceTitle}</h3>
           <ul className="guide-list">
-            <li>Start near 1 wolf for 4–5 players; add a wolf sooner if you run many info roles.</li>
-            <li>Keep at least as many plain Villagers as special roles so the village still needs deduction.</li>
-            <li>Introduce only 1–2 swingy roles (Raven, Fox, Cupid) at a time to avoid chaos.</li>
+            {t.quickGuide.balance.map((line, idx) => <li key={idx}>{line}</li>)}
           </ul>
         </div>
 
         <div className="guide-card">
-          <h3>Role difficulty</h3>
+          <h3>{t.quickGuide.difficultyTitle}</h3>
           <div className="guide-tags">
             <div className="guide-tag soft">
-              Beginner friendly: Seer, Protector, Witch, Hunter, Mayor / Captain
+              {t.quickGuide.beginner}
             </div>
             <div className="guide-tag spicy">
-              Advanced / swingy: Little Girl, Big Bad Wolf, Infect Père des Loups, Village Idiot,
-              Scapegoat, Bear Tamer, Raven, Fox, Cupid
+              {t.quickGuide.spicy}
             </div>
           </div>
         </div>
       </div>
 
       <div className="guide-card ratio-card">
-        <h3>Suggested wolf count</h3>
+        <h3>{t.quickGuide.ratioTitle}</h3>
         <ul className="ratio-list">
-          <li>5–6 players: 1 wolf (light pressure)</li>
-          <li>7–9 players: 2 wolves</li>
-          <li>10–12 players: 3 wolves</li>
-          <li>13–16 players: 4 wolves</li>
-          <li>17–20 players: 4–5 wolves depending on how many chaotic roles you add</li>
+          {t.quickGuide.ratios.map((line, idx) => <li key={idx}>{line}</li>)}
         </ul>
+      </div>
+
+      <div className="guide-card starter-card">
+        <div className="starter-header">
+          <div>
+            <h3>{t.quickGuide.startersTitle}</h3>
+            <p className="guide-subtitle">{t.quickGuide.startersSubtitle}</p>
+          </div>
+        </div>
+        <div className="starter-grid">
+          {starterSets.map((preset) => (
+            <div key={preset.id} className="starter-pill">
+              <div className="starter-pill__top">
+                <div>
+                  <p className="starter-title">{preset.title}</p>
+                  <p className="starter-meta">{t.quickGuide.playersLabel(preset.players)}</p>
+                </div>
+                {onApplyPreset && (
+                  <button
+                    className="btn btn-primary btn-sm"
+                    onClick={() => onApplyPreset(preset)}
+                  >
+                    {t.quickGuide.applyPreset}
+                  </button>
+                )}
+              </div>
+              <p className="starter-description">{preset.description}</p>
+              <div className="starter-roles">{renderPresetRoles(preset)}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </section>
   );

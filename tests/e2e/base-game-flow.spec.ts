@@ -16,6 +16,16 @@ test('base 6-player game flow stays visible and interactive', async ({ page }, t
   await test.step('setup 6 players with 2 wolves', async () => {
     await page.goto('./');
     await expect(page.getByRole('heading', { name: 'Loup-Garous' })).toBeVisible();
+    await expect(page.getByTestId('setup-main-tab')).toBeVisible();
+
+    // DM can open the quick guide without mixing it into the main setup screen
+    await page.getByTestId('setup-tab-guide').click();
+    await expect(page.getByTestId('setup-guide-tab')).toBeVisible();
+    await expect(page.getByTestId('setup-main-tab')).not.toBeVisible();
+    await expect(page.getByRole('heading', { name: /Quick Guide/i })).toBeVisible();
+
+    await page.getByTestId('setup-tab-setup').click();
+    await expect(page.getByTestId('setup-main-tab')).toBeVisible();
 
     // DM can review role reference before assigning
     await page.getByTestId('setup-tab-roles').click();
@@ -45,7 +55,7 @@ test('base 6-player game flow stays visible and interactive', async ({ page }, t
     await expect(page.getByTestId('day-phase')).toBeVisible();
 
     await page.getByTestId('dm-view-toggle').click();
-    await expect(page.locator('.player-role:has-text("Loup-Garou")')).toHaveCount(2);
+    await expect(page.locator('.player-role').filter({ hasText: /Werewolf|Loup-Garou/i })).toHaveCount(2);
 
     const firstVoteRow = page.locator('.vote-row').first();
     await firstVoteRow.getByRole('button', { name: '+' }).click();
