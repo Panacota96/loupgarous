@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { ROLE_MAP, WOLF_ROLE_IDS, getRoleTexts, getRoleName } from '../../data/roles';
 import { useI18n } from '../../i18n';
@@ -29,6 +29,7 @@ export default function DayPhase() {
   const togglePhase = useGameStore((s) => s.togglePhase);
 
   const [showTieBreaker, setShowTieBreaker] = useState(false);
+  const [activeTieSignature, setActiveTieSignature] = useState<string | null>(null);
   const [revealAll, setRevealAll] = useState(false);
   // Mayor bonus: track which player the Mayor voted for (adds +1 to their total)
   const [mayorVoteTarget, setMayorVoteTarget] = useState('');
@@ -80,6 +81,8 @@ export default function DayPhase() {
 
   const maxVotes = Math.max(0, ...Object.values(voteMap));
   const topPlayers = alivePlayers.filter((p) => voteMap[p.id] === maxVotes && maxVotes > 0);
+  const tiedPlayerIds = topPlayers.map((p) => p.id);
+  const tieSignature = tiedPlayerIds.join('|');
   const isTie = topPlayers.length > 1;
 
   const ravenCursedName = ravenCursedId
@@ -96,6 +99,33 @@ export default function DayPhase() {
       eliminatePlayer(topPlayers[0].id);
       clearVotes();
     }
+  };
+
+  const closeTieBreaker = useCallback(() => {
+    setShowTieBreaker(false);
+    setActiveTieSignature(null);
+  }, []);
+
+  const openTieBreaker = () => {
+    if (!isTie) return;
+    setActiveTieSignature(tieSignature);
+    setShowTieBreaker(true);
+  };
+
+  const updateVote = (targetId: string, count: number) => {
+    if (showTieBreaker) closeTieBreaker();
+    setVote(targetId, count);
+  };
+
+  const updateMayorVoteTarget = (targetId: string) => {
+    if (showTieBreaker) closeTieBreaker();
+    setMayorVoteTarget(targetId);
+  };
+
+  const resetVotes = () => {
+    if (showTieBreaker) closeTieBreaker();
+    clearVotes();
+    setMayorVoteTarget('');
   };
 
   // Day triggers to remind DM
@@ -203,7 +233,7 @@ export default function DayPhase() {
       <section className="voting-section">
         <div className="voting-header">
           <h3>{t.day.votingTitle}</h3>
-          <button className="btn btn-ghost btn-sm" onClick={() => { clearVotes(); setMayorVoteTarget(''); }}>
+          <button className="btn btn-ghost btn-sm" onClick={resetVotes}>
             {t.day.resetVotes}
           </button>
         </div>
@@ -222,7 +252,7 @@ export default function DayPhase() {
             <select
               className="mayor-vote-select"
               value={mayorVoteTarget}
-              onChange={(e) => setMayorVoteTarget(e.target.value)}
+              onChange={(e) => updateMayorVoteTarget(e.target.value)}
             >
               <option value="">&mdash; {t.day.noBonus} &mdash;</option>
               {alivePlayers
@@ -249,7 +279,7 @@ export default function DayPhase() {
                 <div className="vote-controls">
                   <button
                     className="vote-btn"
-                    onClick={() => setVote(p.id, Math.max(0, baseCount - 1))}
+                    onClick={() => updateVote(p.id, Math.max(0, baseCount - 1))}
                   >
                     −
                   </button>
@@ -257,7 +287,7 @@ export default function DayPhase() {
                   <button
                     className="vote-btn"
                     disabled={!canIncrement}
-                    onClick={() => setVote(p.id, Math.min(aliveCount, baseCount + 1))}
+                    onClick={() => updateVote(p.id, Math.min(aliveCount, baseCount + 1))}
                   >
                     +
                   </button>
@@ -275,7 +305,7 @@ export default function DayPhase() {
                 {t.day.tieWarning(topPlayers.map((p) => p.name).join(' & '))}
                 <button
                   className="btn btn-yellow"
-                  onClick={() => setShowTieBreaker(true)}
+                  onClick={openTieBreaker}
                 >
                   {t.day.tieBreaker}
                 </button>
@@ -288,17 +318,18 @@ export default function DayPhase() {
           </div>
         )}
 
-        {showTieBreaker && (
+        {showTieBreaker && isTie && activeTieSignature === tieSignature && (
           <TieBreaker
+            tiedPlayerIds={tiedPlayerIds}
             players={alivePlayers}
             t={t}
             onLog={addLog}
             onEliminate={(id) => {
               eliminatePlayer(id);
               clearVotes();
-              setShowTieBreaker(false);
+              closeTieBreaker();
             }}
-            onClose={() => setShowTieBreaker(false)}
+            onClose={closeTieBreaker}
           />
         )}
       </section>
