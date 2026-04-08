@@ -20,6 +20,7 @@ export default function NightPhase() {
   const wolfDogChoiceStore = useGameStore((s) => s.wolfDogChoice);
   const wildChildTransformed = useGameStore((s) => s.wildChildTransformed);
   const foxPowerActive = useGameStore((s) => s.foxPowerActive);
+  const enchantedPlayerIds = useGameStore((s) => s.enchantedPlayerIds);
 
   const completeNightStep = useGameStore((s) => s.completeNightStep);
   const setEliminatedThisNight = useGameStore((s) => s.setEliminatedThisNight);
@@ -93,6 +94,14 @@ export default function NightPhase() {
   const wolfTargets = players.filter((p) => !isWolfAligned(p));
   const cupidIds = players.filter((p) => p.roleId === 'cupid').map((p) => p.id);
   const wildChildId = players.find((p) => p.roleId === 'wild_child')?.id ?? null;
+  const piperEligiblePlayers = useMemo(
+    () => players.filter((p) => !enchantedPlayerIds.includes(p.id)),
+    [players, enchantedPlayerIds]
+  );
+  const piperEligibleIds = useMemo(
+    () => new Set(piperEligiblePlayers.map((p) => p.id)),
+    [piperEligiblePlayers]
+  );
 
   const resetLocalState = () => {
     setWolfVictim('');
@@ -175,7 +184,9 @@ export default function NightPhase() {
       setWolfDogChoiceStore(wolfDogChoice);
 
     if (currentRole.id === 'pied_piper') {
-      const toEnchant = [pipedP1, pipedP2].filter(Boolean);
+      const toEnchant = [pipedP1, pipedP2].filter(
+        (id): id is string => !!id && piperEligibleIds.has(id)
+      );
       if (toEnchant.length > 0) addEnchanted(toEnchant);
     }
 
@@ -420,16 +431,35 @@ export default function NightPhase() {
           <div className="night-input">
             <label>{t.night.piperLabel}</label>
             <div className="lovers-row">
-              <select value={pipedP1} onChange={(e) => setPipedP1(e.target.value)}>
+              <select
+                value={pipedP1}
+                onChange={(e) => setPipedP1(e.target.value)}
+                disabled={piperEligiblePlayers.length === 0}
+              >
                 <option value="">&mdash; {t.night.player1} &mdash;</option>
-                {players.filter((p) => p.id !== pipedP2).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                {piperEligiblePlayers
+                  .filter((p) => p.id !== pipedP2)
+                  .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
               <span>&#127926;</span>
-              <select value={pipedP2} onChange={(e) => setPipedP2(e.target.value)}>
+              <select
+                value={pipedP2}
+                onChange={(e) => setPipedP2(e.target.value)}
+                disabled={piperEligiblePlayers.length <= 1}
+              >
                 <option value="">&mdash; {t.night.player2} &mdash;</option>
-                {players.filter((p) => p.id !== pipedP1).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                {piperEligiblePlayers
+                  .filter((p) => p.id !== pipedP1)
+                  .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
+            {piperEligiblePlayers.length <= 1 && (
+              <p className="infect-note">
+                {piperEligiblePlayers.length === 0
+                  ? t.night.piperNoTargets
+                  : t.night.piperOneTarget}
+              </p>
+            )}
             <p className="infect-note">{t.night.enchantNote}</p>
           </div>
         )}

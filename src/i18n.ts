@@ -115,6 +115,8 @@ interface Strings {
     sistersIntro: (firstNight: boolean) => string;
     sistersNote: string;
     piperLabel: string;
+    piperOneTarget: string;
+    piperNoTargets: string;
     enchantNote: string;
     ravenLabel: string;
     ravenNone: string;
@@ -365,6 +367,8 @@ const translations: Record<Language, Strings> = {
           : '👯 The Two Sisters open their eyes and recognise each other. They communicate silently.',
       sistersNote: 'No DM action required — let them see each other, then close eyes again.',
       piperLabel: '🎶 Pied Piper enchants 2 players:',
+      piperOneTarget: 'Only one eligible target remains to enchant this night.',
+      piperNoTargets: 'All eligible players are already enchanted. Continue to skip this action.',
       enchantNote: 'Enchanted players acknowledge secretly (e.g. thumb up under the table).',
       ravenLabel: '🦅 Raven places a curse on (optional):',
       ravenNone: '— No curse this night —',
@@ -591,6 +595,8 @@ const translations: Record<Language, Strings> = {
           : '👯 Les Deux Sœurs ouvrent les yeux et se reconnaissent. Elles communiquent silencieusement.',
       sistersNote: 'Aucune action pour le MDJ — laissez-les se voir puis refermer les yeux.',
       piperLabel: '🎶 Le Joueur de Flûte envoûte 2 joueurs :',
+      piperOneTarget: "Plus qu'une seule cible éligible à envoûter cette nuit.",
+      piperNoTargets: 'Tous les joueurs éligibles sont déjà envoûtés. Continuez pour passer cette action.',
       enchantNote: 'Les joueurs envoûtés acquiescent discrètement (ex : pouce levé).',
       ravenLabel: '🦅 Le Corbeau place une malédiction sur (optionnel) :',
       ravenNone: '— Pas de malédiction cette nuit —',
