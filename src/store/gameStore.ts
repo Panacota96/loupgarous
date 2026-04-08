@@ -265,11 +265,17 @@ export const useGameStore = create<GameStore>()(
 
       setVote: (targetId, count) =>
         set((s) => {
+          const aliveCount = s.players.filter((p) => p.isAlive).length;
+          const clampedCount = Math.max(0, Math.min(count, aliveCount));
           const existing = s.votes.find((v) => v.targetId === targetId);
           if (existing) {
-            return { votes: s.votes.map((v) => v.targetId === targetId ? { ...v, count } : v) };
+            return {
+              votes: s.votes.map((v) =>
+                v.targetId === targetId ? { ...v, count: clampedCount } : v
+              ),
+            };
           }
-          return { votes: [...s.votes, { targetId, count }] };
+          return { votes: [...s.votes, { targetId, count: clampedCount }] };
         }),
 
       clearVotes: () => set({ votes: [] }),

@@ -11,6 +11,7 @@ export default function DayPhase() {
   const { language, t } = useI18n();
   const players = useGameStore((s) => s.players);
   const alivePlayers = players.filter((p) => p.isAlive);
+  const aliveCount = alivePlayers.length;
   const votes = useGameStore((s) => s.votes);
   const round = useGameStore((s) => s.round);
   const infectedPlayerIds = useGameStore((s) => s.infectedPlayerIds);
@@ -63,9 +64,12 @@ export default function DayPhase() {
   // Compute vote totals:
   // base = manually counted votes, +2 for Raven-cursed player, +1 for Mayor's chosen target
   const mayorAlive = players.find((p) => p.isAlive && p.isMayor);
+  const baseVotes: Record<string, number> = {};
   const voteMap: Record<string, number> = {};
   alivePlayers.forEach((p) => {
-    const base = votes.find((v) => v.targetId === p.id)?.count ?? 0;
+    const rawCount = votes.find((v) => v.targetId === p.id)?.count ?? 0;
+    const base = Math.max(0, Math.min(rawCount, aliveCount));
+    baseVotes[p.id] = base;
     const ravenBonus = ravenCursedId === p.id ? 2 : 0;
     const mayorBonus = mayorAlive && mayorVoteTarget === p.id ? 1 : 0;
     voteMap[p.id] = base + ravenBonus + mayorBonus;
@@ -208,9 +212,11 @@ export default function DayPhase() {
 
         <div className="vote-list">
           {alivePlayers.map((p) => {
-            const count = votes.find((v) => v.targetId === p.id)?.count ?? 0;
+            const baseCount = baseVotes[p.id] ?? 0;
+            const cappedTotal = voteMap[p.id];
+            const canIncrement = baseCount < aliveCount;
             return (
-              <div key={p.id} className={`vote-row ${voteMap[p.id] === maxVotes && maxVotes > 0 ? 'vote-top' : ''}`}>
+              <div key={p.id} className={`vote-row ${cappedTotal === maxVotes && maxVotes > 0 ? 'vote-top' : ''}`}>
                 <span className="vote-name">
                   {p.name}
                   {p.isMayor && ' 🎖️'}
@@ -220,14 +226,15 @@ export default function DayPhase() {
                 <div className="vote-controls">
                   <button
                     className="vote-btn"
-                    onClick={() => setVote(p.id, Math.max(0, count - 1))}
+                    onClick={() => setVote(p.id, Math.max(0, baseCount - 1))}
                   >
                     −
                   </button>
-                  <span className="vote-count">{voteMap[p.id]}</span>
+                  <span className="vote-count">{cappedTotal}</span>
                   <button
                     className="vote-btn"
-                    onClick={() => setVote(p.id, count + 1)}
+                    disabled={!canIncrement}
+                    onClick={() => setVote(p.id, Math.min(aliveCount, baseCount + 1))}
                   >
                     +
                   </button>
