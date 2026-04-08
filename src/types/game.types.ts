@@ -91,6 +91,7 @@ export interface GameState {
   log: string[];
   usedGameAbilities: string[]; // e.g. 'witch_heal', 'witch_poison', 'infect_pere'
   optionalRules: Record<string, boolean>;
+  foxPowerActive: boolean;                 // true while Fox still has sniffing power
   // New role mechanics
   wildChildModelId: string | null;       // ID of Wild Child's chosen role model
   wildChildTransformed: boolean;         // true once Wild Child's model has died

@@ -118,6 +118,12 @@ interface Strings {
     ravenLabel: string;
     ravenNone: string;
     ravenNote: (name: string) => string;
+    foxActive: string;
+    foxLost: string;
+    foxResultLabel: string;
+    foxFoundWolf: string;
+    foxFoundNone: string;
+    foxReminder: string;
     done: string;
     nightEnds: string;
     noElim: string;
@@ -134,6 +140,8 @@ interface Strings {
     piedPiperBar: (count: number, total: number) => string;
     piedPiperWins: string;
     infectedBar: string;
+    foxPowerActive: string;
+    foxPowerLost: string;
     playersTitle: (alive: number) => string;
     votingTitle: string;
     resetVotes: string;
@@ -359,6 +367,13 @@ const translations: Record<Language, Strings> = {
       ravenLabel: '🦅 Raven places a curse on (optional):',
       ravenNone: '— No curse this night —',
       ravenNote: (name: string) => `☠️ ${name} will have +2 votes against them tomorrow.`,
+      foxActive: '🦊 Fox still has its sniffing power.',
+      foxLost: '🦊 Fox already lost its sniffing power.',
+      foxResultLabel: 'Result of tonight’s sniff:',
+      foxFoundWolf: '🐺 Wolf nearby (keep power)',
+      foxFoundNone: '❌ No wolves (power lost)',
+      foxReminder:
+        'If the 3 chosen seats have no werewolves, the Fox loses this power for the rest of the game.',
       done: '✅ Done — Next',
       nightEnds: '🌅 Night ends',
       noElim: 'No one was eliminated tonight. 🐱',
@@ -377,6 +392,8 @@ const translations: Record<Language, Strings> = {
         `🎶 Pied Piper enchanted: ${count} / ${total} players`,
       piedPiperWins: '⭐ PIED PIPER WINS!',
       infectedBar: '🦠 Secret wolves (infected):',
+      foxPowerActive: '🦊 Fox sniffing power: ACTIVE',
+      foxPowerLost: '🦊 Fox sniffing power: LOST (skip future Fox wake-ups)',
       playersTitle: (alive: number) => `👥 Players (${alive} alive)`,
       votingTitle: '🗳️ Voting',
       resetVotes: '🔄 Reset Votes',
@@ -575,6 +592,13 @@ const translations: Record<Language, Strings> = {
       ravenLabel: '🦅 Le Corbeau place une malédiction sur (optionnel) :',
       ravenNone: '— Pas de malédiction cette nuit —',
       ravenNote: (name: string) => `☠️ ${name} aura +2 voix contre lui demain.`,
+      foxActive: '🦊 Le Renard a toujours son pouvoir de flair.',
+      foxLost: '🦊 Le Renard a déjà perdu son pouvoir de flair.',
+      foxResultLabel: 'Résultat du flair cette nuit :',
+      foxFoundWolf: '🐺 Loup à proximité (pouvoir conservé)',
+      foxFoundNone: '❌ Aucun loup (pouvoir perdu)',
+      foxReminder:
+        'Si les 3 joueurs choisis ne comptent aucun loup, le Renard perd ce pouvoir pour toute la partie.',
       done: '✅ Terminé — Suivant',
       nightEnds: '🌅 Fin de nuit',
       noElim: 'Personne éliminé cette nuit. 🐱',
@@ -593,6 +617,8 @@ const translations: Record<Language, Strings> = {
         `🎶 Envoûtés par le Joueur de Flûte : ${count} / ${total} joueurs`,
       piedPiperWins: '⭐ VICTOIRE DU JOUEUR DE FLÛTE !',
       infectedBar: '🦠 Loups secrets (infectés) :',
+      foxPowerActive: '🦊 Pouvoir du Renard : ACTIF',
+      foxPowerLost: '🦊 Pouvoir du Renard : PERDU (ne plus le réveiller)',
       playersTitle: (alive: number) => `👥 Joueurs (${alive} vivants)`,
       votingTitle: '🗳️ Votes',
       resetVotes: '🔄 Réinitialiser les votes',

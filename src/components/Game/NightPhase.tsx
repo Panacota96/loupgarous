@@ -19,6 +19,7 @@ export default function NightPhase() {
   const wolfVictimId = useGameStore((s) => s.wolfVictimId);
   const wolfDogChoiceStore = useGameStore((s) => s.wolfDogChoice);
   const wildChildTransformed = useGameStore((s) => s.wildChildTransformed);
+  const foxPowerActive = useGameStore((s) => s.foxPowerActive);
 
   const completeNightStep = useGameStore((s) => s.completeNightStep);
   const setEliminatedThisNight = useGameStore((s) => s.setEliminatedThisNight);
@@ -31,6 +32,7 @@ export default function NightPhase() {
   const infectPlayer = useGameStore((s) => s.infectPlayer);
   const setWolfVictimIdStore = useGameStore((s) => s.setWolfVictimId);
   const setRavenCursed = useGameStore((s) => s.setRavenCursed);
+  const setFoxPowerActiveStore = useGameStore((s) => s.setFoxPowerActive);
 
   const [witchSave, setWitchSave] = useState(false);
   const [witchKill, setWitchKill] = useState('');
@@ -47,6 +49,7 @@ export default function NightPhase() {
   const [infectTarget, setInfectTarget] = useState('');
   const [ravenTarget, setRavenTarget] = useState('');
   const [passiveChecks, setPassiveChecks] = useState<Record<string, boolean>>({});
+  const [foxResult, setFoxResult] = useState<'wolf' | 'none' | ''>('');
 
   const allStepsDone = currentNightStepIndex >= nightSteps.length;
   const currentStep = nightSteps[currentNightStepIndex];
@@ -106,6 +109,7 @@ export default function NightPhase() {
     setLoversP1('');
     setLoversP2('');
     setRavenTarget('');
+    setFoxResult('');
   };
 
   const handleCompleteStep = () => {
@@ -150,6 +154,12 @@ export default function NightPhase() {
 
     if (currentRole.id === 'raven' && ravenTarget)
       setRavenCursed(ravenTarget);
+
+    if (currentRole.id === 'fox') {
+      const result = foxResult || 'wolf';
+      if (result === 'none') setFoxPowerActiveStore(false);
+      else if (foxPowerActive) setFoxPowerActiveStore(true);
+    }
 
     if (currentRole.id === 'cupid' && loversP1 && loversP2 && round === 1) {
       const invalidLover =
@@ -262,6 +272,33 @@ export default function NightPhase() {
               {alivePureWolves.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
             {alivePureWolves.length === 0 && <p className="infect-note">{t.night.noOtherWolves}</p>}
+          </div>
+        )}
+
+        {/* Fox: sniff result */}
+        {currentRole.id === 'fox' && (
+          <div className="night-input">
+            {foxPowerActive ? (
+              <p className="witch-victim-info">{t.night.foxActive}</p>
+            ) : (
+              <div className="used-banner">{t.night.foxLost}</div>
+            )}
+            <label>{t.night.foxResultLabel}</label>
+            <div className="choice-buttons">
+              <button
+                className={`choice-btn ${foxResult === 'wolf' ? 'selected-village' : ''}`}
+                onClick={() => setFoxResult('wolf')}
+              >
+                {t.night.foxFoundWolf}
+              </button>
+              <button
+                className={`choice-btn ${foxResult === 'none' ? 'selected-wolf' : ''}`}
+                onClick={() => setFoxResult('none')}
+              >
+                {t.night.foxFoundNone}
+              </button>
+            </div>
+            <p className="infect-note">{t.night.foxReminder}</p>
           </div>
         )}
 
