@@ -1,77 +1,69 @@
 import { useState } from 'react';
-import { useGameStore } from '../../store/gameStore';
+import type { useI18n } from '../../i18n';
 import '../../styles/tiebreaker.css';
 
-export default function TieBreaker() {
-  const players = useGameStore((s) => s.players.filter((p) => p.isAlive));
-  const eliminatePlayer = useGameStore((s) => s.eliminatePlayer);
-  const addLog = useGameStore((s) => s.addLog);
+type Strings = ReturnType<typeof useI18n>['t'];
+type SimplePlayer = { id: string; name: string };
 
-  const [tieIds, setTieIds] = useState<string[]>([]);
-  const [result, setResult] = useState<string | null>(null);
+type Props = {
+  tiedPlayerIds: string[];
+  players: SimplePlayer[];
+  t: Strings;
+  onEliminate: (id: string) => void;
+  onLog: (message: string) => void;
+  onClose?: () => void;
+};
 
-  const toggle = (id: string) => {
-    setTieIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-    setResult(null);
-  };
+function pickRandomId(ids: string[]) {
+  if (ids.length < 2) return null;
+  return ids[Math.floor(Math.random() * ids.length)] ?? null;
+}
 
-  const runTieBreaker = () => {
-    if (tieIds.length < 2) return;
-    const pick = tieIds[Math.floor(Math.random() * tieIds.length)];
-    const name = players.find((p) => p.id === pick)?.name ?? pick;
-    setResult(pick);
-    addLog(`Tie-breaker: ${name} was randomly selected for elimination.`);
-  };
+export default function TieBreaker({
+  tiedPlayerIds,
+  players,
+  t,
+  onEliminate,
+  onLog,
+  onClose,
+}: Props) {
+  const tiedPlayers = tiedPlayerIds
+    .map((id) => players.find((p) => p.id === id))
+    .filter((player): player is SimplePlayer => Boolean(player));
+  const [result] = useState<string | null>(() => pickRandomId(tiedPlayerIds));
+
+  const selectedPlayer = tiedPlayers.find((p) => p.id === result) ?? null;
+
+  if (tiedPlayers.length < 2 || !selectedPlayer) {
+    return null;
+  }
 
   const confirmElim = () => {
-    if (!result) return;
-    eliminatePlayer(result);
-    setTieIds([]);
-    setResult(null);
+    onEliminate(selectedPlayer.id);
+    onLog(t.logs.tieBreaker(selectedPlayer.name));
+    onClose?.();
   };
 
   return (
-    <div className="tiebreaker">
-      <h3>⚖️ Tie-Breaker</h3>
-      <p className="tb-hint">Select the tied players, then roll the random tie-breaker.</p>
+    <div className="tiebreaker" data-testid="tie-breaker-panel">
+      <h3>{t.tieBreaker.title}</h3>
+      <p className="tb-hint">{t.tieBreaker.hint}</p>
       <div className="tb-player-list">
-        {players.map((p) => (
-          <label key={p.id} className={`tb-player ${tieIds.includes(p.id) ? 'selected' : ''}`}>
-            <input
-              type="checkbox"
-              checked={tieIds.includes(p.id)}
-              onChange={() => toggle(p.id)}
-            />
+        {tiedPlayers.map((p) => (
+          <div key={p.id} className="tb-player selected readonly">
             {p.name}
-          </label>
+          </div>
         ))}
       </div>
-      <button
-        className="btn btn-yellow"
-        onClick={runTieBreaker}
-        disabled={tieIds.length < 2}
-      >
-        🎲 Random Pick
-      </button>
-      {result && (
-        <div className="tb-result">
-          <p>
-            ➡️ <strong>{players.find((p) => p.id === result)?.name}</strong> is
-            selected for elimination.
-          </p>
-          <button className="btn btn-danger" onClick={confirmElim}>
-            ☠️ Confirm Elimination
-          </button>
-          <button
-            className="btn btn-ghost"
-            onClick={() => { setResult(null); setTieIds([]); }}
-          >
-            Cancel
-          </button>
-        </div>
-      )}
+      <div className="tb-result" data-testid="tie-breaker-result">
+        <p>{t.tieBreaker.selected(selectedPlayer.name)}</p>
+        <button className="btn btn-danger" onClick={confirmElim}>
+          {t.tieBreaker.confirm}
+        </button>
+        <button className="btn btn-ghost" onClick={() => onClose?.()}>
+          {t.tieBreaker.cancel}
+        </button>
+      </div>
     </div>
   );
 }

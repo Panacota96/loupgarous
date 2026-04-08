@@ -36,6 +36,7 @@
   transform: translateY(-1px);
 }
 .tb-player input { cursor: pointer; }
+.tb-player.readonly { cursor: default; }
 
 .tb-result {
   display: flex;

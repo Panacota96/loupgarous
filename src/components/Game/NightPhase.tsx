@@ -3,7 +3,10 @@ import { resolveNightEliminations, useGameStore } from '../../store/gameStore';
 import { ROLE_MAP, WOLF_ROLE_IDS } from '../../data/roles';
 import '../../styles/night.css';
 
+const PASSIVE_REMINDER_ROLE_IDS = ['bear_tamer', 'elder', 'village_idiot', 'scapegoat', 'hunter', 'angel'];
+
 export default function NightPhase() {
+  const { language, t } = useI18n();
   const nightSteps = useGameStore((s) => s.nightSteps);
   const currentNightStepIndex = useGameStore((s) => s.currentNightStepIndex);
   const eliminatedThisNight = useGameStore((s) => s.eliminatedThisNight);
@@ -47,10 +50,29 @@ export default function NightPhase() {
   const [pipedP2, setPipedP2] = useState('');
   const [infectTarget, setInfectTarget] = useState('');
   const [ravenTarget, setRavenTarget] = useState('');
+  const [passiveChecks, setPassiveChecks] = useState<Record<string, boolean>>({});
+  const [foxCenterTarget, setFoxCenterTarget] = useState('');
+  const [protectorTarget, setProtectorTargetLocal] = useState('');
+  const [protectorTouched, setProtectorTouched] = useState(false);
 
   const allStepsDone = currentNightStepIndex >= nightSteps.length;
   const currentStep = nightSteps[currentNightStepIndex];
   const currentRole = currentStep ? ROLE_MAP[currentStep.roleId] : null;
+  const currentRoleText = currentRole ? getRoleTexts(currentRole, language) : null;
+  const currentRoleName = currentRole ? getRoleName(currentRole, language) : '';
+
+  const passiveReminderRoles = useMemo(
+    () => {
+      const uniqueRoleIds = [...new Set(allPlayers.map((p) => p.roleId))];
+      return uniqueRoleIds
+        .map((id) => ROLE_MAP[id])
+        .filter(
+          (r): r is NonNullable<typeof ROLE_MAP[string]> =>
+            !!r && PASSIVE_REMINDER_ROLE_IDS.includes(r.id)
+        );
+    },
+    [allPlayers]
+  );
 
   const witchHealUsed = usedGameAbilities.includes('witch_heal');
   const witchPoisonUsed = usedGameAbilities.includes('witch_poison');
@@ -71,6 +93,13 @@ export default function NightPhase() {
     (p.roleId === 'wolf_dog' && wolfDogChoiceStore === 'werewolf') ||
     (p.roleId === 'wild_child' && wildChildTransformed) ||
     infectedPlayerIds.includes(p.id);
+
+  const isWolfIdentity = (p: typeof players[0]) =>
+    isPlayerWolfIdentity(p, {
+      infectedPlayerIds,
+      wolfDogChoice: wolfDogChoiceStore,
+      wildChildTransformed,
+    });
 
   const wolfTargets = players.filter((p) => !isWolfAligned(p));
   const cupidIds = players.filter((p) => p.roleId === 'cupid').map((p) => p.id);
@@ -115,6 +144,9 @@ export default function NightPhase() {
     setLoversP1('');
     setLoversP2('');
     setRavenTarget('');
+    setFoxCenterTarget('');
+    setProtectorTargetLocal('');
+    setProtectorTouched(false);
   };
 
   const handleCompleteStep = () => {
@@ -150,6 +182,13 @@ export default function NightPhase() {
     if (currentRole.id === 'white_werewolf' && whiteWolfTarget)
       setEliminatedThisNight([...eliminatedThisNight.filter((id) => id !== whiteWolfTarget), whiteWolfTarget]);
 
+    if (currentRole.id === 'protector') {
+      const selectedProtection = protectorTouched
+        ? protectorTarget
+        : protectionThisNight?.targetId ?? '';
+      setProtectorTargetStore(selectedProtection || null);
+    }
+
     if (currentRole.id === 'witch') {
       // Use the persisted wolfVictimId from store — wolfVictim local state is empty at this step
       const victimToSave = wolfVictimId ?? '';
@@ -166,6 +205,11 @@ export default function NightPhase() {
     if (currentRole.id === 'raven' && ravenTarget)
       setRavenCursed(ravenTarget);
 
+    if (currentRole.id === 'fox') {
+      if (foxTrioPlayers.length > 0 && !foxFoundWolf) setFoxPowerActiveStore(false);
+      else if (foxPowerActive) setFoxPowerActiveStore(true);
+    }
+
     if (currentRole.id === 'cupid' && loversP1 && loversP2 && round === 1) {
       const invalidLover =
         loversP1 === loversP2 || cupidIds.includes(loversP1) || cupidIds.includes(loversP2);
@@ -180,11 +224,26 @@ export default function NightPhase() {
       setWolfDogChoiceStore(wolfDogChoice);
 
     if (currentRole.id === 'pied_piper') {
-      const toEnchant = [pipedP1, pipedP2].filter(Boolean);
+      const toEnchant = [pipedP1, pipedP2].filter(
+        (id): id is string => !!id && piperEligibleIds.has(id)
+      );
       if (toEnchant.length > 0) addEnchanted(toEnchant);
     }
 
     completeNightStep();
+    resetLocalState();
+  };
+
+  const handleBackStep = () => {
+    if (currentNightStepIndex <= 0 || nightSteps.length === 0) return;
+    const target = Math.min(currentNightStepIndex - 1, nightSteps.length - 1);
+    goToNightStepStore(target);
+    resetLocalState();
+  };
+
+  const handleJumpToStep = (index: number) => {
+    if (index < 0 || index >= currentNightStepIndex) return;
+    goToNightStepStore(index);
     resetLocalState();
   };
 
@@ -201,17 +260,17 @@ export default function NightPhase() {
         <div className="role-wake">
           <span className="role-wake-emoji">{currentRole.emoji}</span>
           <div>
-            <h3>{currentRole.nameFr} wakes up</h3>
+            <h3>{t.night.wakesUp(currentRoleName)}</h3>
             <div className="role-wake-badges">
-              {currentRole.firstNightOnly && <span className="badge badge-once">First Night Only</span>}
-              {currentRole.everyOtherNight && <span className="badge badge-once">Every Other Night</span>}
-              {currentRole.oddNightsOnly && <span className="badge badge-once">Nights 1, 3, 5&hellip;</span>}
-              {currentRole.nightAction?.isOneTime && <span className="badge badge-once">One-Time Ability</span>}
+              {currentRole.firstNightOnly && <span className="badge badge-once">{t.night.badges.firstNightOnly}</span>}
+              {currentRole.everyOtherNight && <span className="badge badge-once">{t.night.badges.everyOtherNight}</span>}
+              {currentRole.oddNightsOnly && <span className="badge badge-once">{t.night.badges.oddNightsOnly}</span>}
+              {currentRole.nightAction?.isOneTime && <span className="badge badge-once">{t.night.badges.oneTime}</span>}
             </div>
           </div>
         </div>
 
-        <div className="night-instruction">{currentRole.nightAction?.description}</div>
+        <div className="night-instruction">{currentRoleText?.nightActionDescription}</div>
 
         {/* Werewolf: pick victim */}
         {currentRole.id === 'protector' && (
@@ -258,20 +317,20 @@ export default function NightPhase() {
         {currentRole.id === 'infect_pere' && (
           <div className="night-input">
             {currentVictimName
-              ? <p className="witch-victim-info">&#128054; Tonight&apos;s wolf victim: <strong>{currentVictimName}</strong></p>
-              : <p className="witch-victim-info">&#127769; No wolf victim selected yet.</p>}
+              ? <p className="witch-victim-info">{t.night.infectVictim} <strong>{currentVictimName}</strong></p>
+              : <p className="witch-victim-info">{t.night.noWolfVictim}</p>}
             {infectPereUsed ? (
-              <div className="used-banner">&#9760;&#65039; Infect ability already used this game.</div>
+              <div className="used-banner">{t.night.infectUsed}</div>
             ) : (
               <>
-                <label>&#129440; Infect instead of killing (ONCE PER GAME):</label>
+                <label>{t.night.infectInstead}</label>
                 <select value={infectTarget} onChange={(e) => setInfectTarget(e.target.value)}>
-                  <option value="">&mdash; Do not infect &mdash;</option>
+                  <option value="">&mdash; {t.night.skipInfect} &mdash;</option>
                   {wolfTargets.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
                 {infectTarget && (
                   <p className="infect-note">
-                    &#9888;&#65039; If infected, <strong>{players.find((p) => p.id === infectTarget)?.name}</strong> stays alive and secretly joins the wolves.
+                    {t.night.infectNote(players.find((p) => p.id === infectTarget)?.name ?? '')}
                   </p>
                 )}
               </>
@@ -286,10 +345,10 @@ export default function NightPhase() {
               <p className="protected-banner">🛡️ Protected tonight: <strong>{protectedPlayer.name}</strong></p>
             )}
             {anyWolfEliminated ? (
-              <div className="used-banner">&#9888;&#65039; A wolf has been eliminated &mdash; Big Bad Wolf&apos;s extra kill power is GONE.</div>
+              <div className="used-banner">{t.night.bigBadWolfLocked}</div>
             ) : (
               <>
-                <label>&#128023; OPTIONAL extra victim (while no wolf eliminated):</label>
+                <label>{t.night.bigBadWolfLabel}</label>
                 <select value={bigBadWolfExtra} onChange={(e) => setBigBadWolfExtra(e.target.value)}>
                   <option value="">&mdash; Skip extra kill &mdash;</option>
                   {protectedBigBadTarget && (
@@ -307,21 +366,120 @@ export default function NightPhase() {
         {/* White Werewolf: devour a fellow wolf */}
         {currentRole.id === 'white_werewolf' && (
           <div className="night-input">
-            <label>&#11035;&#65039; OPTIONAL &mdash; devour one of the other werewolves:</label>
+            <label>{t.night.whiteWolfLabel}</label>
             <select value={whiteWolfTarget} onChange={(e) => setWhiteWolfTarget(e.target.value)}>
-              <option value="">&mdash; Skip &mdash;</option>
+              <option value="">&mdash; {t.night.skipWhiteWolf} &mdash;</option>
               {alivePureWolves.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
-            {alivePureWolves.length === 0 && <p className="infect-note">No other werewolves are alive.</p>}
+            {alivePureWolves.length === 0 && <p className="infect-note">{t.night.noOtherWolves}</p>}
+          </div>
+        )}
+
+        {/* Protector: choose a player to guard */}
+        {currentRole.id === 'protector' && (
+          <div className="night-input">
+            {lastProtection ? (
+              lastProtection.targetId ? (
+                <p className="witch-victim-info">
+                  {t.night.protectorLast(
+                    lastProtection.targetName ?? t.night.protectorUnknown,
+                    lastProtection.round
+                  )}
+                </p>
+              ) : (
+                <p className="witch-victim-info">
+                  {t.night.protectorLastNone(lastProtection.round)}
+                </p>
+              )
+            ) : (
+              <p className="witch-victim-info">{t.night.protectorNoPrevious}</p>
+            )}
+            <label>{t.night.protectorLabel}</label>
+            <select
+              value={currentProtectionValue}
+              onChange={(e) => {
+                setProtectorTouched(true);
+                setProtectorTargetLocal(e.target.value);
+              }}
+            >
+              <option value="">&mdash; {t.night.protectorNone} &mdash;</option>
+              {players.map((p) => (
+                <option key={p.id} value={p.id} disabled={p.id === (lastProtection?.targetId ?? null)}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            {lastProtection?.targetId && (
+              <p className="infect-note">
+                {t.night.protectorCannotRepeat(
+                  lastProtection.targetName ?? t.night.protectorUnknown
+                )}
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Fox: sniff result */}
+        {currentRole.id === 'fox' && (
+          <div className="night-input">
+            {foxPowerActive ? (
+              <p className="witch-victim-info">{t.night.foxActive}</p>
+            ) : (
+              <div className="used-banner">{t.night.foxLost}</div>
+            )}
+            <label>{t.night.foxCenterLabel}</label>
+            {foxHasSingleTrio ? (
+              <p className="witch-victim-info">{t.night.foxSingleTrio}</p>
+            ) : (
+              <select
+                value={selectedFoxCenterId}
+                onChange={(e) => setFoxCenterTarget(e.target.value)}
+                data-testid="fox-center-select"
+              >
+                {foxCenterOptions.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            )}
+            {foxTrioPlayers.length > 0 && (
+              <div className="fox-trio" data-testid="fox-trio-preview">
+                <p className="fox-trio__label">{t.night.foxPreviewLabel}</p>
+                <div className="fox-trio__cards">
+                  {foxTrioPlayers.map((player) => {
+                    const isWolfSeat = isWolfIdentity(player);
+                    return (
+                      <div
+                        key={player.id}
+                        className={`fox-trio-seat ${isWolfSeat ? 'fox-trio-seat--wolf' : ''}`}
+                        data-testid="fox-trio-seat"
+                      >
+                        <span className="fox-trio-seat__name">{player.name}</span>
+                        {isWolfSeat && (
+                          <span className="fox-trio-seat__badge" data-testid="fox-trio-seat-wolf">
+                            🐺
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            <div
+              className={`fox-result-summary ${foxFoundWolf ? 'fox-result-summary--wolf' : 'fox-result-summary--none'}`}
+              data-testid="fox-result-summary"
+            >
+              <span>{t.night.foxResultLabel}</span>
+              <strong>{foxFoundWolf ? t.night.foxFoundWolf : t.night.foxFoundNone}</strong>
+            </div>
+            <p className="infect-note">{t.night.foxReminder}</p>
           </div>
         )}
 
         {/* Seer: DM-only card peek */}
         {currentRole.id === 'seer' && (
           <div className="night-input">
-            <label>&#128302; Seer looks at player:</label>
+            <label>{t.night.seerLabel}</label>
             <select value={seerTarget} onChange={(e) => setSeerTarget(e.target.value)}>
-              <option value="">&mdash; Select player &mdash;</option>
+              <option value="">&mdash; {t.night.selectPlayer} &mdash;</option>
               {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
             {seerTarget && (() => {
@@ -329,9 +487,8 @@ export default function NightPhase() {
               const targetRole = target ? ROLE_MAP[target.roleId] : null;
               return targetRole ? (
                 <div className="seer-reveal">
-                  <strong>DM only:</strong> {target?.name} is {targetRole.emoji}{' '}
-                  <strong>{targetRole.nameFr}</strong>{' '}
-                  <span className={`camp-badge camp-${targetRole.camp}`}>{targetRole.camp}</span>
+                  <strong>{t.night.dmReveal(target?.name ?? '', getRoleName(targetRole, language))}</strong>{' '}
+                  <span className={`camp-badge camp-${targetRole.camp}`}>{getCampLabel(targetRole.camp, language)}</span>
                 </div>
               ) : null;
             })()}
@@ -342,17 +499,17 @@ export default function NightPhase() {
         {currentRole.id === 'witch' && (
           <div className="night-input">
             {currentVictimName
-              ? <p className="witch-victim-info">&#128054; Wolf victim tonight: <strong>{currentVictimName}</strong></p>
-              : <p className="witch-victim-info">&#127769; No wolf victim tonight.</p>}
+              ? <p className="witch-victim-info">{t.night.witchVictim(currentVictimName)}</p>
+              : <p className="witch-victim-info">{t.night.witchVictim(null)}</p>}
             <label className="witch-option">
               <input type="checkbox" checked={witchSave} onChange={(e) => setWitchSave(e.target.checked)} disabled={witchHealUsed} />
-              <span>&#128154; Use Healing Potion (save victim) {witchHealUsed && <span className="used-badge">USED</span>}</span>
+              <span>{t.night.witchHeal} {witchHealUsed && <span className="used-badge">{t.night.usedBadge}</span>}</span>
             </label>
             <label className="witch-option">
-              <span>&#9760;&#65039; Use Death Potion on:</span>
-              {witchPoisonUsed ? <span className="used-badge">USED</span> : (
+              <span>{t.night.witchDeath}</span>
+              {witchPoisonUsed ? <span className="used-badge">{t.night.usedBadge}</span> : (
                 <select value={witchKill} onChange={(e) => setWitchKill(e.target.value)}>
-                  <option value="">&mdash; None &mdash;</option>
+                  <option value="">&mdash; {t.night.none} &mdash;</option>
                   {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               )}
@@ -363,17 +520,17 @@ export default function NightPhase() {
         {/* Cupid: link lovers */}
         {currentRole.id === 'cupid' && round === 1 && (
           <div className="night-input">
-            <label>&#128152; Cupid links these two lovers:</label>
+            <label>{t.night.cupidLabel}</label>
             <div className="lovers-row">
               <select value={loversP1} onChange={(e) => setLoversP1(e.target.value)}>
-                <option value="">&mdash; Player 1 &mdash;</option>
+                <option value="">&mdash; {t.night.player1} &mdash;</option>
                 {players
                   .filter((p) => p.id !== loversP2 && !cupidIds.includes(p.id))
                   .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
               <span>&#128152;</span>
               <select value={loversP2} onChange={(e) => setLoversP2(e.target.value)}>
-                <option value="">&mdash; Player 2 &mdash;</option>
+                <option value="">&mdash; {t.night.player2} &mdash;</option>
                 {players
                   .filter((p) => p.id !== loversP1 && !cupidIds.includes(p.id))
                   .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -385,19 +542,19 @@ export default function NightPhase() {
         {/* Wolf-Dog: choose side */}
         {currentRole.id === 'wolf_dog' && (
           <div className="night-input">
-            <label>&#128021; Wolf-Dog secretly chooses their side:</label>
+            <label>{t.night.wolfDogLabel}</label>
             <div className="choice-buttons">
               <button
                 className={`choice-btn ${wolfDogChoice === 'villager' ? 'selected-village' : ''}`}
                 onClick={() => setWolfDogChoiceLocal('villager')}
-              >&#128104;&zwj;&#127806; Villager</button>
+              >{t.night.villager}</button>
               <button
                 className={`choice-btn ${wolfDogChoice === 'werewolf' ? 'selected-wolf' : ''}`}
                 onClick={() => setWolfDogChoiceLocal('werewolf')}
-              >&#128054; Werewolf</button>
+              >{t.night.werewolf}</button>
             </div>
             {wolfDogChoice === 'werewolf' && (
-              <p className="infect-note">&#128054; Wolf-Dog joins the wolves! They will wake with the pack from next night.</p>
+              <p className="infect-note">{t.night.wolfDogNote}</p>
             )}
           </div>
         )}
@@ -405,16 +562,16 @@ export default function NightPhase() {
         {/* Wild Child: pick model */}
         {currentRole.id === 'wild_child' && (
           <div className="night-input">
-            <label>&#129536; Wild Child secretly points to their Role Model:</label>
+            <label>{t.night.wildChildLabel}</label>
             <select value={wildChildModel} onChange={(e) => setWildChildModelLocal(e.target.value)}>
-              <option value="">&mdash; Select model &mdash;</option>
+              <option value="">&mdash; {t.night.selectModel} &mdash;</option>
               {players.filter((p) => p.id !== wildChildId).map((p) => (
                 <option key={p.id} value={p.id}>{p.name}</option>
               ))}
             </select>
             {wildChildModel && (
               <p className="infect-note">
-                If <strong>{players.find((p) => p.id === wildChildModel)?.name}</strong> dies, Wild Child becomes a Werewolf.
+                {t.night.wildChildNote(players.find((p) => p.id === wildChildModel)?.name ?? '')}
               </p>
             )}
           </div>
@@ -424,45 +581,63 @@ export default function NightPhase() {
         {currentRole.id === 'soeurs' && (
           <div className="night-input">
             <p className="witch-victim-info">
-              &#128111;&#65039; The Two Sisters open their eyes and recognise each other.
-              {round === 1 ? ' This is their first meeting.' : ' They communicate silently.'}
+              {t.night.sistersIntro(round === 1)}
             </p>
-            <p className="infect-note">No DM action required &mdash; let them see each other, then close eyes again.</p>
+            <p className="infect-note">{t.night.sistersNote}</p>
           </div>
         )}
 
         {/* Pied Piper: enchant 2 */}
         {currentRole.id === 'pied_piper' && (
           <div className="night-input">
-            <label>&#127926; Pied Piper enchants 2 players:</label>
+            <label>{t.night.piperLabel}</label>
             <div className="lovers-row">
-              <select value={pipedP1} onChange={(e) => setPipedP1(e.target.value)}>
-                <option value="">&mdash; Player 1 &mdash;</option>
-                {players.filter((p) => p.id !== pipedP2).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              <select
+                value={pipedP1}
+                onChange={(e) => setPipedP1(e.target.value)}
+                disabled={piperEligiblePlayers.length === 0}
+              >
+                <option value="">&mdash; {t.night.player1} &mdash;</option>
+                {piperEligiblePlayers
+                  .filter((p) => p.id !== pipedP2)
+                  .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
               <span>&#127926;</span>
-              <select value={pipedP2} onChange={(e) => setPipedP2(e.target.value)}>
-                <option value="">&mdash; Player 2 &mdash;</option>
-                {players.filter((p) => p.id !== pipedP1).map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              <select
+                value={pipedP2}
+                onChange={(e) => setPipedP2(e.target.value)}
+                disabled={piperEligiblePlayers.length <= 1}
+              >
+                <option value="">&mdash; {t.night.player2} &mdash;</option>
+                {piperEligiblePlayers
+                  .filter((p) => p.id !== pipedP1)
+                  .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
             </div>
-            <p className="infect-note">Enchanted players acknowledge secretly (e.g. thumb up under the table).</p>
+            {piperEligiblePlayers.length <= 1 && (
+              <p className="infect-note">
+                {piperEligiblePlayers.length === 0
+                  ? t.night.piperNoTargets
+                  : t.night.piperOneTarget}
+              </p>
+            )}
+            <p className="infect-note">{t.night.enchantNote}</p>
           </div>
         )}
 
         {/* Raven: curse a player (+2 votes next day) */}
         {currentRole.id === 'raven' && (
           <div className="night-input">
-            <label>&#129413; Raven places a curse on (optional):</label>
+            <label>{t.night.ravenLabel}</label>
             <select value={ravenTarget} onChange={(e) => setRavenTarget(e.target.value)}>
-              <option value="">&mdash; No curse this night &mdash;</option>
+              <option value="">&mdash; {t.night.ravenNone} &mdash;</option>
               {players.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
             {ravenTarget && (() => {
               const cursedName = players.find((p) => p.id === ravenTarget)?.name;
               return (
                 <p className="infect-note">
-                  &#9760;&#65039; <strong>{cursedName}</strong> will have +2 votes against them tomorrow.
+                  {t.night.ravenNote(cursedName ?? '')}
                 </p>
               );
             })()}
@@ -477,25 +652,73 @@ export default function NightPhase() {
       <div className="night-header">
         <span className="phase-icon">&#127769;</span>
         <div>
-          <h2>Night Phase &mdash; Round {round}</h2>
-          <p className="night-subtitle">All players close their eyes.</p>
+          <h2>{t.night.title(round)}</h2>
+          <p className="night-subtitle">{t.night.subtitle}</p>
         </div>
       </div>
+
+      {round === 1 && passiveReminderRoles.length > 0 && (
+        <div className="gm-checklist" data-testid="passive-checklist">
+          <div className="gm-checklist__header">
+            <span className="gm-checklist__icon">📋</span>
+            <div>
+              <h3>{t.night.passiveTitle}</h3>
+              <p className="gm-checklist__subtitle">{t.night.passiveSubtitle}</p>
+            </div>
+          </div>
+          <div className="gm-checklist__items">
+            {passiveReminderRoles.map((r) => {
+              const texts = getRoleTexts(r, language);
+              const reminder = texts.dayTrigger ?? texts.revealTrigger ?? texts.description ?? '';
+              const checked = passiveChecks[r.id] ?? false;
+              return (
+                <label key={r.id} className="gm-checklist__item">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) =>
+                      setPassiveChecks((prev) => ({ ...prev, [r.id]: e.target.checked }))
+                    }
+                  />
+                  <span>
+                    {r.emoji} <strong>{getRoleName(r, language)}:</strong> {reminder}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+          <p className="gm-checklist__hint">{t.night.passiveHint}</p>
+        </div>
+      )}
 
       <div className="night-steps-bar">
         {nightSteps.map((step, i) => {
           const r = ROLE_MAP[step.roleId];
+          const canJump = i < currentNightStepIndex;
           return (
             <div
               key={i}
-              className={`step-pip ${step.completed ? 'done' : ''} ${i === currentNightStepIndex ? 'active' : ''}`}
-              title={r?.nameFr}
+              className={`step-pip ${step.completed ? 'done' : ''} ${i === currentNightStepIndex ? 'active' : ''} ${canJump ? 'clickable' : ''}`}
+              title={r ? getRoleName(r, language) : undefined}
+              role={canJump ? 'button' : undefined}
+              tabIndex={canJump ? 0 : -1}
+              onClick={canJump ? () => handleJumpToStep(i) : undefined}
+              onKeyDown={
+                canJump
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') handleJumpToStep(i);
+                    }
+                  : undefined
+              }
             >
               {r?.emoji}
             </div>
           );
         })}
       </div>
+      {currentNightStepIndex > 0 && (
+        <p className="night-nav-hint">{t.night.backHint}</p>
+      )}
 
       {!allStepsDone ? (
         <>
@@ -516,7 +739,7 @@ export default function NightPhase() {
             <p>No one was eliminated tonight. &#128570;</p>
           ) : (
             <p>
-              Eliminated:{' '}
+              {t.night.eliminated}{' '}
               <strong>
                 {nightResolutionPreview.finalEliminated
                   .map((id) => allPlayers.find((p) => p.id === id)?.name)
@@ -524,13 +747,22 @@ export default function NightPhase() {
               </strong>
             </p>
           )}
-          <button
-            className="btn btn-primary btn-large"
-            data-testid="reveal-day"
-            onClick={applyNightResults}
-          >
-            &#127748; Reveal Day
-          </button>
+          <div className="night-actions summary-actions">
+            <button
+              className="btn btn-ghost"
+              onClick={handleBackStep}
+              disabled={currentNightStepIndex <= 0}
+            >
+              {t.night.goBack}
+            </button>
+            <button
+              className="btn btn-primary btn-large"
+              data-testid="reveal-day"
+              onClick={applyNightResults}
+            >
+              {t.night.revealDay}
+            </button>
+          </div>
         </div>
       )}
     </div>

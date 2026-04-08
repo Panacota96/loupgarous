@@ -1,4 +1,5 @@
 export type Phase = 'setup' | 'night' | 'day';
+export type Language = 'en' | 'fr';
 export type Camp =
   | 'village'
   | 'werewolves'
@@ -14,6 +15,8 @@ export interface RoleAction {
   isOneTime?: boolean;
   /** Used by game state to track if this one-time action was spent */
   key?: string;
+  /** Localized description (French) */
+  descriptionFr?: string;
 }
 
 export interface RoleDefinition {
@@ -24,6 +27,8 @@ export interface RoleDefinition {
   minCount: number;
   maxCount: number;
   nightOrder: number | null; // null = day-only or passive
+  /** Roles that can be chosen during setup (statuses like Mayor are excluded) */
+  setupSelectable?: boolean;
   nightPhaseOnly?: boolean;
   firstNightOnly?: boolean;
   everyOtherNight?: boolean;
@@ -32,8 +37,12 @@ export interface RoleDefinition {
   nightAction: RoleAction | null;
   dayTrigger: string | null;       // tooltip shown to DM on day phase
   revealTrigger: string | null;    // what happens when this role is revealed/dies
+  dayTriggerFr?: string | null;
+  revealTriggerFr?: string | null;
   optionalRule?: string;
+  optionalRuleFr?: string;
   description: string;
+  descriptionFr?: string;
   emoji: string;
 }
 
@@ -48,7 +57,6 @@ export interface Player {
   name: string;
   roleId: string;
   isAlive: boolean;
-  isRevealed: boolean;
   isMayor: boolean;
   isLover: boolean;
   extraVotes: number;
@@ -62,9 +70,24 @@ export interface NightStep {
   completed: boolean;
 }
 
-export interface Vote {
-  targetId: string;
-  count: number;
+export interface NightStepState {
+  eliminatedThisNight: string[];
+  usedGameAbilities: string[];
+  enchantedPlayerIds: string[];
+  infectedPlayerIds: string[];
+  loversIds: [string, string] | null;
+  players: Player[];
+  foxPowerActive: boolean;
+  wolfVictimId: string | null;
+  ravenCursedId: string | null;
+  wildChildModelId: string | null;
+  wolfDogChoice: 'villager' | 'werewolf' | null;
+  protectorHistory: ProtectorRecord[];
+}
+
+export interface ProtectorRecord {
+  round: number;
+  targetId: string | null;
 }
 
 export interface GameState {
@@ -77,12 +100,12 @@ export interface GameState {
   discussionTimeSeconds: number;
   timerRunning: boolean;
   timerRemaining: number;
-  votes: Vote[];
   loversIds: [string, string] | null;
   mayorId: string | null;
   log: string[];
   usedGameAbilities: string[]; // e.g. 'witch_heal', 'witch_poison', 'infect_pere'
   optionalRules: Record<string, boolean>;
+  foxPowerActive: boolean;                 // true while Fox still has sniffing power
   // New role mechanics
   wildChildModelId: string | null;       // ID of Wild Child's chosen role model
   wildChildTransformed: boolean;         // true once Wild Child's model has died
