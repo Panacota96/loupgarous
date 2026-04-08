@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { ROLE_MAP, WOLF_ROLE_IDS } from '../../data/roles';
 import PlayerCard from './PlayerCard';
@@ -23,6 +23,7 @@ export default function DayPhase() {
   const togglePhase = useGameStore((s) => s.togglePhase);
 
   const [showTieBreaker, setShowTieBreaker] = useState(false);
+  const [activeTieSignature, setActiveTieSignature] = useState<string | null>(null);
   const [revealAll, setRevealAll] = useState(false);
   // Mayor bonus: track which player the Mayor voted for (adds +1 to their total)
   const [mayorVoteTarget, setMayorVoteTarget] = useState('');
@@ -71,6 +72,8 @@ export default function DayPhase() {
 
   const maxVotes = Math.max(0, ...Object.values(voteMap));
   const topPlayers = alivePlayers.filter((p) => voteMap[p.id] === maxVotes && maxVotes > 0);
+  const tiedPlayerIds = topPlayers.map((p) => p.id);
+  const tieSignature = tiedPlayerIds.join('|');
   const isTie = topPlayers.length > 1;
 
   const ravenCursedName = ravenCursedId
@@ -83,6 +86,25 @@ export default function DayPhase() {
       clearVotes();
     }
   };
+
+  const closeTieBreaker = useCallback(() => {
+    setShowTieBreaker(false);
+    setActiveTieSignature(null);
+  }, []);
+
+  const openTieBreaker = () => {
+    if (!isTie) return;
+    setActiveTieSignature(tieSignature);
+    setShowTieBreaker(true);
+  };
+
+  useEffect(() => {
+    if (!showTieBreaker) return;
+
+    if (!isTie || activeTieSignature !== tieSignature) {
+      closeTieBreaker();
+    }
+  }, [activeTieSignature, closeTieBreaker, isTie, showTieBreaker, tieSignature]);
 
   // Day triggers to remind DM
   const dayTriggers = alivePlayers
@@ -238,7 +260,7 @@ export default function DayPhase() {
                 ⚖️ TIE between {topPlayers.map((p) => p.name).join(' & ')}!
                 <button
                   className="btn btn-yellow"
-                  onClick={() => setShowTieBreaker(true)}
+                  onClick={openTieBreaker}
                 >
                   ⚖️ Tie-Breaker
                 </button>
@@ -251,7 +273,9 @@ export default function DayPhase() {
           </div>
         )}
 
-        {showTieBreaker && <TieBreaker />}
+        {showTieBreaker && (
+          <TieBreaker tiedPlayerIds={tiedPlayerIds} onClose={closeTieBreaker} />
+        )}
       </section>
 
       {/* Night transition */}

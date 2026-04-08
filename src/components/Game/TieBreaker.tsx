@@ -1,77 +1,70 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import '../../styles/tiebreaker.css';
 
-export default function TieBreaker() {
-  const players = useGameStore((s) => s.players.filter((p) => p.isAlive));
+interface Props {
+  tiedPlayerIds: string[];
+  onClose: () => void;
+}
+
+function pickRandomId(ids: string[]) {
+  if (ids.length < 2) return null;
+  return ids[Math.floor(Math.random() * ids.length)] ?? null;
+}
+
+export default function TieBreaker({ tiedPlayerIds, onClose }: Props) {
+  const players = useGameStore((s) => s.players);
   const eliminatePlayer = useGameStore((s) => s.eliminatePlayer);
+  const clearVotes = useGameStore((s) => s.clearVotes);
   const addLog = useGameStore((s) => s.addLog);
+  const [result] = useState<string | null>(() => pickRandomId(tiedPlayerIds));
+  const alivePlayers = useMemo(() => players.filter((p) => p.isAlive), [players]);
 
-  const [tieIds, setTieIds] = useState<string[]>([]);
-  const [result, setResult] = useState<string | null>(null);
+  const tiedPlayers = useMemo(
+    () =>
+      tiedPlayerIds
+        .map((id) => alivePlayers.find((p) => p.id === id))
+        .filter((player): player is (typeof alivePlayers)[number] => Boolean(player)),
+    [alivePlayers, tiedPlayerIds]
+  );
 
-  const toggle = (id: string) => {
-    setTieIds((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-    );
-    setResult(null);
-  };
+  const selectedPlayer = alivePlayers.find((p) => p.id === result) ?? null;
 
-  const runTieBreaker = () => {
-    if (tieIds.length < 2) return;
-    const pick = tieIds[Math.floor(Math.random() * tieIds.length)];
-    const name = players.find((p) => p.id === pick)?.name ?? pick;
-    setResult(pick);
-    addLog(`Tie-breaker: ${name} was randomly selected for elimination.`);
-  };
+  if (tiedPlayers.length < 2 || !selectedPlayer) {
+    return null;
+  }
 
   const confirmElim = () => {
-    if (!result) return;
-    eliminatePlayer(result);
-    setTieIds([]);
-    setResult(null);
+    eliminatePlayer(selectedPlayer.id);
+    clearVotes();
+    addLog(`Tie-breaker: ${selectedPlayer.name} was randomly selected for elimination.`);
+    onClose();
   };
 
   return (
-    <div className="tiebreaker">
+    <div className="tiebreaker" data-testid="tie-breaker-panel">
       <h3>⚖️ Tie-Breaker</h3>
-      <p className="tb-hint">Select the tied players, then roll the random tie-breaker.</p>
+      <p className="tb-hint">
+        The tied players were detected automatically. One of them was selected at random.
+      </p>
       <div className="tb-player-list">
-        {players.map((p) => (
-          <label key={p.id} className={`tb-player ${tieIds.includes(p.id) ? 'selected' : ''}`}>
-            <input
-              type="checkbox"
-              checked={tieIds.includes(p.id)}
-              onChange={() => toggle(p.id)}
-            />
+        {tiedPlayers.map((p) => (
+          <div key={p.id} className="tb-player selected readonly">
             {p.name}
-          </label>
+          </div>
         ))}
       </div>
-      <button
-        className="btn btn-yellow"
-        onClick={runTieBreaker}
-        disabled={tieIds.length < 2}
-      >
-        🎲 Random Pick
-      </button>
-      {result && (
-        <div className="tb-result">
-          <p>
-            ➡️ <strong>{players.find((p) => p.id === result)?.name}</strong> is
-            selected for elimination.
-          </p>
-          <button className="btn btn-danger" onClick={confirmElim}>
-            ☠️ Confirm Elimination
-          </button>
-          <button
-            className="btn btn-ghost"
-            onClick={() => { setResult(null); setTieIds([]); }}
-          >
-            Cancel
-          </button>
-        </div>
-      )}
+      <div className="tb-result" data-testid="tie-breaker-result">
+        <p>
+          ➡️ <strong>{selectedPlayer.name}</strong> is selected for elimination.
+        </p>
+        <button className="btn btn-danger" onClick={confirmElim}>
+          ☠️ Confirm Elimination
+        </button>
+        <button className="btn btn-ghost" onClick={onClose}>
+          Cancel
+        </button>
+      </div>
     </div>
   );
 }
