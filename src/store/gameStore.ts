@@ -86,12 +86,24 @@ const defaultGame: GameState = {
   language: 'en',
 };
 
-function buildNightSteps(roleIds: string[], round: number, foxPowerActive = true): NightStep[] {
-  return getNightOrder(roleIds, round, foxPowerActive).map((r, i) => ({
-    roleId: r.id,
-    stepIndex: i,
-    completed: false,
-  }));
+function buildNightSteps(
+  roleIds: string[],
+  round: number,
+  foxPowerActive = true,
+  usedGameAbilities: string[] = []
+): NightStep[] {
+  const witchPotionsAvailable = !(
+    usedGameAbilities.includes('witch_heal') &&
+    usedGameAbilities.includes('witch_poison')
+  );
+
+  return getNightOrder(roleIds, round, foxPowerActive)
+    .filter((r) => r.id !== 'witch' || witchPotionsAvailable)
+    .map((r, i) => ({
+      roleId: r.id,
+      stepIndex: i,
+      completed: false,
+    }));
 }
 
 function clonePlayers(players: Player[]) {
@@ -139,7 +151,8 @@ export const useGameStore = create<GameStore>()(
         const nightSteps = buildNightSteps(
           [...new Set(players.map((p) => p.roleId))],
           round,
-          true
+          true,
+          []
         );
         const nextState: Partial<GameStore> = {
           phase: 'night',
@@ -241,14 +254,14 @@ export const useGameStore = create<GameStore>()(
         const {
           players, eliminatedThisNight, round, discussionTimeSeconds, optionalRules,
           infectedPlayerIds, wildChildModelId, wildChildTransformed, log,
-          foxPowerActive,
+          foxPowerActive, usedGameAbilities,
         } = get();
         const strings = getStrings(get().language);
+        const extraLogParts: string[] = [];
 
         // Knight with Rusty Sword: if Knight was killed by wolves,
         // the first wolf to their LEFT (seating order) dies at dawn.
         const finalEliminated = [...eliminatedThisNight];
-        let extraLog = '';
         const knightPlayer = players.find((p) => p.isAlive && p.roleId === 'knight');
         if (knightPlayer && finalEliminated.includes(knightPlayer.id)) {
           const total = players.length;
@@ -262,10 +275,19 @@ export const useGameStore = create<GameStore>()(
             ) {
               if (!finalEliminated.includes(candidate.id)) {
                 finalEliminated.push(candidate.id);
-                extraLog = strings.logs.knightRustySword(candidate.name);
+                extraLogParts.push(strings.logs.knightRustySword(candidate.name));
               }
               break;
             }
+          }
+        }
+
+        const witchHealUsed = usedGameAbilities.includes('witch_heal');
+        const witchPoisonUsed = usedGameAbilities.includes('witch_poison');
+        if (witchHealUsed || witchPoisonUsed) {
+          extraLogParts.push(strings.logs.witchPotionsStatus(witchHealUsed, witchPoisonUsed));
+          if (witchHealUsed && witchPoisonUsed) {
+            extraLogParts.push(strings.logs.witchPotionsSpent);
           }
         }
 
@@ -279,7 +301,7 @@ export const useGameStore = create<GameStore>()(
 
         const roleIds = [...new Set(updated.filter((p) => p.isAlive).map((p) => p.roleId))];
         const newRound = round + 1;
-        const nightSteps = buildNightSteps(roleIds, newRound, foxPowerActive);
+        const nightSteps = buildNightSteps(roleIds, newRound, foxPowerActive, usedGameAbilities);
 
         const eliminatedNames = finalEliminated
           .map((id) => updated.find((p) => p.id === id)?.name)
@@ -289,7 +311,7 @@ export const useGameStore = create<GameStore>()(
         const nightMsg = strings.logs.nightSummary(
           round,
           eliminatedNames || null,
-          extraLog
+          extraLogParts.length > 0 ? ` ${extraLogParts.map((p) => p.trim()).join(' ')}` : ''
         );
 
         set({
@@ -308,11 +330,13 @@ export const useGameStore = create<GameStore>()(
       },
 
       togglePhase: () => {
-        const { phase, round, players, discussionTimeSeconds, optionalRules, foxPowerActive } = get();
+        const {
+          phase, round, players, discussionTimeSeconds, optionalRules, foxPowerActive, usedGameAbilities
+        } = get();
         if (phase === 'day') {
           const roleIds = [...new Set(players.filter((p) => p.isAlive).map((p) => p.roleId))];
           const newRound = round + 1;
-          const nightSteps = buildNightSteps(roleIds, newRound, foxPowerActive);
+          const nightSteps = buildNightSteps(roleIds, newRound, foxPowerActive, usedGameAbilities);
           const nextState: Partial<GameStore> = {
             phase: 'night',
             round: newRound,
