@@ -1,4 +1,4 @@
-import type { RoleDefinition, Language } from '../types/game.types';
+import type { RoleDefinition, Language, Player } from '../types/game.types';
 
 export const ROLES: RoleDefinition[] = [
   // ─── VILLAGEOIS ──────────────────────────────────────────────────────────────
@@ -620,6 +620,33 @@ export const ROLE_MAP: Record<string, RoleDefinition> = Object.fromEntries(
 
 /** All role IDs that count as werewolf-aligned */
 export const WOLF_ROLE_IDS = ['werewolf', 'big_bad_wolf', 'infect_pere'];
+
+interface WolfIdentityContext {
+  infectedPlayerIds?: string[];
+  wolfDogChoice?: 'villager' | 'werewolf' | null;
+  wildChildTransformed?: boolean;
+}
+
+/**
+ * Returns true when a player should be treated as a wolf identity for DM-facing
+ * reveals and reminders, including hidden or transformed wolf states.
+ */
+export function isPlayerWolfIdentity(
+  player: Pick<Player, 'id' | 'roleId'>,
+  {
+    infectedPlayerIds = [],
+    wolfDogChoice = null,
+    wildChildTransformed = false,
+  }: WolfIdentityContext = {}
+) {
+  return (
+    WOLF_ROLE_IDS.includes(player.roleId) ||
+    player.roleId === 'white_werewolf' ||
+    infectedPlayerIds.includes(player.id) ||
+    (player.roleId === 'wolf_dog' && wolfDogChoice === 'werewolf') ||
+    (player.roleId === 'wild_child' && wildChildTransformed)
+  );
+}
 
 /** Role IDs that are loners (win alone, not with village or wolves) */
 export const LONER_ROLE_IDS = ['white_werewolf', 'pied_piper', 'angel'];

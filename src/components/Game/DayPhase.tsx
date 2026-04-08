@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
-import { ROLE_MAP, WOLF_ROLE_IDS, getRoleTexts, getRoleName } from '../../data/roles';
+import { ROLE_MAP, getRoleTexts, getRoleName, isPlayerWolfIdentity } from '../../data/roles';
 import { useI18n } from '../../i18n';
 import PlayerCard from './PlayerCard';
 import Timer from './Timer';
@@ -42,10 +42,11 @@ export default function DayPhase() {
 
     const isWolfSide = (p: typeof players[0] | undefined) =>
       !!p &&
-      (WOLF_ROLE_IDS.includes(p.roleId) ||
-        infectedPlayerIds.includes(p.id) ||
-        (p.roleId === 'wolf_dog' && wolfDogChoice === 'werewolf') ||
-        (p.roleId === 'wild_child' && wildChildTransformed));
+      isPlayerWolfIdentity(p, {
+        infectedPlayerIds,
+        wolfDogChoice,
+        wildChildTransformed,
+      });
 
     let leftNeighbor: typeof players[0] | undefined;
     for (let offset = 1; offset < total; offset++) {
