@@ -19,6 +19,7 @@ export default function DayPhase() {
   const wildChildTransformed = useGameStore((s) => s.wildChildTransformed);
   const wolfDogChoice = useGameStore((s) => s.wolfDogChoice);
   const ravenCursedId = useGameStore((s) => s.ravenCursedId);
+  const foxPowerActive = useGameStore((s) => s.foxPowerActive);
 
   const setVote = useGameStore((s) => s.setVote);
   const clearVotes = useGameStore((s) => s.clearVotes);
@@ -82,6 +83,7 @@ export default function DayPhase() {
   const ravenCursedName = ravenCursedId
     ? (players.find((p) => p.id === ravenCursedId)?.name ?? null)
     : null;
+  const foxInGame = players.some((p) => p.roleId === 'fox');
 
   const executeTop = () => {
     if (topPlayers.length === 1) {
@@ -134,6 +136,13 @@ export default function DayPhase() {
               );
             })()
           ))}
+        </div>
+      )}
+
+      {/* Fox sniffing power status */}
+      {foxInGame && (
+        <div className="day-trigger-item">
+          {foxPowerActive ? t.day.foxPowerActive : t.day.foxPowerLost}
         </div>
       )}
 

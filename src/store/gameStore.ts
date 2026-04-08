@@ -24,6 +24,7 @@ interface StoreActions {
   addEnchanted: (ids: string[]) => void;
   infectPlayer: (id: string) => void;
   setAngelWon: (val: boolean) => void;
+  setFoxPowerActive: (active: boolean) => void;
   setWolfVictimId: (id: string | null) => void;
   setRavenCursed: (id: string | null) => void;
   togglePhase: () => void;
@@ -65,6 +66,7 @@ const defaultGame: GameState = {
   log: [],
   usedGameAbilities: [],
   optionalRules: {},
+  foxPowerActive: true,
   wildChildModelId: null,
   wildChildTransformed: false,
   wolfDogChoice: null,
@@ -76,8 +78,8 @@ const defaultGame: GameState = {
   language: 'en',
 };
 
-function buildNightSteps(roleIds: string[], round: number): NightStep[] {
-  return getNightOrder(roleIds, round).map((r, i) => ({
+function buildNightSteps(roleIds: string[], round: number, foxPowerActive = true): NightStep[] {
+  return getNightOrder(roleIds, round, foxPowerActive).map((r, i) => ({
     roleId: r.id,
     stepIndex: i,
     completed: false,
@@ -108,7 +110,8 @@ export const useGameStore = create<GameStore>()(
         const round = 1;
         const nightSteps = buildNightSteps(
           [...new Set(players.map((p) => p.roleId))],
-          round
+          round,
+          true
         );
         set({
           phase: 'night',
@@ -125,6 +128,7 @@ export const useGameStore = create<GameStore>()(
           log: [strings.logs.gameStarted(players.length)],
           usedGameAbilities: [],
           optionalRules,
+          foxPowerActive: true,
           wildChildModelId: null,
           wildChildTransformed: false,
           wolfDogChoice: null,
@@ -163,6 +167,7 @@ export const useGameStore = create<GameStore>()(
           usedGameAbilities: [...s.usedGameAbilities, 'infect_pere'],
         })),
       setAngelWon: (val) => set({ angelWon: val }),
+      setFoxPowerActive: (active) => set({ foxPowerActive: active }),
       setWolfVictimId: (id) => set({ wolfVictimId: id }),
       setRavenCursed: (id) => set({ ravenCursedId: id }),
 
@@ -170,6 +175,7 @@ export const useGameStore = create<GameStore>()(
         const {
           players, eliminatedThisNight, round, discussionTimeSeconds, optionalRules,
           infectedPlayerIds, wildChildModelId, wildChildTransformed, log,
+          foxPowerActive,
         } = get();
         const strings = getStrings(get().language);
 
@@ -207,7 +213,7 @@ export const useGameStore = create<GameStore>()(
 
         const roleIds = [...new Set(updated.filter((p) => p.isAlive).map((p) => p.roleId))];
         const newRound = round + 1;
-        const nightSteps = buildNightSteps(roleIds, newRound);
+        const nightSteps = buildNightSteps(roleIds, newRound, foxPowerActive);
 
         const eliminatedNames = finalEliminated
           .map((id) => updated.find((p) => p.id === id)?.name)
@@ -235,11 +241,11 @@ export const useGameStore = create<GameStore>()(
       },
 
       togglePhase: () => {
-        const { phase, round, players, discussionTimeSeconds, optionalRules } = get();
+        const { phase, round, players, discussionTimeSeconds, optionalRules, foxPowerActive } = get();
         if (phase === 'day') {
           const roleIds = [...new Set(players.filter((p) => p.isAlive).map((p) => p.roleId))];
           const newRound = round + 1;
-          const nightSteps = buildNightSteps(roleIds, newRound);
+          const nightSteps = buildNightSteps(roleIds, newRound, foxPowerActive);
           set({
             phase: 'night', round: newRound, nightSteps,
             currentNightStepIndex: 0, eliminatedThisNight: [], votes: [], optionalRules,

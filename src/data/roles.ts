@@ -625,13 +625,18 @@ export const WOLF_ROLE_IDS = ['werewolf', 'big_bad_wolf', 'infect_pere'];
 export const LONER_ROLE_IDS = ['white_werewolf', 'pied_piper', 'angel'];
 
 /** Returns night-phase roles in night order (ascending) for a given set of roleIds and round */
-export function getNightOrder(roleIds: string[], round: number): RoleDefinition[] {
+export function getNightOrder(
+  roleIds: string[],
+  round: number,
+  foxPowerActive = true
+): RoleDefinition[] {
   return ROLES.filter((r) => {
     if (r.nightOrder === null) return false;
     if (!roleIds.includes(r.id)) return false;
     if (r.firstNightOnly && round > 1) return false;
     if (r.everyOtherNight && round % 2 !== 0) return false;
     if (r.oddNightsOnly && round % 2 !== 1) return false;
+    if (!foxPowerActive && r.id === 'fox') return false;
     return true;
   }).sort((a, b) => (a.nightOrder as number) - (b.nightOrder as number));
 }
