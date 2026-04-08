@@ -439,7 +439,8 @@ export const useGameStore = create<GameStore>()(
           return persistedState as unknown as GameStore;
         }
 
-        const { votes: _votes, ...rest } = persistedState as Record<string, unknown>;
+        const rest = { ...(persistedState as Record<string, unknown>) };
+        delete rest.votes;
         return rest as unknown as GameStore;
       },
     }

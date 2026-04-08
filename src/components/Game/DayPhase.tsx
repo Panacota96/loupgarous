@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { ROLE_MAP, WOLF_ROLE_IDS, getRoleTexts, getRoleName } from '../../data/roles';
 import { useI18n } from '../../i18n';
@@ -79,23 +79,11 @@ export default function DayPhase() {
   const witchPoisonUsed = usedGameAbilities.includes('witch_poison');
   const witchPotionsSpent = witchHealUsed && witchPoisonUsed;
 
-  const selectedTiePlayers = selectedTieIds
+  const activeTieIds = selectedTieIds.filter((id) => alivePlayers.some((p) => p.id === id));
+  const selectedTiePlayers = activeTieIds
     .map((id) => alivePlayers.find((p) => p.id === id))
     .filter((player): player is (typeof alivePlayers)[number] => Boolean(player));
   const selectedTieNames = selectedTiePlayers.map((p) => p.name).join(' & ');
-
-  useEffect(() => {
-    setSelectedTieIds((ids) => {
-      const nextIds = ids.filter((id) => alivePlayers.some((p) => p.id === id));
-      return nextIds.length === ids.length ? ids : nextIds;
-    });
-  }, [alivePlayers]);
-
-  useEffect(() => {
-    if (selectedTieIds.length >= 2) return;
-    setShowTieBreaker(false);
-    setShowScapegoatConfirm(false);
-  }, [selectedTieIds]);
 
   const resetTieFlow = () => {
     setIsTieFlowOpen(false);
@@ -279,7 +267,7 @@ export default function DayPhase() {
 
             <div className="tb-player-list">
               {alivePlayers.map((player) => {
-                const selected = selectedTieIds.includes(player.id);
+                const selected = activeTieIds.includes(player.id);
                 return (
                   <button
                     key={player.id}
@@ -322,7 +310,7 @@ export default function DayPhase() {
 
             {showTieBreaker && selectedTiePlayers.length > 1 && !scapegoatPlayer && (
               <TieBreaker
-                tiedPlayerIds={selectedTieIds}
+                tiedPlayerIds={activeTieIds}
                 players={alivePlayers}
                 t={t}
                 onLog={addLog}
