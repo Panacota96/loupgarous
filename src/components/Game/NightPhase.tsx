@@ -4,6 +4,8 @@ import { ROLE_MAP, WOLF_ROLE_IDS, getRoleTexts, getRoleName } from '../../data/r
 import { getCampLabel, useI18n } from '../../i18n';
 import '../../styles/night.css';
 
+const PASSIVE_REMINDER_ROLE_IDS = ['bear_tamer', 'elder', 'village_idiot', 'scapegoat', 'hunter', 'angel'];
+
 export default function NightPhase() {
   const { language, t } = useI18n();
   const nightSteps = useGameStore((s) => s.nightSteps);
@@ -44,12 +46,26 @@ export default function NightPhase() {
   const [pipedP2, setPipedP2] = useState('');
   const [infectTarget, setInfectTarget] = useState('');
   const [ravenTarget, setRavenTarget] = useState('');
+  const [passiveChecks, setPassiveChecks] = useState<Record<string, boolean>>({});
 
   const allStepsDone = currentNightStepIndex >= nightSteps.length;
   const currentStep = nightSteps[currentNightStepIndex];
   const currentRole = currentStep ? ROLE_MAP[currentStep.roleId] : null;
   const currentRoleText = currentRole ? getRoleTexts(currentRole, language) : null;
   const currentRoleName = currentRole ? getRoleName(currentRole, language) : '';
+
+  const passiveReminderRoles = useMemo(
+    () => {
+      const uniqueRoleIds = [...new Set(allPlayers.map((p) => p.roleId))];
+      return uniqueRoleIds
+        .map((id) => ROLE_MAP[id])
+        .filter(
+          (r): r is NonNullable<typeof ROLE_MAP[string]> =>
+            !!r && PASSIVE_REMINDER_ROLE_IDS.includes(r.id)
+        );
+    },
+    [allPlayers]
+  );
 
   const witchHealUsed = usedGameAbilities.includes('witch_heal');
   const witchPoisonUsed = usedGameAbilities.includes('witch_poison');
@@ -412,6 +428,40 @@ export default function NightPhase() {
           <p className="night-subtitle">{t.night.subtitle}</p>
         </div>
       </div>
+
+      {round === 1 && passiveReminderRoles.length > 0 && (
+        <div className="gm-checklist" data-testid="passive-checklist">
+          <div className="gm-checklist__header">
+            <span className="gm-checklist__icon">📋</span>
+            <div>
+              <h3>{t.night.passiveTitle}</h3>
+              <p className="gm-checklist__subtitle">{t.night.passiveSubtitle}</p>
+            </div>
+          </div>
+          <div className="gm-checklist__items">
+            {passiveReminderRoles.map((r) => {
+              const texts = getRoleTexts(r, language);
+              const reminder = texts.dayTrigger ?? texts.revealTrigger ?? texts.description ?? '';
+              const checked = passiveChecks[r.id] ?? false;
+              return (
+                <label key={r.id} className="gm-checklist__item">
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) =>
+                      setPassiveChecks((prev) => ({ ...prev, [r.id]: e.target.checked }))
+                    }
+                  />
+                  <span>
+                    {r.emoji} <strong>{getRoleName(r, language)}:</strong> {reminder}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+          <p className="gm-checklist__hint">{t.night.passiveHint}</p>
+        </div>
+      )}
 
       <div className="night-steps-bar">
         {nightSteps.map((step, i) => {
