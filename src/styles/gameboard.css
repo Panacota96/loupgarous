@@ -46,10 +46,20 @@
 .tabs {
   display: flex;
   gap: 0.25rem;
+  align-items: flex-end;
   padding: 0.7rem 1.2rem 0;
   border-bottom: 1px solid var(--border);
   background: rgba(14,9,20,0.9);
   backdrop-filter: blur(6px);
+}
+.tabs-desktop {
+  display: flex;
+  gap: 0.25rem;
+}
+.tabs-mobile-config {
+  display: none;
+  margin-left: auto;
+  position: relative;
 }
 .tab-btn {
   padding: 0.5rem 1rem;
@@ -71,6 +81,46 @@
   border: 1px solid var(--border);
   border-bottom-color: transparent;
   box-shadow: 0 -4px 14px rgba(185,42,58,0.25);
+}
+.conf-tab-btn {
+  min-width: 5.4rem;
+  justify-content: center;
+}
+.conf-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.55rem);
+  min-width: 9.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(14,9,20,0.98);
+  box-shadow: 0 14px 34px rgba(0,0,0,0.42);
+  z-index: 12;
+}
+.conf-menu-item {
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  color: var(--text);
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: left;
+  padding: 0.65rem 0.8rem;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.conf-menu-item:hover {
+  background: rgba(255,255,255,0.07);
+  border-color: var(--border);
+}
+.conf-menu-item.active {
+  background: rgba(185,42,58,0.14);
+  border-color: rgba(185,42,58,0.42);
 }
 
 .tab-content {
@@ -122,3 +172,31 @@
 .win-white_werewolf h2 { color: #e0e0e0; }
 .win-angel h2 { color: #f0c060; }
 .win-screen p { color: var(--text-muted); font-size: 1rem; letter-spacing: 0.04em; }
+
+@media (max-width: 640px) {
+  .gameboard-topbar {
+    padding-inline: 0.85rem;
+  }
+
+  .tabs {
+    padding-inline: 0.85rem;
+  }
+
+  .tabs-desktop {
+    display: none;
+  }
+
+  .tabs-mobile-config {
+    display: block;
+  }
+
+  .tab-btn {
+    padding-inline: 0.85rem;
+    font-size: 0.82rem;
+  }
+
+  .conf-menu {
+    right: 0;
+    min-width: 8.75rem;
+  }
+}

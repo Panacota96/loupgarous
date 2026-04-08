@@ -2,8 +2,8 @@ import { useState, useCallback } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { SETUP_ROLE_IDS, SETUP_ROLES, getRoleName, getRoleTexts } from '../../data/roles';
 import RoleReference from '../Roles/RoleReference';
-import QuickGuide from './QuickGuide';
 import LanguageToggle from '../LanguageToggle';
+import QuickGuide from './QuickGuide';
 import { useI18n } from '../../i18n';
 import '../../styles/setup.css';
 
@@ -17,7 +17,7 @@ export default function SetupScreen() {
   const setSetup = useGameStore((s) => s.setSetup);
   const startGame = useGameStore((s) => s.startGame);
 
-  const [tab, setTab] = useState<'setup' | 'roles'>('setup');
+  const [tab, setTab] = useState<'setup' | 'roles' | 'guide'>('setup');
   const [playerCount, setPlayerCount] = useState(6);
   const [playerNames, setPlayerNames] = useState<string[]>(
     Array.from({ length: 6 }, (_, i) => t.setup.playerNamePlaceholder(i + 1))
@@ -74,7 +74,7 @@ export default function SetupScreen() {
       setRoleAssignment(() => {
         const next = preset.roles.slice(0, clamped);
         while (next.length < clamped) next.push('villager');
-        return next.map((id) => (SETUP_ROLE_IDS.has(id) ? id : 'villager'));
+        return next.map((id: string) => (SETUP_ROLE_IDS.has(id) ? id : 'villager'));
       });
       setOptionalRules({});
     },
@@ -163,10 +163,17 @@ export default function SetupScreen() {
         >
           📚 {t.tabs.roles}
         </button>
+        <button
+          className={`tab-btn ${tab === 'guide' ? 'active' : ''}`}
+          onClick={() => setTab('guide')}
+          data-testid="setup-tab-guide"
+        >
+          {language === 'fr' ? '📘 Guide rapide' : '📘 Quick Guide'}
+        </button>
       </div>
 
       {tab === 'setup' ? (
-        <>
+        <div data-testid="setup-main-tab">
           {/* Player Count */}
           <section className="setup-section">
             <h2>👥 {t.setup.numberOfPlayers}</h2>
@@ -283,8 +290,6 @@ export default function SetupScreen() {
             </section>
           )}
 
-          <QuickGuide onApplyPreset={applyStarterPreset} />
-
           {/* Errors */}
           {errors.length > 0 && (
             <div className="setup-errors">
@@ -304,11 +309,21 @@ export default function SetupScreen() {
           >
             {t.setup.startGame}
           </button>
-        </>
-      ) : (
+        </div>
+      ) : tab === 'roles' ? (
         <section className="roles-tab-panel" data-testid="setup-roles-tab">
           <p className="roles-tab-hint">{t.setup.rolesTabHint}</p>
           <RoleReference />
+          <div className="roles-tab-actions">
+            <button className="btn btn-primary btn-large" onClick={() => setTab('setup')}>
+              {t.setup.backToSetup}
+            </button>
+          </div>
+        </section>
+      ) : (
+        <section className="roles-tab-panel guide-tab-panel" data-testid="setup-guide-tab">
+          <p className="roles-tab-hint">{t.quickGuide.subtitle}</p>
+          <QuickGuide onApplyPreset={applyStarterPreset} />
           <div className="roles-tab-actions">
             <button className="btn btn-primary btn-large" onClick={() => setTab('setup')}>
               {t.setup.backToSetup}

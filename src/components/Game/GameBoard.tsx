@@ -24,6 +24,7 @@ export default function GameBoard() {
   const { t } = useI18n();
 
   const [tab, setTab] = useState<Tab>('game');
+  const [isConfigOpen, setIsConfigOpen] = useState(false);
 
   const alivePlayers = players.filter((p) => p.isAlive);
 
@@ -62,6 +63,11 @@ export default function GameBoard() {
   else if (piedPiperWins) winner = 'pied_piper';
   else if (whiteWolfWins) winner = 'white_werewolf';
   else if (angelWon) winner = 'angel';
+
+  const openTab = (nextTab: Tab) => {
+    setTab(nextTab);
+    setIsConfigOpen(false);
+  };
 
   return (
     <div className={`gameboard ${phase}`}>
@@ -139,22 +145,58 @@ export default function GameBoard() {
           <div className="tabs">
             <button
               className={`tab-btn ${tab === 'game' ? 'active' : ''}`}
-              onClick={() => setTab('game')}
+              onClick={() => openTab('game')}
+              data-testid="gameboard-tab-game"
             >
               {t.game.tabs.game}
             </button>
-            <button
-              className={`tab-btn ${tab === 'roles' ? 'active' : ''}`}
-              onClick={() => setTab('roles')}
-            >
-              {t.game.tabs.roles}
-            </button>
-            <button
-              className={`tab-btn ${tab === 'log' ? 'active' : ''}`}
-              onClick={() => setTab('log')}
-            >
-              {t.game.tabs.log}
-            </button>
+            <div className="tabs-desktop">
+              <button
+                className={`tab-btn ${tab === 'roles' ? 'active' : ''}`}
+                onClick={() => openTab('roles')}
+                data-testid="gameboard-tab-roles"
+              >
+                📚 Roles
+              </button>
+              <button
+                className={`tab-btn ${tab === 'log' ? 'active' : ''}`}
+                onClick={() => openTab('log')}
+                data-testid="gameboard-tab-log"
+              >
+                📜 Log
+              </button>
+            </div>
+            <div className="tabs-mobile-config">
+              <button
+                className={`tab-btn conf-tab-btn ${tab !== 'game' || isConfigOpen ? 'active' : ''}`}
+                onClick={() => setIsConfigOpen((open) => !open)}
+                aria-expanded={isConfigOpen}
+                aria-haspopup="menu"
+                data-testid="gameboard-tab-conf"
+              >
+                ⚙️ Conf
+              </button>
+              {isConfigOpen && (
+                <div className="conf-menu" role="menu" data-testid="gameboard-conf-menu">
+                  <button
+                    className={`conf-menu-item ${tab === 'roles' ? 'active' : ''}`}
+                    onClick={() => openTab('roles')}
+                    role="menuitem"
+                    data-testid="gameboard-conf-roles"
+                  >
+                    📚 Roles
+                  </button>
+                  <button
+                    className={`conf-menu-item ${tab === 'log' ? 'active' : ''}`}
+                    onClick={() => openTab('log')}
+                    role="menuitem"
+                    data-testid="gameboard-conf-log"
+                  >
+                    📜 Log
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="tab-content">

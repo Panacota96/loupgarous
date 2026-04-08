@@ -16,6 +16,16 @@ test('base 6-player game flow stays visible and interactive', async ({ page }, t
   await test.step('setup 6 players with 2 wolves', async () => {
     await page.goto('./');
     await expect(page.getByRole('heading', { name: 'Loup-Garous' })).toBeVisible();
+    await expect(page.getByTestId('setup-main-tab')).toBeVisible();
+
+    // DM can open the quick guide without mixing it into the main setup screen
+    await page.getByTestId('setup-tab-guide').click();
+    await expect(page.getByTestId('setup-guide-tab')).toBeVisible();
+    await expect(page.getByTestId('setup-main-tab')).not.toBeVisible();
+    await expect(page.getByRole('heading', { name: /Quick Guide/i })).toBeVisible();
+
+    await page.getByTestId('setup-tab-setup').click();
+    await expect(page.getByTestId('setup-main-tab')).toBeVisible();
 
     // DM can review role reference before assigning
     await page.getByTestId('setup-tab-roles').click();
