@@ -1,13 +1,19 @@
 import { useState } from 'react';
-import { useGameStore } from '../../store/gameStore';
-import { useI18n } from '../../i18n';
+import type { useI18n } from '../../i18n';
 import '../../styles/tiebreaker.css';
 
-export default function TieBreaker() {
-  const { t } = useI18n();
-  const players = useGameStore((s) => s.players.filter((p) => p.isAlive));
-  const eliminatePlayer = useGameStore((s) => s.eliminatePlayer);
-  const addLog = useGameStore((s) => s.addLog);
+type Strings = ReturnType<typeof useI18n>['t'];
+type SimplePlayer = { id: string; name: string };
+
+type Props = {
+  players: SimplePlayer[];
+  t: Strings;
+  onEliminate: (id: string) => void;
+  onLog: (message: string) => void;
+  onClose?: () => void;
+};
+
+export default function TieBreaker({ players, t, onEliminate, onLog, onClose }: Props) {
 
   const [tieIds, setTieIds] = useState<string[]>([]);
   const [result, setResult] = useState<string | null>(null);
@@ -24,14 +30,15 @@ export default function TieBreaker() {
     const pick = tieIds[Math.floor(Math.random() * tieIds.length)];
     const name = players.find((p) => p.id === pick)?.name ?? pick;
     setResult(pick);
-    addLog(t.logs.tieBreaker(name));
+    onLog(t.logs.tieBreaker(name));
   };
 
   const confirmElim = () => {
     if (!result) return;
-    eliminatePlayer(result);
+    onEliminate(result);
     setTieIds([]);
     setResult(null);
+    onClose?.();
   };
 
   return (
@@ -67,7 +74,11 @@ export default function TieBreaker() {
           </button>
           <button
             className="btn btn-ghost"
-            onClick={() => { setResult(null); setTieIds([]); }}
+            onClick={() => {
+              setResult(null);
+              setTieIds([]);
+              onClose?.();
+            }}
           >
             {t.tieBreaker.cancel}
           </button>

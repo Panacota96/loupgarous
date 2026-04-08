@@ -22,9 +22,11 @@ sleep 15
 
 (adb shell pidof -s "$package_name" || true) | tee "$artifact_dir/pid.txt"
 (adb shell dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp' || true) | tee "$artifact_dir/focus.txt"
+# Capture the app log before running helper tools like uiautomator, which may
+# emit their own AndroidRuntime crashes unrelated to the target application.
+adb logcat -d > "$artifact_dir/logcat.txt"
 adb exec-out uiautomator dump /dev/tty > "$artifact_dir/ui.xml" || true
 adb exec-out screencap -p > "$artifact_dir/launch.png" || true
-adb logcat -d > "$artifact_dir/logcat.txt"
 
 if ! grep -Eq '[0-9]+' "$artifact_dir/pid.txt"; then
   echo "Application process did not stay alive after launch." >&2
@@ -38,7 +40,7 @@ if ! grep -q "$package_name" "$artifact_dir/focus.txt" \
   exit 1
 fi
 
-if grep -Eq "FATAL EXCEPTION|ANR in ${package_name}|Process ${package_name} .* has died" "$artifact_dir/logcat.txt"; then
+if grep -Eq "ANR in ${package_name}|Process: ${package_name}, PID:|Process ${package_name} .* has died" "$artifact_dir/logcat.txt"; then
   echo "Crash or ANR detected in logcat." >&2
   exit 1
 fi
