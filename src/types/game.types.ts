@@ -27,6 +27,8 @@ export interface RoleDefinition {
   minCount: number;
   maxCount: number;
   nightOrder: number | null; // null = day-only or passive
+  /** Roles that can be chosen during setup (statuses like Mayor are excluded) */
+  setupSelectable?: boolean;
   nightPhaseOnly?: boolean;
   firstNightOnly?: boolean;
   everyOtherNight?: boolean;

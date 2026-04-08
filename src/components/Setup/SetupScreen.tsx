@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react';
 import { useGameStore } from '../../store/gameStore';
-import { ROLES, getRoleName, getRoleTexts } from '../../data/roles';
+import { SETUP_ROLE_IDS, SETUP_ROLES, getRoleName, getRoleTexts } from '../../data/roles';
 import RoleReference from '../Roles/RoleReference';
 import LanguageToggle from '../LanguageToggle';
 import { useI18n } from '../../i18n';
@@ -56,7 +56,7 @@ export default function SetupScreen() {
   const handleRoleChange = (i: number, roleId: string) => {
     setRoleAssignment((prev) => {
       const next = [...prev];
-      next[i] = roleId;
+      next[i] = SETUP_ROLE_IDS.has(roleId) ? roleId : 'villager';
       return next;
     });
   };
@@ -64,13 +64,14 @@ export default function SetupScreen() {
   // Tally roles assigned
   const roleCounts: Record<string, number> = {};
   roleAssignment.slice(0, playerCount).forEach((r) => {
-    roleCounts[r] = (roleCounts[r] ?? 0) + 1;
+    const roleId = SETUP_ROLE_IDS.has(r) ? r : 'villager';
+    roleCounts[roleId] = (roleCounts[roleId] ?? 0) + 1;
   });
 
   // Validation
   const errors: string[] = [];
   Object.entries(roleCounts).forEach(([id, count]) => {
-    const def = ROLES.find((r) => r.id === id);
+    const def = SETUP_ROLES.find((r) => r.id === id);
     if (!def) return;
     const roleLabel = getRoleName(def, language);
     if (count > def.maxCount)
@@ -86,17 +87,23 @@ export default function SetupScreen() {
 
   const handleStart = () => {
     if (!canStart) return;
+    const sanitizedRoleIds = roleAssignment
+      .slice(0, playerCount)
+      .map((id) => (SETUP_ROLE_IDS.has(id) ? id : 'villager'));
+    const allowedOptionalRules = Object.fromEntries(
+      Object.entries(optionalRules).filter(([id]) => SETUP_ROLE_IDS.has(id))
+    );
     setSetup({
       playerNames: playerNames.slice(0, playerCount),
-      roleIds: roleAssignment.slice(0, playerCount),
+      roleIds: sanitizedRoleIds,
       discussionTime,
-      optionalRules,
+      optionalRules: allowedOptionalRules,
     });
     startGame();
   };
 
   // Role distribution helper: roles that have optional rules
-  const optionalRoleRules = ROLES.filter((r) => r.optionalRule);
+  const optionalRoleRules = SETUP_ROLES.filter((r) => r.optionalRule);
 
   return (
     <div className="setup-screen">
@@ -183,7 +190,7 @@ export default function SetupScreen() {
                     value={roleAssignment[i] ?? 'villager'}
                     onChange={(e) => handleRoleChange(i, e.target.value)}
                   >
-                    {ROLES.map((r) => (
+                    {SETUP_ROLES.map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.emoji} {getRoleName(r, language)}
                       </option>
@@ -199,7 +206,7 @@ export default function SetupScreen() {
             <h2>📊 {t.setup.roleSummary}</h2>
             <div className="role-summary">
               {Object.entries(roleCounts).map(([id, count]) => {
-                const def = ROLES.find((r) => r.id === id);
+                const def = SETUP_ROLES.find((r) => r.id === id);
                 if (!def) return null;
                 return (
                   <div key={id} className={`role-badge camp-${def.camp}`}>

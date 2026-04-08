@@ -221,6 +221,7 @@ export const ROLES: RoleDefinition[] = [
     name: 'Mayor / Captain',
     nameFr: 'Maire / Capitaine',
     camp: 'village',
+    setupSelectable: false,
     minCount: 0,
     maxCount: 1,
     nightOrder: null,
@@ -588,6 +589,10 @@ export const ROLES: RoleDefinition[] = [
     emoji: '👼',
   },
 ];
+
+/** Roles that can be assigned during pre-game setup (excludes in-game statuses like Mayor) */
+export const SETUP_ROLES = ROLES.filter((r) => r.setupSelectable !== false);
+export const SETUP_ROLE_IDS = new Set(SETUP_ROLES.map((r) => r.id));
 
 export function getRoleName(role: RoleDefinition, language: Language) {
   return language === 'fr' ? role.nameFr : role.name;
