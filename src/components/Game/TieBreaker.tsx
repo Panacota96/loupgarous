@@ -6,6 +6,7 @@ type Strings = ReturnType<typeof useI18n>['t'];
 type SimplePlayer = { id: string; name: string };
 
 type Props = {
+  tiedPlayerIds: string[];
   players: SimplePlayer[];
   t: Strings;
   onEliminate: (id: string) => void;
@@ -13,36 +14,38 @@ type Props = {
   onClose?: () => void;
 };
 
-export default function TieBreaker({ players, t, onEliminate, onLog, onClose }: Props) {
+function pickRandomId(ids: string[]) {
+  if (ids.length < 2) return null;
+  return ids[Math.floor(Math.random() * ids.length)] ?? null;
+}
 
-  const tiedPlayers = useMemo(
-    () =>
-      tiedPlayerIds
-        .map((id) => alivePlayers.find((p) => p.id === id))
-        .filter((player): player is (typeof alivePlayers)[number] => Boolean(player)),
-    [alivePlayers, tiedPlayerIds]
-  );
+export default function TieBreaker({
+  tiedPlayerIds,
+  players,
+  t,
+  onEliminate,
+  onLog,
+  onClose,
+}: Props) {
+  const tiedPlayers = tiedPlayerIds
+    .map((id) => players.find((p) => p.id === id))
+    .filter((player): player is SimplePlayer => Boolean(player));
+  const [result] = useState<string | null>(() => pickRandomId(tiedPlayerIds));
 
-  const selectedPlayer = alivePlayers.find((p) => p.id === result) ?? null;
+  const selectedPlayer = tiedPlayers.find((p) => p.id === result) ?? null;
 
-  const runTieBreaker = () => {
-    if (tieIds.length < 2) return;
-    const pick = tieIds[Math.floor(Math.random() * tieIds.length)];
-    const name = players.find((p) => p.id === pick)?.name ?? pick;
-    setResult(pick);
-    onLog(t.logs.tieBreaker(name));
-  };
+  if (tiedPlayers.length < 2 || !selectedPlayer) {
+    return null;
+  }
 
   const confirmElim = () => {
-    if (!result) return;
-    onEliminate(result);
-    setTieIds([]);
-    setResult(null);
+    onEliminate(selectedPlayer.id);
+    onLog(t.logs.tieBreaker(selectedPlayer.name));
     onClose?.();
   };
 
   return (
-    <div className="tiebreaker">
+    <div className="tiebreaker" data-testid="tie-breaker-panel">
       <h3>{t.tieBreaker.title}</h3>
       <p className="tb-hint">{t.tieBreaker.hint}</p>
       <div className="tb-player-list">
@@ -52,33 +55,15 @@ export default function TieBreaker({ players, t, onEliminate, onLog, onClose }: 
           </div>
         ))}
       </div>
-      <button
-        className="btn btn-yellow"
-        onClick={runTieBreaker}
-        disabled={tieIds.length < 2}
-      >
-        {t.tieBreaker.randomPick}
-      </button>
-      {result && (
-        <div className="tb-result">
-          <p>
-            {t.tieBreaker.selected(players.find((p) => p.id === result)?.name ?? '')}
-          </p>
-          <button className="btn btn-danger" onClick={confirmElim}>
-            {t.tieBreaker.confirm}
-          </button>
-          <button
-            className="btn btn-ghost"
-            onClick={() => {
-              setResult(null);
-              setTieIds([]);
-              onClose?.();
-            }}
-          >
-            {t.tieBreaker.cancel}
-          </button>
-        </div>
-      )}
+      <div className="tb-result" data-testid="tie-breaker-result">
+        <p>{t.tieBreaker.selected(selectedPlayer.name)}</p>
+        <button className="btn btn-danger" onClick={confirmElim}>
+          {t.tieBreaker.confirm}
+        </button>
+        <button className="btn btn-ghost" onClick={() => onClose?.()}>
+          {t.tieBreaker.cancel}
+        </button>
+      </div>
     </div>
   );
 }

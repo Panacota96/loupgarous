@@ -497,7 +497,7 @@ const translations: Record<Language, Strings> = {
     },
     tieBreaker: {
       title: '⚖️ Tie-Breaker',
-      hint: 'Select the tied players, then roll the random tie-breaker.',
+      hint: 'The tied players were detected automatically. One of them was selected at random.',
       randomPick: '🎲 Random Pick',
       selected: (name: string) => `➡️ ${name} is selected for elimination.`,
       confirm: '☠️ Confirm Elimination',
@@ -772,7 +772,7 @@ const translations: Record<Language, Strings> = {
     },
     tieBreaker: {
       title: '⚖️ Bris d’égalité',
-      hint: 'Sélectionnez les joueurs à égalité puis lancez le tirage au sort.',
+      hint: 'Les joueurs à égalité ont été détectés automatiquement. L’un d’eux a été tiré au sort.',
       randomPick: '🎲 Tirage aléatoire',
       selected: (name: string) => `➡️ ${name} est choisi pour l’élimination.`,
       confirm: '☠️ Confirmer l’élimination',
