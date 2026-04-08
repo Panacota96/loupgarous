@@ -82,6 +82,9 @@ export default function SetupScreen() {
   const wolfCount = roleCounts['werewolf'] ?? 0;
   if (wolfCount === 0)
     errors.push(t.setup.errors.needWolf);
+  const sistersDef = SETUP_ROLES.find((r) => r.id === 'soeurs');
+  if (sistersDef && (roleCounts['soeurs'] ?? 0) === 1)
+    errors.push(t.setup.errors.pairRequired(getRoleName(sistersDef, language)));
 
   const canStart = errors.length === 0;
 
