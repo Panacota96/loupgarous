@@ -22,6 +22,7 @@ interface Strings {
       tooMany: (name: string, max: number) => string;
       notEnough: (name: string, min: number) => string;
       needWolf: string;
+      pairRequired: (name: string) => string;
     };
   };
   quickGuide: {
@@ -241,6 +242,7 @@ const translations: Record<Language, Strings> = {
         tooMany: (name: string, max: number) => `Too many "${name}" (max ${max}).`,
         notEnough: (name: string, min: number) => `Not enough "${name}" (min ${min}).`,
         needWolf: 'You must have at least 1 Werewolf.',
+        pairRequired: (name: string) => `"${name}" must be assigned either 0 or 2 times.`,
       },
     },
     quickGuide: {
@@ -466,6 +468,7 @@ const translations: Record<Language, Strings> = {
         tooMany: (name: string, max: number) => `Trop de « ${name} » (max ${max}).`,
         notEnough: (name: string, min: number) => `Pas assez de « ${name} » (min ${min}).`,
         needWolf: 'Vous devez avoir au moins 1 Loup-Garou.',
+        pairRequired: (name: string) => `« ${name} » doit être attribué soit 0 soit 2 fois.`,
       },
     },
     quickGuide: {
