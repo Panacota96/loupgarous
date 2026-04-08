@@ -2,7 +2,9 @@ import { useState, useCallback } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { SETUP_ROLE_IDS, SETUP_ROLES, getRoleName, getRoleTexts } from '../../data/roles';
 import RoleReference from '../Roles/RoleReference';
+import LanguageToggle from '../LanguageToggle';
 import QuickGuide from './QuickGuide';
+import { useI18n } from '../../i18n';
 import '../../styles/setup.css';
 
 const MIN_PLAYERS = 5;
@@ -72,7 +74,7 @@ export default function SetupScreen() {
       setRoleAssignment(() => {
         const next = preset.roles.slice(0, clamped);
         while (next.length < clamped) next.push('villager');
-        return next.map((id) => (SETUP_ROLE_IDS.has(id) ? id : 'villager'));
+        return next.map((id: string) => (SETUP_ROLE_IDS.has(id) ? id : 'villager'));
       });
       setOptionalRules({});
     },
@@ -166,7 +168,7 @@ export default function SetupScreen() {
           onClick={() => setTab('guide')}
           data-testid="setup-tab-guide"
         >
-          📘 Quick Guide
+          {language === 'fr' ? '📘 Guide rapide' : '📘 Quick Guide'}
         </button>
       </div>
 
@@ -288,8 +290,6 @@ export default function SetupScreen() {
             </section>
           )}
 
-          <QuickGuide onApplyPreset={applyStarterPreset} />
-
           {/* Errors */}
           {errors.length > 0 && (
             <div className="setup-errors">
@@ -322,13 +322,11 @@ export default function SetupScreen() {
         </section>
       ) : (
         <section className="roles-tab-panel guide-tab-panel" data-testid="setup-guide-tab">
-          <p className="roles-tab-hint">
-            Keep the balance notes out of the main setup flow and open them only when needed.
-          </p>
-          <QuickGuide />
+          <p className="roles-tab-hint">{t.quickGuide.subtitle}</p>
+          <QuickGuide onApplyPreset={applyStarterPreset} />
           <div className="roles-tab-actions">
             <button className="btn btn-primary btn-large" onClick={() => setTab('setup')}>
-              ↩️ Back to setup
+              {t.setup.backToSetup}
             </button>
           </div>
         </section>
