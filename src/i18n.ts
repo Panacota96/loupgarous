@@ -35,6 +35,17 @@ interface Strings {
     spicy: string;
     ratioTitle: string;
     ratios: string[];
+    startersTitle: string;
+    startersSubtitle: string;
+    applyPreset: string;
+    playersLabel: (count: number) => string;
+    starterSets: {
+      id: string;
+      title: string;
+      description: string;
+      players: number;
+      roles: string[];
+    }[];
   };
   roles: {
     referenceTitle: string;
@@ -127,6 +138,8 @@ interface Strings {
     foxFoundWolf: string;
     foxFoundNone: string;
     foxReminder: string;
+    goBack: string;
+    backHint: string;
     done: string;
     nightEnds: string;
     noElim: string;
@@ -268,6 +281,33 @@ const translations: Record<Language, Strings> = {
         '13–16 players: 4 wolves',
         '17–20 players: 4–5 wolves depending on how many chaotic roles you add',
       ],
+      startersTitle: 'Starter packs for new GMs',
+      startersSubtitle: 'One-click role spreads that are fast to run and easy to explain.',
+      applyPreset: 'Use this setup',
+      playersLabel: (count: number) => `${count} players`,
+      starterSets: [
+        {
+          id: 'classic-6',
+          title: 'Gentle intro (6p)',
+          description: 'Teach night flow with one wolf and the core information/power roles.',
+          players: 6,
+          roles: ['werewolf', 'seer', 'witch', 'protector', 'hunter', 'villager'],
+        },
+        {
+          id: 'balanced-8',
+          title: 'Balanced village (8p)',
+          description: 'Two wolves, protection, and Cupid for light drama without chaos.',
+          players: 8,
+          roles: ['werewolf', 'werewolf', 'seer', 'witch', 'protector', 'cupid', 'hunter', 'villager'],
+        },
+        {
+          id: 'spicy-10',
+          title: 'Spicy but fair (10p)',
+          description: 'Three wolves plus Raven pressure; still keeps clear information roles.',
+          players: 10,
+          roles: ['werewolf', 'werewolf', 'werewolf', 'seer', 'witch', 'cupid', 'raven', 'bear_tamer', 'villager', 'villager'],
+        },
+      ],
     },
     roles: {
       referenceTitle: '📚 Role Reference',
@@ -380,6 +420,8 @@ const translations: Record<Language, Strings> = {
       foxFoundNone: '❌ No wolves (power lost)',
       foxReminder:
         'If the 3 chosen seats have no werewolves, the Fox loses this power for the rest of the game.',
+      goBack: '↩️ Back to previous step',
+      backHint: 'Tap any completed role above to rewind and fix that step.',
       done: '✅ Done — Next',
       nightEnds: '🌅 Night ends',
       noElim: 'No one was eliminated tonight. 🐱',
@@ -496,6 +538,33 @@ const translations: Record<Language, Strings> = {
         '13–16 joueurs : 4 loups',
         '17–20 joueurs : 4–5 loups selon les rôles chaotiques ajoutés',
       ],
+      startersTitle: 'Packs prêts à jouer',
+      startersSubtitle: 'Des répartitions rapides pour lancer une partie sans préparation.',
+      applyPreset: 'Utiliser ce setup',
+      playersLabel: (count: number) => `${count} joueurs`,
+      starterSets: [
+        {
+          id: 'classic-6',
+          title: 'Intro douce (6j)',
+          description: 'Une explication simple : un loup, des rôles d’info et de protection.',
+          players: 6,
+          roles: ['werewolf', 'seer', 'witch', 'protector', 'hunter', 'villager'],
+        },
+        {
+          id: 'balanced-8',
+          title: 'Village équilibré (8j)',
+          description: 'Deux loups, protection et Cupidon : du drama léger sans chaos.',
+          players: 8,
+          roles: ['werewolf', 'werewolf', 'seer', 'witch', 'protector', 'cupid', 'hunter', 'villager'],
+        },
+        {
+          id: 'spicy-10',
+          title: 'Épicé mais lisible (10j)',
+          description: 'Trois loups avec pression du Corbeau et des rôles d’info clairs.',
+          players: 10,
+          roles: ['werewolf', 'werewolf', 'werewolf', 'seer', 'witch', 'cupid', 'raven', 'bear_tamer', 'villager', 'villager'],
+        },
+      ],
     },
     roles: {
       referenceTitle: '📚 Référence des rôles',
@@ -608,6 +677,8 @@ const translations: Record<Language, Strings> = {
       foxFoundNone: '❌ Aucun loup (pouvoir perdu)',
       foxReminder:
         'Si les 3 joueurs choisis ne comptent aucun loup, le Renard perd ce pouvoir pour toute la partie.',
+      goBack: '↩️ Retour à l’étape précédente',
+      backHint: 'Touchez un rôle déjà validé pour revenir en arrière et corriger.',
       done: '✅ Terminé — Suivant',
       nightEnds: '🌅 Fin de nuit',
       noElim: 'Personne éliminé cette nuit. 🐱',

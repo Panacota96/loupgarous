@@ -34,6 +34,7 @@ export default function NightPhase() {
   const setWolfVictimIdStore = useGameStore((s) => s.setWolfVictimId);
   const setRavenCursed = useGameStore((s) => s.setRavenCursed);
   const setFoxPowerActiveStore = useGameStore((s) => s.setFoxPowerActive);
+  const goToNightStepStore = useGameStore((s) => s.goToNightStep);
 
   const [witchSave, setWitchSave] = useState(false);
   const [witchKill, setWitchKill] = useState('');
@@ -191,6 +192,19 @@ export default function NightPhase() {
     }
 
     completeNightStep();
+    resetLocalState();
+  };
+
+  const handleBackStep = () => {
+    if (currentNightStepIndex <= 0 || nightSteps.length === 0) return;
+    const target = Math.min(currentNightStepIndex - 1, nightSteps.length - 1);
+    goToNightStepStore(target);
+    resetLocalState();
+  };
+
+  const handleJumpToStep = (index: number) => {
+    if (index < 0 || index >= currentNightStepIndex) return;
+    goToNightStepStore(index);
     resetLocalState();
   };
 
@@ -533,28 +547,51 @@ export default function NightPhase() {
       <div className="night-steps-bar">
         {nightSteps.map((step, i) => {
           const r = ROLE_MAP[step.roleId];
+          const canJump = i < currentNightStepIndex;
           return (
             <div
               key={i}
-              className={`step-pip ${step.completed ? 'done' : ''} ${i === currentNightStepIndex ? 'active' : ''}`}
+              className={`step-pip ${step.completed ? 'done' : ''} ${i === currentNightStepIndex ? 'active' : ''} ${canJump ? 'clickable' : ''}`}
               title={r ? getRoleName(r, language) : undefined}
+              role={canJump ? 'button' : undefined}
+              tabIndex={canJump ? 0 : -1}
+              onClick={canJump ? () => handleJumpToStep(i) : undefined}
+              onKeyDown={
+                canJump
+                  ? (e) => {
+                      if (e.key === 'Enter' || e.key === ' ') handleJumpToStep(i);
+                    }
+                  : undefined
+              }
             >
               {r?.emoji}
             </div>
           );
         })}
       </div>
+      {currentNightStepIndex > 0 && (
+        <p className="night-nav-hint">{t.night.backHint}</p>
+      )}
 
       {!allStepsDone ? (
         <>
           {renderStepContent()}
-          <button
-            className="btn btn-primary btn-large"
-            data-testid="night-next"
-            onClick={handleCompleteStep}
-          >
-            {t.night.done}
-          </button>
+          <div className="night-actions">
+            <button
+              className="btn btn-ghost"
+              onClick={handleBackStep}
+              disabled={currentNightStepIndex <= 0}
+            >
+              {t.night.goBack}
+            </button>
+            <button
+              className="btn btn-primary btn-large"
+              data-testid="night-next"
+              onClick={handleCompleteStep}
+            >
+              {t.night.done}
+            </button>
+          </div>
         </>
       ) : (
         <div className="night-summary">
@@ -571,13 +608,22 @@ export default function NightPhase() {
               </strong>
             </p>
           )}
-          <button
-            className="btn btn-primary btn-large"
-            data-testid="reveal-day"
-            onClick={applyNightResults}
-          >
-            {t.night.revealDay}
-          </button>
+          <div className="night-actions summary-actions">
+            <button
+              className="btn btn-ghost"
+              onClick={handleBackStep}
+              disabled={currentNightStepIndex <= 0}
+            >
+              {t.night.goBack}
+            </button>
+            <button
+              className="btn btn-primary btn-large"
+              data-testid="reveal-day"
+              onClick={applyNightResults}
+            >
+              {t.night.revealDay}
+            </button>
+          </div>
         </div>
       )}
     </div>

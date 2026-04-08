@@ -1,6 +1,12 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Player, GameState, NightStep, Language } from '../types/game.types';
+import type {
+  Player,
+  GameState,
+  NightStep,
+  NightStepState,
+  Language,
+} from '../types/game.types';
 import { getNightOrder, WOLF_ROLE_IDS } from '../data/roles';
 import { getStrings } from '../i18n';
 
@@ -16,6 +22,7 @@ interface StoreActions {
   startGame: () => void;
   resetGame: () => void;
   completeNightStep: () => void;
+  goToNightStep: (index: number) => void;
   setEliminatedThisNight: (ids: string[]) => void;
   useGameAbility: (key: string) => void;
   applyNightResults: () => void;
@@ -55,6 +62,7 @@ const defaultGame: GameState = {
   round: 0,
   players: [],
   nightSteps: [],
+  nightStepStates: [],
   currentNightStepIndex: 0,
   eliminatedThisNight: [],
   discussionTimeSeconds: 180,
@@ -86,6 +94,26 @@ function buildNightSteps(roleIds: string[], round: number, foxPowerActive = true
   }));
 }
 
+function clonePlayers(players: Player[]) {
+  return players.map((p) => ({ ...p }));
+}
+
+function captureNightState(state: GameStore): NightStepState {
+  return {
+    eliminatedThisNight: [...state.eliminatedThisNight],
+    usedGameAbilities: [...state.usedGameAbilities],
+    enchantedPlayerIds: [...state.enchantedPlayerIds],
+    infectedPlayerIds: [...state.infectedPlayerIds],
+    loversIds: state.loversIds ? [...state.loversIds] as [string, string] : null,
+    players: clonePlayers(state.players),
+    foxPowerActive: state.foxPowerActive,
+    wolfVictimId: state.wolfVictimId,
+    ravenCursedId: state.ravenCursedId,
+    wildChildModelId: state.wildChildModelId,
+    wolfDogChoice: state.wolfDogChoice,
+  };
+}
+
 export const useGameStore = create<GameStore>()(
   persist(
     (set, get) => ({
@@ -113,43 +141,81 @@ export const useGameStore = create<GameStore>()(
           round,
           true
         );
-        set({
+        const nextState: Partial<GameStore> = {
           phase: 'night',
           round,
           players,
           nightSteps,
           currentNightStepIndex: 0,
-          eliminatedThisNight: [],
+          eliminatedThisNight: [] as string[],
           timerRemaining: discussionTime,
           discussionTimeSeconds: discussionTime,
-          votes: [],
+          votes: [] as GameState['votes'],
           loversIds: null,
           mayorId: null,
           log: [strings.logs.gameStarted(players.length)],
-          usedGameAbilities: [],
+          usedGameAbilities: [] as string[],
           optionalRules,
           foxPowerActive: true,
           wildChildModelId: null,
           wildChildTransformed: false,
           wolfDogChoice: null,
-          enchantedPlayerIds: [],
-          infectedPlayerIds: [],
+          enchantedPlayerIds: [] as string[],
+          infectedPlayerIds: [] as string[],
           angelWon: false,
           wolfVictimId: null,
           ravenCursedId: null,
           language: language ?? 'en',
-        });
+        };
+        const snapshotBase = { ...get(), ...nextState, nightStepStates: [] } as GameStore;
+        const nightStepStates = [captureNightState(snapshotBase)];
+        set({ ...nextState, nightStepStates });
       },
 
       resetGame: () => set((s) => ({ ...defaultSetup, ...defaultGame, language: s.language })),
 
-      completeNightStep: () => {
-        const { nightSteps, currentNightStepIndex } = get();
-        const updated = nightSteps.map((s, i) =>
-          i === currentNightStepIndex ? { ...s, completed: true } : s
-        );
-        set({ nightSteps: updated, currentNightStepIndex: currentNightStepIndex + 1 });
-      },
+      completeNightStep: () =>
+        set((state) => {
+          const updated = state.nightSteps.map((s, i) =>
+            i === state.currentNightStepIndex ? { ...s, completed: true } : s
+          );
+          const nextIndex = state.currentNightStepIndex + 1;
+          const history = [...(state.nightStepStates ?? [])];
+          history[nextIndex] = captureNightState(state);
+          return {
+            nightSteps: updated,
+            currentNightStepIndex: nextIndex,
+            nightStepStates: history,
+          };
+        }),
+
+      goToNightStep: (index) =>
+        set((state) => {
+          const target = Math.max(0, Math.min(index, state.nightSteps.length - 1));
+          const history = state.nightStepStates ?? [];
+          const snapshot = history[target];
+          if (!snapshot) return {};
+          const nightSteps = state.nightSteps.map((step, i) => ({
+            ...step,
+            completed: i < target,
+          }));
+          return {
+            eliminatedThisNight: [...snapshot.eliminatedThisNight],
+            usedGameAbilities: [...snapshot.usedGameAbilities],
+            enchantedPlayerIds: [...snapshot.enchantedPlayerIds],
+            infectedPlayerIds: [...snapshot.infectedPlayerIds],
+            loversIds: snapshot.loversIds ? [...snapshot.loversIds] as [string, string] : null,
+            players: clonePlayers(snapshot.players),
+            foxPowerActive: snapshot.foxPowerActive,
+            wolfVictimId: snapshot.wolfVictimId,
+            ravenCursedId: snapshot.ravenCursedId,
+            wildChildModelId: snapshot.wildChildModelId,
+            wolfDogChoice: snapshot.wolfDogChoice,
+            nightSteps,
+            currentNightStepIndex: target,
+            nightStepStates: history.slice(0, target + 1),
+          };
+        }),
 
       setEliminatedThisNight: (ids) => set({ eliminatedThisNight: ids }),
 
@@ -232,6 +298,7 @@ export const useGameStore = create<GameStore>()(
           eliminatedThisNight: [],
           nightSteps,
           currentNightStepIndex: 0,
+          nightStepStates: [],
           timerRemaining: discussionTimeSeconds,
           log: [...log, nightMsg],
           optionalRules,
@@ -246,13 +313,21 @@ export const useGameStore = create<GameStore>()(
           const roleIds = [...new Set(players.filter((p) => p.isAlive).map((p) => p.roleId))];
           const newRound = round + 1;
           const nightSteps = buildNightSteps(roleIds, newRound, foxPowerActive);
-          set({
-            phase: 'night', round: newRound, nightSteps,
-            currentNightStepIndex: 0, eliminatedThisNight: [], votes: [], optionalRules,
+          const nextState: Partial<GameStore> = {
+            phase: 'night',
+            round: newRound,
+            nightSteps,
+            currentNightStepIndex: 0,
+            eliminatedThisNight: [] as string[],
+            votes: [] as GameState['votes'],
+            optionalRules,
             ravenCursedId: null,
-          });
+          };
+          const snapshotBase = { ...get(), ...nextState, nightStepStates: [] } as GameStore;
+          const nightStepStates = [captureNightState(snapshotBase)];
+          set({ ...nextState, nightStepStates });
         } else {
-          set({ phase: 'day', timerRemaining: discussionTimeSeconds, votes: [] });
+          set({ phase: 'day', timerRemaining: discussionTimeSeconds, votes: [], nightStepStates: [] });
         }
       },
 
