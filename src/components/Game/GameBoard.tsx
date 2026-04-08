@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
-import { WOLF_ROLE_IDS, LONER_ROLE_IDS } from '../../data/roles';
+import { WOLF_ROLE_IDS, INDEPENDENT_LONER_ROLE_IDS } from '../../data/roles';
 import NightPhase from './NightPhase';
 import DayPhase from './DayPhase';
 import RoleReference from '../Roles/RoleReference';
@@ -35,11 +35,16 @@ export default function GameBoard() {
     (p.roleId === 'wild_child' && wildChildTransformed) ||
     infectedPlayerIds.includes(p.id);
 
-  const wolfCount = alivePlayers.filter(isWolfAligned).length;
+  const packWolfCount = alivePlayers.filter(isWolfAligned).length;
+  const whiteWolfAlive = alivePlayers.some((p) => p.roleId === 'white_werewolf');
 
-  // Loners are not counted as village (they have independent win conditions)
+  // Village parity excludes pack wolves, White Werewolf, and truly independent loners.
   const villageCount = alivePlayers.filter(
-    (p) => !isWolfAligned(p) && !LONER_ROLE_IDS.includes(p.roleId)
+    (p) => (
+      !isWolfAligned(p) &&
+      p.roleId !== 'white_werewolf' &&
+      !INDEPENDENT_LONER_ROLE_IDS.includes(p.roleId)
+    )
   ).length;
 
   // Pied Piper wins when ALL other alive players are enchanted
@@ -53,8 +58,13 @@ export default function GameBoard() {
     alivePlayers.length === 1 && alivePlayers[0]?.roleId === 'white_werewolf';
 
   // Standard win conditions
-  const villageWins = wolfCount === 0 && !piedPiperWins && !whiteWolfWins && !angelWon;
-  const wolvesWin = wolfCount > 0 && wolfCount >= villageCount && !piedPiperWins && !whiteWolfWins && !angelWon;
+  const villageWins = packWolfCount === 0 && !whiteWolfAlive && !piedPiperWins && !whiteWolfWins && !angelWon;
+  const wolvesWin =
+    packWolfCount > 0 &&
+    packWolfCount >= villageCount &&
+    !piedPiperWins &&
+    !whiteWolfWins &&
+    !angelWon;
 
   const gameOver = villageWins || wolvesWin || piedPiperWins || whiteWolfWins || angelWon;
 
@@ -78,7 +88,7 @@ export default function GameBoard() {
             {t.game.phaseChip(phase, round)}
           </span>
           <span className="alive-chip">{t.game.alive(alivePlayers.length)}</span>
-          <span className="wolf-chip">{t.game.wolves(wolfCount)}</span>
+          <span className="wolf-chip">{t.game.wolves(packWolfCount)}</span>
         </div>
         <div className="topbar-right">
           <LanguageToggle compact />
