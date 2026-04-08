@@ -158,6 +158,8 @@ interface Strings {
     infectedBar: string;
     foxPowerActive: string;
     foxPowerLost: string;
+    witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) => string;
+    witchPotionsSpent: string;
     playersTitle: (alive: number) => string;
     votingTitle: string;
     resetVotes: string;
@@ -200,6 +202,8 @@ interface Strings {
     dayElimination: (round: number, names: string) => string;
     tieBreaker: (name: string) => string;
     knightRustySword: (name: string) => string;
+    witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) => string;
+    witchPotionsSpent: string;
   };
   camps: Record<Camp, string>;
 }
@@ -442,6 +446,9 @@ const translations: Record<Language, Strings> = {
       infectedBar: '🦠 Secret wolves (infected):',
       foxPowerActive: '🦊 Fox sniffing power: ACTIVE',
       foxPowerLost: '🦊 Fox sniffing power: LOST (skip future Fox wake-ups)',
+      witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
+        `🧙‍♀️ Witch potions — Healing: ${healUsed ? 'USED' : 'available'}, Death: ${poisonUsed ? 'USED' : 'available'}.`,
+      witchPotionsSpent: '🧙‍♀️ Witch has no potions left (skip future Witch wake-ups).',
       playersTitle: (alive: number) => `👥 Players (${alive} alive)`,
       votingTitle: '🗳️ Voting',
       resetVotes: '🔄 Reset Votes',
@@ -485,6 +492,9 @@ const translations: Record<Language, Strings> = {
       dayElimination: (round: number, names: string) => `Day ${round}: ${names} eliminated.`,
       tieBreaker: (name: string) => `Tie-breaker: ${name} was randomly selected for elimination.`,
       knightRustySword: (name: string) => ` ⚔️ Knight's rusty sword: ${name} dies of tetanus!`,
+      witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
+        `🧙‍♀️ Witch potions — Healing: ${healUsed ? 'USED' : 'available'}, Death: ${poisonUsed ? 'USED' : 'available'}.`,
+      witchPotionsSpent: '🧙‍♀️ Witch has no potions left and will skip future wake-ups.',
     },
     camps: campLabels.en,
   },
@@ -699,6 +709,9 @@ const translations: Record<Language, Strings> = {
       infectedBar: '🦠 Loups secrets (infectés) :',
       foxPowerActive: '🦊 Pouvoir du Renard : ACTIF',
       foxPowerLost: '🦊 Pouvoir du Renard : PERDU (ne plus le réveiller)',
+      witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
+        `🧙‍♀️ Potions de la Sorcière — Vie : ${healUsed ? 'UTILISÉE' : 'disponible'}, Mort : ${poisonUsed ? 'UTILISÉE' : 'disponible'}.`,
+      witchPotionsSpent: '🧙‍♀️ La Sorcière n’a plus de potions (ne se réveillera plus).',
       playersTitle: (alive: number) => `👥 Joueurs (${alive} vivants)`,
       votingTitle: '🗳️ Votes',
       resetVotes: '🔄 Réinitialiser les votes',
@@ -742,6 +755,9 @@ const translations: Record<Language, Strings> = {
       dayElimination: (round: number, names: string) => `Jour ${round} : ${names} éliminé(s).`,
       tieBreaker: (name: string) => `Bris d’égalité : ${name} a été tiré au sort pour être éliminé.`,
       knightRustySword: (name: string) => ` ⚔️ Épée rouillée du Chevalier : ${name} meurt du tétanos !`,
+      witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
+        `🧙‍♀️ Potions de la Sorcière — Vie : ${healUsed ? 'UTILISÉE' : 'disponible'}, Mort : ${poisonUsed ? 'UTILISÉE' : 'disponible'}.`,
+      witchPotionsSpent: '🧙‍♀️ La Sorcière n’a plus de potions et ne se réveillera plus.',
     },
     camps: campLabels.fr,
   },

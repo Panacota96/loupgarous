@@ -20,6 +20,7 @@ export default function DayPhase() {
   const wolfDogChoice = useGameStore((s) => s.wolfDogChoice);
   const ravenCursedId = useGameStore((s) => s.ravenCursedId);
   const foxPowerActive = useGameStore((s) => s.foxPowerActive);
+  const usedGameAbilities = useGameStore((s) => s.usedGameAbilities);
 
   const setVote = useGameStore((s) => s.setVote);
   const clearVotes = useGameStore((s) => s.clearVotes);
@@ -84,6 +85,10 @@ export default function DayPhase() {
     ? (players.find((p) => p.id === ravenCursedId)?.name ?? null)
     : null;
   const foxInGame = players.some((p) => p.roleId === 'fox');
+  const witchInGame = players.some((p) => p.roleId === 'witch' && p.isAlive);
+  const witchHealUsed = usedGameAbilities.includes('witch_heal');
+  const witchPoisonUsed = usedGameAbilities.includes('witch_poison');
+  const witchPotionsSpent = witchHealUsed && witchPoisonUsed;
 
   const executeTop = () => {
     if (topPlayers.length === 1) {
@@ -143,6 +148,14 @@ export default function DayPhase() {
       {foxInGame && (
         <div className="day-trigger-item">
           {foxPowerActive ? t.day.foxPowerActive : t.day.foxPowerLost}
+        </div>
+      )}
+
+      {/* Witch potion status */}
+      {witchInGame && (
+        <div className="day-trigger-item">
+          {t.day.witchPotionsStatus(witchHealUsed, witchPoisonUsed)}
+          {witchPotionsSpent && <span className="win-alert"> {t.day.witchPotionsSpent}</span>}
         </div>
       )}
 
