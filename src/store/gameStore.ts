@@ -6,7 +6,6 @@ import type {
   NightStep,
   NightStepState,
   Language,
-  ProtectorRecord,
 } from '../types/game.types';
 import { getNightOrder, WOLF_ROLE_IDS } from '../data/roles';
 import { getStrings } from '../i18n';
@@ -84,6 +83,8 @@ const defaultGame: GameState = {
   wolfVictimId: null,
   ravenCursedId: null,
   language: 'en',
+  protectedPlayerId: null,
+  lastProtectedPlayerId: null,
 };
 
 function buildNightSteps(
@@ -124,7 +125,60 @@ function captureNightState(state: GameStore): NightStepState {
     wildChildModelId: state.wildChildModelId,
     wolfDogChoice: state.wolfDogChoice,
     protectorHistory: state.protectorHistory.map((p) => ({ ...p })),
+    protectedPlayerId: state.protectedPlayerId,
+    lastProtectedPlayerId: state.lastProtectedPlayerId,
   };
+}
+
+export function resolveNightEliminations(
+  players: Player[],
+  eliminatedThisNight: string[],
+  infectedPlayerIds: string[],
+  loversIds: [string, string] | null
+) {
+  const finalEliminated = [...eliminatedThisNight];
+  let knightLog = '';
+  let loversLog = '';
+
+  const knightPlayer = players.find((p) => p.isAlive && p.roleId === 'knight');
+  if (knightPlayer && finalEliminated.includes(knightPlayer.id)) {
+    const total = players.length;
+    const knightIdx = players.findIndex((p) => p.id === knightPlayer.id);
+    for (let offset = 1; offset < total; offset++) {
+      const candidate = players[(knightIdx - offset + total) % total];
+      if (!candidate.isAlive) continue;
+      if (
+        WOLF_ROLE_IDS.includes(candidate.roleId) ||
+        infectedPlayerIds.includes(candidate.id)
+      ) {
+        if (!finalEliminated.includes(candidate.id)) {
+          finalEliminated.push(candidate.id);
+          knightLog = `⚔️ Knight's rusty sword: ${candidate.name} dies of tetanus!`;
+        }
+        break;
+      }
+    }
+  }
+
+  if (loversIds) {
+    const [loverAId, loverBId] = loversIds;
+    const loverAEliminated = finalEliminated.includes(loverAId);
+    const loverBEliminated = finalEliminated.includes(loverBId);
+
+    if (loverAEliminated !== loverBEliminated) {
+      const chainedId = loverAEliminated ? loverBId : loverAId;
+      const fallenId = loverAEliminated ? loverAId : loverBId;
+      const chainedPlayer = players.find((p) => p.id === chainedId);
+
+      if (chainedPlayer?.isAlive && !finalEliminated.includes(chainedId)) {
+        finalEliminated.push(chainedId);
+        const fallenName = players.find((p) => p.id === fallenId)?.name ?? 'Unknown';
+        loversLog = `💘 Lovers: ${chainedPlayer.name} dies with ${fallenName}.`;
+      }
+    }
+  }
+
+  return { finalEliminated, knightLog, loversLog };
 }
 
 export const useGameStore = create<GameStore>()(
@@ -161,25 +215,27 @@ export const useGameStore = create<GameStore>()(
           players,
           nightSteps,
           currentNightStepIndex: 0,
-          eliminatedThisNight: [] as string[],
+          eliminatedThisNight: [],
           timerRemaining: discussionTime,
           discussionTimeSeconds: discussionTime,
           loversIds: null,
           mayorId: null,
           log: [strings.logs.gameStarted(players.length)],
-          usedGameAbilities: [] as string[],
+          usedGameAbilities: [],
           optionalRules,
           foxPowerActive: true,
-          protectorHistory: [] as ProtectorRecord[],
+          protectorHistory: [],
           wildChildModelId: null,
           wildChildTransformed: false,
           wolfDogChoice: null,
-          enchantedPlayerIds: [] as string[],
-          infectedPlayerIds: [] as string[],
+          enchantedPlayerIds: [],
+          infectedPlayerIds: [],
           angelWon: false,
           wolfVictimId: null,
           ravenCursedId: null,
           language: language ?? 'en',
+          protectedPlayerId: null,
+          lastProtectedPlayerId: null,
         };
         const snapshotBase = { ...get(), ...nextState, nightStepStates: [] } as GameStore;
         const nightStepStates = [captureNightState(snapshotBase)];
@@ -226,6 +282,8 @@ export const useGameStore = create<GameStore>()(
             wildChildModelId: snapshot.wildChildModelId,
             wolfDogChoice: snapshot.wolfDogChoice,
             protectorHistory: snapshot.protectorHistory.map((p) => ({ ...p })),
+            protectedPlayerId: snapshot.protectedPlayerId,
+            lastProtectedPlayerId: snapshot.lastProtectedPlayerId,
             nightSteps,
             currentNightStepIndex: target,
             nightStepStates: history.slice(0, target + 1),
@@ -256,40 +314,38 @@ export const useGameStore = create<GameStore>()(
           const withoutCurrentRound = s.protectorHistory.filter((p) => p.round !== s.round);
           return {
             protectorHistory: [...withoutCurrentRound, { round: s.round, targetId }],
+            protectedPlayerId: targetId,
           };
         }),
 
       applyNightResults: () => {
         const {
-          players, eliminatedThisNight, round, discussionTimeSeconds, optionalRules,
-          infectedPlayerIds, wildChildModelId, wildChildTransformed, log,
-          foxPowerActive, usedGameAbilities, protectorHistory,
+          players,
+          eliminatedThisNight,
+          round,
+          discussionTimeSeconds,
+          optionalRules,
+          infectedPlayerIds,
+          wildChildModelId,
+          wildChildTransformed,
+          log,
+          foxPowerActive,
+          usedGameAbilities,
+          protectorHistory,
+          loversIds,
+          protectedPlayerId,
         } = get();
         const strings = getStrings(get().language);
         const extraLogParts: string[] = [];
+        const { finalEliminated, knightLog, loversLog } = resolveNightEliminations(
+          players,
+          eliminatedThisNight,
+          infectedPlayerIds,
+          loversIds
+        );
 
-        // Knight with Rusty Sword: if Knight was killed by wolves,
-        // the first wolf to their LEFT (seating order) dies at dawn.
-        const finalEliminated = [...eliminatedThisNight];
-        const knightPlayer = players.find((p) => p.isAlive && p.roleId === 'knight');
-        if (knightPlayer && finalEliminated.includes(knightPlayer.id)) {
-          const total = players.length;
-          const knightIdx = players.findIndex((p) => p.id === knightPlayer.id);
-          for (let offset = 1; offset < total; offset++) {
-            const candidate = players[(knightIdx - offset + total) % total];
-            if (!candidate.isAlive) continue;
-            if (
-              WOLF_ROLE_IDS.includes(candidate.roleId) ||
-              infectedPlayerIds.includes(candidate.id)
-            ) {
-              if (!finalEliminated.includes(candidate.id)) {
-                finalEliminated.push(candidate.id);
-                extraLogParts.push(strings.logs.knightRustySword(candidate.name));
-              }
-              break;
-            }
-          }
-        }
+        if (knightLog) extraLogParts.push(knightLog);
+        if (loversLog) extraLogParts.push(loversLog);
 
         const witchHealUsed = usedGameAbilities.includes('witch_heal');
         const witchPoisonUsed = usedGameAbilities.includes('witch_poison');
@@ -332,7 +388,7 @@ export const useGameStore = create<GameStore>()(
         const nightMsg = strings.logs.nightSummary(
           round,
           eliminatedNames || null,
-          extraLogParts.length > 0 ? ` ${extraLogParts.map((p) => p.trim()).join(' ')}` : ''
+          extraLogParts.length > 0 ? ` ${extraLogParts.join(' ')}` : ''
         );
 
         set({
@@ -347,12 +403,20 @@ export const useGameStore = create<GameStore>()(
           optionalRules,
           wildChildTransformed: newWildChildTransformed,
           wolfVictimId: null,
+          protectedPlayerId: null,
+          lastProtectedPlayerId: protectedPlayerId,
         });
       },
 
       togglePhase: () => {
         const {
-          phase, round, players, discussionTimeSeconds, optionalRules, foxPowerActive, usedGameAbilities
+          phase,
+          round,
+          players,
+          discussionTimeSeconds,
+          optionalRules,
+          foxPowerActive,
+          usedGameAbilities,
         } = get();
         if (phase === 'day') {
           const roleIds = [...new Set(players.filter((p) => p.isAlive).map((p) => p.roleId))];
@@ -363,9 +427,10 @@ export const useGameStore = create<GameStore>()(
             round: newRound,
             nightSteps,
             currentNightStepIndex: 0,
-            eliminatedThisNight: [] as string[],
+            eliminatedThisNight: [],
             optionalRules,
             ravenCursedId: null,
+            protectedPlayerId: null,
           };
           const snapshotBase = { ...get(), ...nextState, nightStepStates: [] } as GameStore;
           const nightStepStates = [captureNightState(snapshotBase)];

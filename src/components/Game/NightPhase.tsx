@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { useGameStore } from '../../store/gameStore';
+import { resolveNightEliminations, useGameStore } from '../../store/gameStore';
 import {
   ROLE_MAP,
   WOLF_ROLE_IDS,
@@ -28,6 +28,9 @@ export default function NightPhase() {
   const foxPowerActive = useGameStore((s) => s.foxPowerActive);
   const enchantedPlayerIds = useGameStore((s) => s.enchantedPlayerIds);
   const protectorHistory = useGameStore((s) => s.protectorHistory);
+  const protectedPlayerId = useGameStore((s) => s.protectedPlayerId);
+  const lastProtectedPlayerId = useGameStore((s) => s.lastProtectedPlayerId);
+  const loversIds = useGameStore((s) => s.loversIds);
 
   const completeNightStep = useGameStore((s) => s.completeNightStep);
   const setEliminatedThisNight = useGameStore((s) => s.setEliminatedThisNight);
@@ -69,29 +72,24 @@ export default function NightPhase() {
   const currentRoleText = currentRole ? getRoleTexts(currentRole, language) : null;
   const currentRoleName = currentRole ? getRoleName(currentRole, language) : '';
 
-  const passiveReminderRoles = useMemo(
-    () => {
-      const uniqueRoleIds = [...new Set(allPlayers.map((p) => p.roleId))];
-      return uniqueRoleIds
-        .map((id) => ROLE_MAP[id])
-        .filter(
-          (r): r is NonNullable<typeof ROLE_MAP[string]> =>
-            !!r && PASSIVE_REMINDER_ROLE_IDS.includes(r.id)
-        );
-    },
-    [allPlayers]
-  );
+  const passiveReminderRoles = useMemo(() => {
+    const uniqueRoleIds = [...new Set(allPlayers.map((p) => p.roleId))];
+    return uniqueRoleIds
+      .map((id) => ROLE_MAP[id])
+      .filter(
+        (r): r is NonNullable<typeof ROLE_MAP[string]> =>
+          !!r && PASSIVE_REMINDER_ROLE_IDS.includes(r.id)
+      );
+  }, [allPlayers]);
 
   const witchHealUsed = usedGameAbilities.includes('witch_heal');
   const witchPoisonUsed = usedGameAbilities.includes('witch_poison');
   const infectPereUsed = usedGameAbilities.includes('infect_pere');
 
-  // Has any wolf-aligned player been eliminated already?
   const anyWolfEliminated = allPlayers.some(
     (p) => !p.isAlive && (WOLF_ROLE_IDS.includes(p.roleId) || infectedPlayerIds.includes(p.id))
   );
 
-  // Alive pure wolves (not white werewolf) for White Werewolf target
   const alivePureWolves = players.filter(
     (p) => WOLF_ROLE_IDS.includes(p.roleId) && p.roleId !== 'white_werewolf'
   );
@@ -131,9 +129,30 @@ export default function NightPhase() {
       : null;
     return { ...prior, targetName };
   }, [protectorHistory, round, allPlayers]);
+  const previousProtectedPlayerId = lastProtectedPlayerId ?? lastProtection?.targetId ?? null;
+  const currentProtectedPlayerId = protectedPlayerId ?? protectionThisNight?.targetId ?? null;
   const currentProtectionValue = protectorTouched
     ? protectorTarget
-    : protectionThisNight?.targetId ?? '';
+    : currentProtectedPlayerId ?? '';
+  const protectablePlayers = players.filter((p) => p.id !== previousProtectedPlayerId);
+  const currentProtectedPlayer = currentProtectedPlayerId
+    ? allPlayers.find((p) => p.id === currentProtectedPlayerId) ?? null
+    : null;
+  const protectedWolfTarget = currentProtectedPlayerId
+    ? wolfTargets.find((p) => p.id === currentProtectedPlayerId) ?? null
+    : null;
+  const currentWolfTargets = wolfTargets.filter((p) => p.id !== currentProtectedPlayerId);
+  const bigBadWolfTargets = players.filter(
+    (p) => p.id !== wolfVictim && !eliminatedThisNight.includes(p.id) && !isWolfAligned(p)
+  );
+  const protectedBigBadTarget = currentProtectedPlayerId
+    ? bigBadWolfTargets.find((p) => p.id === currentProtectedPlayerId) ?? null
+    : null;
+  const currentBigBadTargets = bigBadWolfTargets.filter((p) => p.id !== currentProtectedPlayerId);
+  const canCompleteStep =
+    currentRole?.id !== 'protector' ||
+    protectablePlayers.length === 0 ||
+    protectablePlayers.some((p) => p.id === currentProtectionValue);
   const foxHasSingleTrio = players.length === 3;
   const foxCenterOptions = useMemo(
     () => (foxHasSingleTrio ? players.slice(0, 1) : players),
@@ -148,6 +167,10 @@ export default function NightPhase() {
     return [-1, 0, 1].map((offset) => players[(centerIndex + offset + players.length) % players.length]);
   }, [players, selectedFoxCenterId]);
   const foxFoundWolf = foxTrioPlayers.some((p) => isWolfIdentity(p));
+  const nightResolutionPreview = useMemo(
+    () => resolveNightEliminations(allPlayers, eliminatedThisNight, infectedPlayerIds, loversIds),
+    [allPlayers, eliminatedThisNight, infectedPlayerIds, loversIds]
+  );
 
   const resetLocalState = () => {
     setWolfVictim('');
@@ -171,6 +194,7 @@ export default function NightPhase() {
 
   const handleCompleteStep = () => {
     if (!currentRole) return;
+    if (!canCompleteStep) return;
 
     if (currentRole.id === 'werewolf') {
       const target = players.find((p) => p.id === wolfVictim);
@@ -197,10 +221,8 @@ export default function NightPhase() {
       setEliminatedThisNight([...eliminatedThisNight.filter((id) => id !== whiteWolfTarget), whiteWolfTarget]);
 
     if (currentRole.id === 'protector') {
-      const selectedProtection = protectorTouched
-        ? protectorTarget
-        : protectionThisNight?.targetId ?? '';
-      setProtectorTargetStore(selectedProtection || null);
+      const selectedProtection = protectablePlayers.find((p) => p.id === currentProtectionValue)?.id ?? null;
+      setProtectorTargetStore(selectedProtection);
     }
 
     if (currentRole.id === 'witch') {
@@ -289,10 +311,18 @@ export default function NightPhase() {
         {/* Werewolf: pick victim */}
         {currentRole.id === 'werewolf' && (
           <div className="night-input">
-            <label>{t.night.wolvesChoose}</label>
+            {currentProtectedPlayer && (
+              <p className="protected-banner">🛡️ Protected tonight: <strong>{currentProtectedPlayer.name}</strong></p>
+            )}
+            <label>&#127919; Wolves choose their victim:</label>
             <select value={wolfVictim} onChange={(e) => setWolfVictim(e.target.value)}>
-              <option value="">&mdash; {t.night.selectTarget} &mdash;</option>
-              {wolfTargets.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              <option value="">&mdash; Select target (optional) &mdash;</option>
+              {protectedWolfTarget && (
+                <option value={protectedWolfTarget.id} disabled>
+                  🛡️ {protectedWolfTarget.name} (Protected)
+                </option>
+              )}
+              {currentWolfTargets.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </div>
         )}
@@ -325,6 +355,9 @@ export default function NightPhase() {
         {/* Big Bad Wolf: optional extra kill */}
         {currentRole.id === 'big_bad_wolf' && (
           <div className="night-input">
+            {currentProtectedPlayer && (
+              <p className="protected-banner">🛡️ Protected tonight: <strong>{currentProtectedPlayer.name}</strong></p>
+            )}
             {anyWolfEliminated ? (
               <div className="used-banner">{t.night.bigBadWolfLocked}</div>
             ) : (
@@ -332,9 +365,12 @@ export default function NightPhase() {
                 <label>{t.night.bigBadWolfLabel}</label>
                 <select value={bigBadWolfExtra} onChange={(e) => setBigBadWolfExtra(e.target.value)}>
                   <option value="">&mdash; {t.night.skipExtra} &mdash;</option>
-                  {players
-                    .filter((p) => p.id !== wolfVictim && !eliminatedThisNight.includes(p.id) && !isWolfAligned(p))
-                    .map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  {protectedBigBadTarget && (
+                    <option value={protectedBigBadTarget.id} disabled>
+                      🛡️ {protectedBigBadTarget.name} (Protected)
+                    </option>
+                  )}
+                  {currentBigBadTargets.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </>
             )}
@@ -372,25 +408,33 @@ export default function NightPhase() {
             ) : (
               <p className="witch-victim-info">{t.night.protectorNoPrevious}</p>
             )}
-            <label>{t.night.protectorLabel}</label>
-            <select
-              value={currentProtectionValue}
-              onChange={(e) => {
-                setProtectorTouched(true);
-                setProtectorTargetLocal(e.target.value);
-              }}
-            >
-              <option value="">&mdash; {t.night.protectorNone} &mdash;</option>
-              {players.map((p) => (
-                <option key={p.id} value={p.id} disabled={p.id === (lastProtection?.targetId ?? null)}>
-                  {p.name}
-                </option>
-              ))}
-            </select>
-            {lastProtection?.targetId && (
+            {protectablePlayers.length === 0 ? (
+              <div className="used-banner">🛡️ No valid protection target remains tonight.</div>
+            ) : (
+              <>
+                <label>{t.night.protectorLabel}</label>
+                <select
+                  value={currentProtectionValue}
+                  onChange={(e) => {
+                    setProtectorTouched(true);
+                    setProtectorTargetLocal(e.target.value);
+                  }}
+                >
+                  <option value="">&mdash; Select player &mdash;</option>
+                  {protectablePlayers.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </>
+            )}
+            {previousProtectedPlayerId && (
               <p className="infect-note">
                 {t.night.protectorCannotRepeat(
-                  lastProtection.targetName ?? t.night.protectorUnknown
+                  lastProtection?.targetName ??
+                    allPlayers.find((p) => p.id === previousProtectedPlayerId)?.name ??
+                    t.night.protectorUnknown
                 )}
               </p>
             )}
@@ -701,33 +745,25 @@ export default function NightPhase() {
       {!allStepsDone ? (
         <>
           {renderStepContent()}
-          <div className="night-actions">
-            <button
-              className="btn btn-ghost"
-              onClick={handleBackStep}
-              disabled={currentNightStepIndex <= 0}
-            >
-              {t.night.goBack}
-            </button>
-            <button
-              className="btn btn-primary btn-large"
-              data-testid="night-next"
-              onClick={handleCompleteStep}
-            >
-              {t.night.done}
-            </button>
-          </div>
+          <button
+            className="btn btn-primary btn-large"
+            data-testid="night-next"
+            onClick={handleCompleteStep}
+            disabled={!canCompleteStep}
+          >
+            &#9989; Done &mdash; Next
+          </button>
         </>
       ) : (
         <div className="night-summary">
-          <h3>{t.night.nightEnds}</h3>
-          {eliminatedThisNight.length === 0 ? (
-            <p>{t.night.noElim}</p>
+          <h3>&#127749; Night ends</h3>
+          {nightResolutionPreview.finalEliminated.length === 0 ? (
+            <p>No one was eliminated tonight. &#128570;</p>
           ) : (
             <p>
               {t.night.eliminated}{' '}
               <strong>
-                {eliminatedThisNight
+                {nightResolutionPreview.finalEliminated
                   .map((id) => allPlayers.find((p) => p.id === id)?.name)
                   .join(', ')}
               </strong>
