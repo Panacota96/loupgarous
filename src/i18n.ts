@@ -70,6 +70,9 @@ interface Strings {
   night: {
     title: (round: number) => string;
     subtitle: string;
+    passiveTitle: string;
+    passiveSubtitle: string;
+    passiveHint: string;
     wakesUp: (name: string) => string;
     badges: {
       firstNightOnly: string;
@@ -301,6 +304,9 @@ const translations: Record<Language, Strings> = {
     night: {
       title: (round: number) => `Night Phase — Round ${round}`,
       subtitle: 'All players close their eyes.',
+      passiveTitle: 'First-night GM checklist',
+      passiveSubtitle: 'Passive/manual roles to remember. Do NOT wake them.',
+      passiveHint: 'Use the checkboxes as reminders — this list only appears on night 1.',
       wakesUp: (name: string) => `${name} wakes up`,
       badges: {
         firstNightOnly: 'First Night Only',
@@ -514,6 +520,9 @@ const translations: Record<Language, Strings> = {
     night: {
       title: (round: number) => `Phase de nuit — Manche ${round}`,
       subtitle: 'Tous les joueurs ferment les yeux.',
+      passiveTitle: 'Checklist MJ (première nuit)',
+      passiveSubtitle: 'Rôles passifs/manuels à garder en tête. Ne les réveillez pas.',
+      passiveHint: 'Servez-vous des cases comme pense-bête — la liste disparaît après la nuit 1.',
       wakesUp: (name: string) => `${name} se réveille`,
       badges: {
         firstNightOnly: 'Première nuit uniquement',
