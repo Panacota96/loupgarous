@@ -25,6 +25,7 @@ interface StoreActions {
   setAngelWon: (val: boolean) => void;
   setWolfVictimId: (id: string | null) => void;
   setRavenCursed: (id: string | null) => void;
+  setProtectedPlayerId: (id: string | null) => void;
   togglePhase: () => void;
   startTimer: () => void;
   stopTimer: () => void;
@@ -72,6 +73,8 @@ const defaultGame: GameState = {
   angelWon: false,
   wolfVictimId: null,
   ravenCursedId: null,
+  protectedPlayerId: null,
+  lastProtectedPlayerId: null,
 };
 
 function buildNightSteps(roleIds: string[], round: number): NightStep[] {
@@ -80,6 +83,60 @@ function buildNightSteps(roleIds: string[], round: number): NightStep[] {
     stepIndex: i,
     completed: false,
   }));
+}
+
+export function resolveNightEliminations(
+  players: Player[],
+  eliminatedThisNight: string[],
+  infectedPlayerIds: string[],
+  loversIds: [string, string] | null
+) {
+  const finalEliminated = [...eliminatedThisNight];
+  let extraLog = '';
+
+  // Knight with Rusty Sword: if Knight was killed by wolves,
+  // the first wolf to their LEFT (seating order) dies at dawn.
+  const knightPlayer = players.find((p) => p.isAlive && p.roleId === 'knight');
+  if (knightPlayer && finalEliminated.includes(knightPlayer.id)) {
+    const total = players.length;
+    const knightIdx = players.findIndex((p) => p.id === knightPlayer.id);
+    for (let offset = 1; offset < total; offset++) {
+      const candidate = players[(knightIdx - offset + total) % total];
+      if (!candidate.isAlive) continue;
+      if (
+        WOLF_ROLE_IDS.includes(candidate.roleId) ||
+        infectedPlayerIds.includes(candidate.id)
+      ) {
+        if (!finalEliminated.includes(candidate.id)) {
+          finalEliminated.push(candidate.id);
+          extraLog = ` ⚔️ Knight's rusty sword: ${candidate.name} dies of tetanus!`;
+        }
+        break;
+      }
+    }
+  }
+
+  let loversLog = '';
+  if (loversIds) {
+    const [loverAId, loverBId] = loversIds;
+    const loverAEliminated = finalEliminated.includes(loverAId);
+    const loverBEliminated = finalEliminated.includes(loverBId);
+
+    if (loverAEliminated !== loverBEliminated) {
+      const chainedId = loverAEliminated ? loverBId : loverAId;
+      const fallenId = loverAEliminated ? loverAId : loverBId;
+      const chainedPlayer = players.find((p) => p.id === chainedId);
+
+      if (chainedPlayer?.isAlive && !finalEliminated.includes(chainedId)) {
+        finalEliminated.push(chainedId);
+        const chainedName = chainedPlayer.name;
+        const fallenName = players.find((p) => p.id === fallenId)?.name ?? 'Unknown';
+        loversLog = ` 💘 Lovers: ${chainedName} dies with ${fallenName}.`;
+      }
+    }
+  }
+
+  return { finalEliminated, extraLog, loversLog };
 }
 
 export const useGameStore = create<GameStore>()(
@@ -131,6 +188,8 @@ export const useGameStore = create<GameStore>()(
           angelWon: false,
           wolfVictimId: null,
           ravenCursedId: null,
+          protectedPlayerId: null,
+          lastProtectedPlayerId: null,
         });
       },
 
@@ -162,36 +221,20 @@ export const useGameStore = create<GameStore>()(
       setAngelWon: (val) => set({ angelWon: val }),
       setWolfVictimId: (id) => set({ wolfVictimId: id }),
       setRavenCursed: (id) => set({ ravenCursedId: id }),
+      setProtectedPlayerId: (id) => set({ protectedPlayerId: id }),
 
       applyNightResults: () => {
         const {
           players, eliminatedThisNight, round, discussionTimeSeconds, optionalRules,
           infectedPlayerIds, wildChildModelId, wildChildTransformed, log,
+          loversIds, protectedPlayerId,
         } = get();
-
-        // Knight with Rusty Sword: if Knight was killed by wolves,
-        // the first wolf to their LEFT (seating order) dies at dawn.
-        const finalEliminated = [...eliminatedThisNight];
-        let extraLog = '';
-        const knightPlayer = players.find((p) => p.isAlive && p.roleId === 'knight');
-        if (knightPlayer && finalEliminated.includes(knightPlayer.id)) {
-          const total = players.length;
-          const knightIdx = players.findIndex((p) => p.id === knightPlayer.id);
-          for (let offset = 1; offset < total; offset++) {
-            const candidate = players[(knightIdx - offset + total) % total];
-            if (!candidate.isAlive) continue;
-            if (
-              WOLF_ROLE_IDS.includes(candidate.roleId) ||
-              infectedPlayerIds.includes(candidate.id)
-            ) {
-              if (!finalEliminated.includes(candidate.id)) {
-                finalEliminated.push(candidate.id);
-                extraLog = ` ⚔️ Knight's rusty sword: ${candidate.name} dies of tetanus!`;
-              }
-              break;
-            }
-          }
-        }
+        const { finalEliminated, extraLog, loversLog } = resolveNightEliminations(
+          players,
+          eliminatedThisNight,
+          infectedPlayerIds,
+          loversIds
+        );
 
         const updated = players.map((p) =>
           finalEliminated.includes(p.id) ? { ...p, isAlive: false } : p
@@ -206,7 +249,7 @@ export const useGameStore = create<GameStore>()(
         const nightSteps = buildNightSteps(roleIds, newRound);
 
         const nightMsg = finalEliminated.length
-          ? `Night ${round}: ${finalEliminated.map((id) => updated.find((p) => p.id === id)?.name).join(', ')} were eliminated.${extraLog}`
+          ? `Night ${round}: ${finalEliminated.map((id) => updated.find((p) => p.id === id)?.name).join(', ')} were eliminated.${extraLog}${loversLog}`
           : `Night ${round}: No one was eliminated (peaceful night).`;
 
         set({
@@ -220,6 +263,8 @@ export const useGameStore = create<GameStore>()(
           optionalRules,
           wildChildTransformed: newWildChildTransformed,
           wolfVictimId: null,
+          protectedPlayerId: null,
+          lastProtectedPlayerId: protectedPlayerId,
         });
       },
 
@@ -233,6 +278,7 @@ export const useGameStore = create<GameStore>()(
             phase: 'night', round: newRound, nightSteps,
             currentNightStepIndex: 0, eliminatedThisNight: [], votes: [], optionalRules,
             ravenCursedId: null,
+            protectedPlayerId: null,
           });
         } else {
           set({ phase: 'day', timerRemaining: discussionTimeSeconds, votes: [] });

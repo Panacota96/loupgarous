@@ -92,4 +92,6 @@ export interface GameState {
   angelWon: boolean;                     // true if Angel was first Day-1 execution
   wolfVictimId: string | null;           // wolf's chosen victim for this night (persists across steps for Witch)
   ravenCursedId: string | null;          // player cursed by Raven last night (+2 votes)
+  protectedPlayerId: string | null;      // player protected by Protector for the current night
+  lastProtectedPlayerId: string | null;  // player protected on the previous night
 }

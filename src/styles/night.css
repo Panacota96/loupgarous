@@ -181,6 +181,26 @@
   font-weight: 600;
 }
 
+.protected-banner,
+.protect-note {
+  border-radius: 8px;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.9rem;
+}
+
+.protected-banner {
+  background: rgba(46,160,67,0.12);
+  border: 1px solid rgba(46,160,67,0.4);
+  color: #8ddb9d;
+  box-shadow: inset 0 0 0 1px rgba(46,160,67,0.12);
+}
+
+.protect-note {
+  background: rgba(56,139,253,0.08);
+  border: 1px solid rgba(56,139,253,0.28);
+  color: #8dbbff;
+}
+
 .choice-buttons {
   display: flex;
   gap: 0.7rem;
