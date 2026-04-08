@@ -21,6 +21,7 @@ export default function NightPhase() {
   const wildChildTransformed = useGameStore((s) => s.wildChildTransformed);
   const foxPowerActive = useGameStore((s) => s.foxPowerActive);
   const enchantedPlayerIds = useGameStore((s) => s.enchantedPlayerIds);
+  const protectorHistory = useGameStore((s) => s.protectorHistory);
 
   const completeNightStep = useGameStore((s) => s.completeNightStep);
   const setEliminatedThisNight = useGameStore((s) => s.setEliminatedThisNight);
@@ -35,6 +36,7 @@ export default function NightPhase() {
   const setRavenCursed = useGameStore((s) => s.setRavenCursed);
   const setFoxPowerActiveStore = useGameStore((s) => s.setFoxPowerActive);
   const goToNightStepStore = useGameStore((s) => s.goToNightStep);
+  const setProtectorTargetStore = useGameStore((s) => s.setProtectorTarget);
 
   const [witchSave, setWitchSave] = useState(false);
   const [witchKill, setWitchKill] = useState('');
@@ -52,6 +54,8 @@ export default function NightPhase() {
   const [ravenTarget, setRavenTarget] = useState('');
   const [passiveChecks, setPassiveChecks] = useState<Record<string, boolean>>({});
   const [foxResult, setFoxResult] = useState<'wolf' | 'none' | ''>('');
+  const [protectorTarget, setProtectorTargetLocal] = useState('');
+  const [protectorTouched, setProtectorTouched] = useState(false);
 
   const allStepsDone = currentNightStepIndex >= nightSteps.length;
   const currentStep = nightSteps[currentNightStepIndex];
@@ -103,6 +107,20 @@ export default function NightPhase() {
     () => new Set(piperEligiblePlayers.map((p) => p.id)),
     [piperEligiblePlayers]
   );
+  const protectionThisNight = protectorHistory.find((p) => p.round === round) ?? null;
+  const lastProtection = useMemo(() => {
+    const prior = [...protectorHistory]
+      .filter((p) => p.round < round)
+      .sort((a, b) => b.round - a.round)[0];
+    if (!prior) return null;
+    const targetName = prior.targetId
+      ? allPlayers.find((p) => p.id === prior.targetId)?.name ?? null
+      : null;
+    return { ...prior, targetName };
+  }, [protectorHistory, round, allPlayers]);
+  const currentProtectionValue = protectorTouched
+    ? protectorTarget
+    : protectionThisNight?.targetId ?? '';
 
   const resetLocalState = () => {
     setWolfVictim('');
@@ -120,6 +138,8 @@ export default function NightPhase() {
     setLoversP2('');
     setRavenTarget('');
     setFoxResult('');
+    setProtectorTargetLocal('');
+    setProtectorTouched(false);
   };
 
   const handleCompleteStep = () => {
@@ -148,6 +168,13 @@ export default function NightPhase() {
 
     if (currentRole.id === 'white_werewolf' && whiteWolfTarget)
       setEliminatedThisNight([...eliminatedThisNight.filter((id) => id !== whiteWolfTarget), whiteWolfTarget]);
+
+    if (currentRole.id === 'protector') {
+      const selectedProtection = protectorTouched
+        ? protectorTarget
+        : protectionThisNight?.targetId ?? '';
+      setProtectorTargetStore(selectedProtection || null);
+    }
 
     if (currentRole.id === 'witch') {
       // Use the persisted wolfVictimId from store — wolfVictim local state is empty at this step
@@ -297,6 +324,50 @@ export default function NightPhase() {
               {alivePureWolves.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
             {alivePureWolves.length === 0 && <p className="infect-note">{t.night.noOtherWolves}</p>}
+          </div>
+        )}
+
+        {/* Protector: choose a player to guard */}
+        {currentRole.id === 'protector' && (
+          <div className="night-input">
+            {lastProtection ? (
+              lastProtection.targetId ? (
+                <p className="witch-victim-info">
+                  {t.night.protectorLast(
+                    lastProtection.targetName ?? t.night.protectorUnknown,
+                    lastProtection.round
+                  )}
+                </p>
+              ) : (
+                <p className="witch-victim-info">
+                  {t.night.protectorLastNone(lastProtection.round)}
+                </p>
+              )
+            ) : (
+              <p className="witch-victim-info">{t.night.protectorNoPrevious}</p>
+            )}
+            <label>{t.night.protectorLabel}</label>
+            <select
+              value={currentProtectionValue}
+              onChange={(e) => {
+                setProtectorTouched(true);
+                setProtectorTargetLocal(e.target.value);
+              }}
+            >
+              <option value="">&mdash; {t.night.protectorNone} &mdash;</option>
+              {players.map((p) => (
+                <option key={p.id} value={p.id} disabled={p.id === (lastProtection?.targetId ?? null)}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+            {lastProtection?.targetId && (
+              <p className="infect-note">
+                {t.night.protectorCannotRepeat(
+                  lastProtection.targetName ?? t.night.protectorUnknown
+                )}
+              </p>
+            )}
           </div>
         )}
 

@@ -82,11 +82,17 @@ export interface NightStepState {
   ravenCursedId: string | null;
   wildChildModelId: string | null;
   wolfDogChoice: 'villager' | 'werewolf' | null;
+  protectorHistory: ProtectorRecord[];
 }
 
 export interface Vote {
   targetId: string;
   count: number;
+}
+
+export interface ProtectorRecord {
+  round: number;
+  targetId: string | null;
 }
 
 export interface GameState {
@@ -117,4 +123,5 @@ export interface GameState {
   ravenCursedId: string | null;          // player cursed by Raven last night (+2 votes)
   language: Language;
   nightStepStates: NightStepState[];     // checkpoints for each night step to allow back navigation
+  protectorHistory: ProtectorRecord[];   // records per-night Protector targets
 }

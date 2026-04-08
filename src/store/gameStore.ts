@@ -6,6 +6,7 @@ import type {
   NightStep,
   NightStepState,
   Language,
+  ProtectorRecord,
 } from '../types/game.types';
 import { getNightOrder, WOLF_ROLE_IDS } from '../data/roles';
 import { getStrings } from '../i18n';
@@ -46,6 +47,7 @@ interface StoreActions {
   setLovers: (id1: string, id2: string) => void;
   addLog: (message: string) => void;
   setLanguage: (lang: Language) => void;
+  setProtectorTarget: (targetId: string | null) => void;
 }
 
 export type GameStore = SetupState & GameState & StoreActions;
@@ -75,6 +77,7 @@ const defaultGame: GameState = {
   usedGameAbilities: [],
   optionalRules: {},
   foxPowerActive: true,
+  protectorHistory: [],
   wildChildModelId: null,
   wildChildTransformed: false,
   wolfDogChoice: null,
@@ -123,6 +126,7 @@ function captureNightState(state: GameStore): NightStepState {
     ravenCursedId: state.ravenCursedId,
     wildChildModelId: state.wildChildModelId,
     wolfDogChoice: state.wolfDogChoice,
+    protectorHistory: state.protectorHistory.map((p) => ({ ...p })),
   };
 }
 
@@ -170,6 +174,7 @@ export const useGameStore = create<GameStore>()(
           usedGameAbilities: [] as string[],
           optionalRules,
           foxPowerActive: true,
+          protectorHistory: [] as ProtectorRecord[],
           wildChildModelId: null,
           wildChildTransformed: false,
           wolfDogChoice: null,
@@ -224,6 +229,7 @@ export const useGameStore = create<GameStore>()(
             ravenCursedId: snapshot.ravenCursedId,
             wildChildModelId: snapshot.wildChildModelId,
             wolfDogChoice: snapshot.wolfDogChoice,
+            protectorHistory: snapshot.protectorHistory.map((p) => ({ ...p })),
             nightSteps,
             currentNightStepIndex: target,
             nightStepStates: history.slice(0, target + 1),
@@ -249,12 +255,19 @@ export const useGameStore = create<GameStore>()(
       setFoxPowerActive: (active) => set({ foxPowerActive: active }),
       setWolfVictimId: (id) => set({ wolfVictimId: id }),
       setRavenCursed: (id) => set({ ravenCursedId: id }),
+      setProtectorTarget: (targetId) =>
+        set((s) => {
+          const withoutCurrentRound = s.protectorHistory.filter((p) => p.round !== s.round);
+          return {
+            protectorHistory: [...withoutCurrentRound, { round: s.round, targetId }],
+          };
+        }),
 
       applyNightResults: () => {
         const {
           players, eliminatedThisNight, round, discussionTimeSeconds, optionalRules,
           infectedPlayerIds, wildChildModelId, wildChildTransformed, log,
-          foxPowerActive, usedGameAbilities,
+          foxPowerActive, usedGameAbilities, protectorHistory,
         } = get();
         const strings = getStrings(get().language);
         const extraLogParts: string[] = [];
@@ -289,6 +302,18 @@ export const useGameStore = create<GameStore>()(
           if (witchHealUsed && witchPoisonUsed) {
             extraLogParts.push(strings.logs.witchPotionsSpent);
           }
+        }
+
+        const protectionEntry = protectorHistory.find((p) => p.round === round);
+        if (protectionEntry) {
+          const targetName = protectionEntry.targetId
+            ? players.find((p) => p.id === protectionEntry.targetId)?.name ?? strings.night.protectorUnknown
+            : '';
+          extraLogParts.push(
+            protectionEntry.targetId
+              ? strings.logs.protectorProtected(targetName)
+              : strings.logs.protectorNoProtection
+          );
         }
 
         const updated = players.map((p) =>
