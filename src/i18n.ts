@@ -134,6 +134,9 @@ interface Strings {
     ravenNote: (name: string) => string;
     foxActive: string;
     foxLost: string;
+    foxCenterLabel: string;
+    foxPreviewLabel: string;
+    foxSingleTrio: string;
     foxResultLabel: string;
     foxFoundWolf: string;
     foxFoundNone: string;
@@ -431,6 +434,9 @@ const translations: Record<Language, Strings> = {
       ravenNote: (name: string) => `☠️ ${name} will have +2 votes against them tomorrow.`,
       foxActive: '🦊 Fox still has its sniffing power.',
       foxLost: '🦊 Fox already lost its sniffing power.',
+      foxCenterLabel: '🦊 Center seat of the trio to sniff:',
+      foxPreviewLabel: 'DM only: chosen trio',
+      foxSingleTrio: 'Only one trio is possible with 3 living players.',
       foxResultLabel: 'Result of tonight’s sniff:',
       foxFoundWolf: '🐺 Wolf nearby (keep power)',
       foxFoundNone: '❌ No wolves (power lost)',
@@ -710,6 +716,9 @@ const translations: Record<Language, Strings> = {
       ravenNote: (name: string) => `☠️ ${name} aura +2 voix contre lui demain.`,
       foxActive: '🦊 Le Renard a toujours son pouvoir de flair.',
       foxLost: '🦊 Le Renard a déjà perdu son pouvoir de flair.',
+      foxCenterLabel: '🦊 Siège central du trio à flairer :',
+      foxPreviewLabel: 'MJ uniquement : trio choisi',
+      foxSingleTrio: 'Un seul trio est possible avec 3 joueurs encore en vie.',
       foxResultLabel: 'Résultat du flair cette nuit :',
       foxFoundWolf: '🐺 Loup à proximité (pouvoir conservé)',
       foxFoundNone: '❌ Aucun loup (pouvoir perdu)',

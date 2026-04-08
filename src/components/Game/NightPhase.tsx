@@ -1,6 +1,12 @@
 import { useMemo, useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
-import { ROLE_MAP, WOLF_ROLE_IDS, getRoleTexts, getRoleName } from '../../data/roles';
+import {
+  ROLE_MAP,
+  WOLF_ROLE_IDS,
+  getRoleTexts,
+  getRoleName,
+  isPlayerWolfIdentity,
+} from '../../data/roles';
 import { getCampLabel, useI18n } from '../../i18n';
 import '../../styles/night.css';
 
@@ -53,7 +59,7 @@ export default function NightPhase() {
   const [infectTarget, setInfectTarget] = useState('');
   const [ravenTarget, setRavenTarget] = useState('');
   const [passiveChecks, setPassiveChecks] = useState<Record<string, boolean>>({});
-  const [foxResult, setFoxResult] = useState<'wolf' | 'none' | ''>('');
+  const [foxCenterTarget, setFoxCenterTarget] = useState('');
   const [protectorTarget, setProtectorTargetLocal] = useState('');
   const [protectorTouched, setProtectorTouched] = useState(false);
 
@@ -96,6 +102,13 @@ export default function NightPhase() {
     (p.roleId === 'wild_child' && wildChildTransformed) ||
     infectedPlayerIds.includes(p.id);
 
+  const isWolfIdentity = (p: typeof players[0]) =>
+    isPlayerWolfIdentity(p, {
+      infectedPlayerIds,
+      wolfDogChoice: wolfDogChoiceStore,
+      wildChildTransformed,
+    });
+
   const wolfTargets = players.filter((p) => !isWolfAligned(p));
   const cupidIds = players.filter((p) => p.roleId === 'cupid').map((p) => p.id);
   const wildChildId = players.find((p) => p.roleId === 'wild_child')?.id ?? null;
@@ -121,6 +134,20 @@ export default function NightPhase() {
   const currentProtectionValue = protectorTouched
     ? protectorTarget
     : protectionThisNight?.targetId ?? '';
+  const foxHasSingleTrio = players.length === 3;
+  const foxCenterOptions = useMemo(
+    () => (foxHasSingleTrio ? players.slice(0, 1) : players),
+    [foxHasSingleTrio, players]
+  );
+  const selectedFoxCenterId = foxCenterTarget || foxCenterOptions[0]?.id || '';
+  const foxTrioPlayers = useMemo(() => {
+    if (players.length < 3 || !selectedFoxCenterId) return [];
+    const centerIndex = players.findIndex((p) => p.id === selectedFoxCenterId);
+    if (centerIndex === -1) return [];
+    if (players.length === 3) return players;
+    return [-1, 0, 1].map((offset) => players[(centerIndex + offset + players.length) % players.length]);
+  }, [players, selectedFoxCenterId]);
+  const foxFoundWolf = foxTrioPlayers.some((p) => isWolfIdentity(p));
 
   const resetLocalState = () => {
     setWolfVictim('');
@@ -137,7 +164,7 @@ export default function NightPhase() {
     setLoversP1('');
     setLoversP2('');
     setRavenTarget('');
-    setFoxResult('');
+    setFoxCenterTarget('');
     setProtectorTargetLocal('');
     setProtectorTouched(false);
   };
@@ -193,8 +220,7 @@ export default function NightPhase() {
       setRavenCursed(ravenTarget);
 
     if (currentRole.id === 'fox') {
-      const result = foxResult || 'wolf';
-      if (result === 'none') setFoxPowerActiveStore(false);
+      if (foxTrioPlayers.length > 0 && !foxFoundWolf) setFoxPowerActiveStore(false);
       else if (foxPowerActive) setFoxPowerActiveStore(true);
     }
 
@@ -379,20 +405,48 @@ export default function NightPhase() {
             ) : (
               <div className="used-banner">{t.night.foxLost}</div>
             )}
-            <label>{t.night.foxResultLabel}</label>
-            <div className="choice-buttons">
-              <button
-                className={`choice-btn ${foxResult === 'wolf' ? 'selected-village' : ''}`}
-                onClick={() => setFoxResult('wolf')}
+            <label>{t.night.foxCenterLabel}</label>
+            {foxHasSingleTrio ? (
+              <p className="witch-victim-info">{t.night.foxSingleTrio}</p>
+            ) : (
+              <select
+                value={selectedFoxCenterId}
+                onChange={(e) => setFoxCenterTarget(e.target.value)}
+                data-testid="fox-center-select"
               >
-                {t.night.foxFoundWolf}
-              </button>
-              <button
-                className={`choice-btn ${foxResult === 'none' ? 'selected-wolf' : ''}`}
-                onClick={() => setFoxResult('none')}
-              >
-                {t.night.foxFoundNone}
-              </button>
+                {foxCenterOptions.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            )}
+            {foxTrioPlayers.length > 0 && (
+              <div className="fox-trio" data-testid="fox-trio-preview">
+                <p className="fox-trio__label">{t.night.foxPreviewLabel}</p>
+                <div className="fox-trio__cards">
+                  {foxTrioPlayers.map((player) => {
+                    const isWolfSeat = isWolfIdentity(player);
+                    return (
+                      <div
+                        key={player.id}
+                        className={`fox-trio-seat ${isWolfSeat ? 'fox-trio-seat--wolf' : ''}`}
+                        data-testid="fox-trio-seat"
+                      >
+                        <span className="fox-trio-seat__name">{player.name}</span>
+                        {isWolfSeat && (
+                          <span className="fox-trio-seat__badge" data-testid="fox-trio-seat-wolf">
+                            🐺
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            <div
+              className={`fox-result-summary ${foxFoundWolf ? 'fox-result-summary--wolf' : 'fox-result-summary--none'}`}
+              data-testid="fox-result-summary"
+            >
+              <span>{t.night.foxResultLabel}</span>
+              <strong>{foxFoundWolf ? t.night.foxFoundWolf : t.night.foxFoundNone}</strong>
             </div>
             <p className="infect-note">{t.night.foxReminder}</p>
           </div>
