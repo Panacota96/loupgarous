@@ -15,6 +15,33 @@
 .night-header h2 { font-size: 1.35rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; }
 .night-subtitle { color: var(--text-muted); font-size: 0.9rem; }
 
+.gm-checklist {
+  border: 1.5px dashed var(--border);
+  border-radius: 12px;
+  padding: 0.95rem 1rem;
+  background: rgba(255,255,255,0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.gm-checklist__header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+.gm-checklist__icon { font-size: 1.35rem; }
+.gm-checklist__subtitle { color: var(--text-muted); margin: 0; font-size: 0.9rem; }
+.gm-checklist__items { display: flex; flex-direction: column; gap: 0.45rem; }
+.gm-checklist__item {
+  display: flex;
+  gap: 0.55rem;
+  align-items: flex-start;
+  font-size: 0.94rem;
+  line-height: 1.4;
+}
+.gm-checklist__item input { margin-top: 0.2rem; }
+.gm-checklist__hint { margin: 0; color: var(--text-muted); font-size: 0.85rem; }
+
 /* Step pip bar */
 .night-steps-bar {
   display: flex;
@@ -37,6 +64,14 @@
 }
 .step-pip.done { background: var(--bg2); border-color: var(--success); opacity: 0.6; }
 .step-pip.active { border-color: var(--primary); background: rgba(185,42,58,0.15); box-shadow: 0 0 0 3px rgba(185,42,58,0.2); transform: translateY(-1px); }
+.step-pip.clickable { cursor: pointer; opacity: 0.9; }
+.step-pip.clickable:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 0 0 3px rgba(185,42,58,0.2); }
+
+.night-nav-hint {
+  margin: -0.2rem 0 0.1rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
 
 /* Night step content */
 .night-step-content {
@@ -170,6 +205,17 @@
   color: #f0a028;
   margin-top: 0.4rem;
 }
+
+.night-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.night-actions .btn-primary { margin-left: auto; }
+.night-actions .btn-ghost { text-transform: none; letter-spacing: 0.03em; }
+.night-actions.summary-actions { justify-content: center; }
+.night-actions.summary-actions .btn-primary { margin-left: 0; }
 
 .used-banner {
   background: rgba(218,54,51,0.1);

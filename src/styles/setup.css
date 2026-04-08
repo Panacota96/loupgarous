@@ -38,9 +38,16 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
-.setup-header .rulebook-btn {
-  margin-top: 0.85rem;
+.rulebook-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  padding: 0.35rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   box-shadow: 0 10px 28px rgba(185,42,58,0.3), 0 0 0 1px rgba(255,255,255,0.04);
+  font-size: 1.1rem;
 }
 
 .setup-tabs {
@@ -163,6 +170,64 @@
   gap: 0.35rem;
   font-size: 0.92rem;
   line-height: 1.4;
+  color: var(--text);
+}
+.starter-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+.starter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 0.7rem;
+}
+.starter-pill {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--bg2);
+  padding: 0.75rem 0.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+}
+.starter-pill__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+.starter-title {
+  margin: 0;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.starter-meta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+.starter-description {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+.starter-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.role-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  font-size: 0.85rem;
   color: var(--text);
 }
 

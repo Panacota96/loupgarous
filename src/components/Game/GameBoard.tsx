@@ -4,6 +4,8 @@ import { WOLF_ROLE_IDS, LONER_ROLE_IDS } from '../../data/roles';
 import NightPhase from './NightPhase';
 import DayPhase from './DayPhase';
 import RoleReference from '../Roles/RoleReference';
+import LanguageToggle from '../LanguageToggle';
+import { useI18n } from '../../i18n';
 import '../../styles/gameboard.css';
 
 type Tab = 'game' | 'roles' | 'log';
@@ -19,6 +21,7 @@ export default function GameBoard() {
   const infectedPlayerIds = useGameStore((s) => s.infectedPlayerIds);
   const enchantedPlayerIds = useGameStore((s) => s.enchantedPlayerIds);
   const angelWon = useGameStore((s) => s.angelWon);
+  const { t } = useI18n();
 
   const [tab, setTab] = useState<Tab>('game');
   const [isConfigOpen, setIsConfigOpen] = useState(false);
@@ -68,23 +71,28 @@ export default function GameBoard() {
 
   return (
     <div className={`gameboard ${phase}`}>
+      <div className="corner-actions corner-actions--game">
+        <LanguageToggle compact />
+      </div>
       {/* Top bar */}
       <div className="gameboard-topbar">
         <div className="topbar-left">
           <span className="phase-chip">
-            {phase === 'night' ? '🌙 Night' : '☀️ Day'} — Round {round}
+            {t.game.phaseChip(phase, round)}
           </span>
-          <span className="alive-chip">🫀 {alivePlayers.length} alive</span>
-          <span className="wolf-chip">🐺 {wolfCount} wolves</span>
+          <span className="alive-chip">{t.game.alive(alivePlayers.length)}</span>
+          <span className="wolf-chip">{t.game.wolves(wolfCount)}</span>
         </div>
-        <button
-          className="btn btn-ghost btn-sm"
-          onClick={() => {
-            if (window.confirm('Reset game and return to setup?')) resetGame();
-          }}
-        >
-          🏠 Setup
-        </button>
+        <div className="topbar-right">
+          <button
+            className="btn btn-ghost btn-sm"
+            onClick={() => {
+              if (window.confirm(t.game.resetConfirm)) resetGame();
+            }}
+          >
+            {t.game.reset}
+          </button>
+        </div>
       </div>
 
       {/* Win screen */}
@@ -93,40 +101,40 @@ export default function GameBoard() {
           {winner === 'village' && (
             <>
               <div className="win-emoji">🎉</div>
-              <h2>Village Wins!</h2>
-              <p>All werewolves have been eliminated.</p>
+              <h2>{t.game.wins.village.title}</h2>
+              <p>{t.game.wins.village.body}</p>
             </>
           )}
           {winner === 'werewolves' && (
             <>
               <div className="win-emoji">🐺</div>
-              <h2>Werewolves Win!</h2>
-              <p>The wolves now control the village.</p>
+              <h2>{t.game.wins.werewolves.title}</h2>
+              <p>{t.game.wins.werewolves.body}</p>
             </>
           )}
           {winner === 'pied_piper' && (
             <>
               <div className="win-emoji">🎶</div>
-              <h2>Pied Piper Wins!</h2>
-              <p>All players have been enchanted by the Joueur de Flûte!</p>
+              <h2>{t.game.wins.pied_piper.title}</h2>
+              <p>{t.game.wins.pied_piper.body}</p>
             </>
           )}
           {winner === 'white_werewolf' && (
             <>
               <div className="win-emoji">⬛</div>
-              <h2>White Werewolf Wins!</h2>
-              <p>The Loup-Garou Blanc is the last survivor!</p>
+              <h2>{t.game.wins.white_werewolf.title}</h2>
+              <p>{t.game.wins.white_werewolf.body}</p>
             </>
           )}
           {winner === 'angel' && (
             <>
               <div className="win-emoji">👼</div>
-              <h2>Angel Wins!</h2>
-              <p>The Angel was the first to be executed on Day 1!</p>
+              <h2>{t.game.wins.angel.title}</h2>
+              <p>{t.game.wins.angel.body}</p>
             </>
           )}
           <button className="btn btn-primary" onClick={resetGame}>
-            🔄 New Game
+            {t.game.newGame}
           </button>
         </div>
       )}
@@ -140,7 +148,7 @@ export default function GameBoard() {
               onClick={() => openTab('game')}
               data-testid="gameboard-tab-game"
             >
-              🎮 Game
+              {t.game.tabs.game}
             </button>
             <div className="tabs-desktop">
               <button
@@ -198,8 +206,8 @@ export default function GameBoard() {
             {tab === 'roles' && <RoleReference />}
             {tab === 'log' && (
               <div className="game-log">
-                <h3>📜 Game Log</h3>
-                {log.length === 0 && <p className="log-empty">No events yet.</p>}
+                <h3>{t.game.log.title}</h3>
+                {log.length === 0 && <p className="log-empty">{t.game.log.empty}</p>}
                 {[...log].reverse().map((entry, i) => (
                   <div key={i} className="log-entry">
                     {entry}

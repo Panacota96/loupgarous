@@ -25,6 +25,7 @@
   box-shadow: 0 10px 24px rgba(0,0,0,0.35);
 }
 .topbar-left { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; }
+.topbar-right { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; justify-content: flex-end; }
 
 .phase-chip {
   padding: 0.35rem 0.8rem;
