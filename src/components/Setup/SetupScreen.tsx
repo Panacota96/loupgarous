@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { SETUP_ROLE_IDS, SETUP_ROLES, getRoleName, getRoleTexts } from '../../data/roles';
 import RoleReference from '../Roles/RoleReference';
+import QuickGuide from './QuickGuide';
 import LanguageToggle from '../LanguageToggle';
 import { useI18n } from '../../i18n';
 import '../../styles/setup.css';
@@ -60,6 +61,25 @@ export default function SetupScreen() {
       return next;
     });
   };
+
+  const applyStarterPreset = useCallback(
+    (preset: (typeof t.quickGuide.starterSets)[number]) => {
+      const clamped = Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, preset.players));
+      setPlayerCount(clamped);
+      setPlayerNames((prev) => {
+        const next = [...prev];
+        while (next.length < clamped) next.push(t.setup.playerNamePlaceholder(next.length + 1));
+        return next.slice(0, clamped);
+      });
+      setRoleAssignment(() => {
+        const next = preset.roles.slice(0, clamped);
+        while (next.length < clamped) next.push('villager');
+        return next.map((id) => (SETUP_ROLE_IDS.has(id) ? id : 'villager'));
+      });
+      setOptionalRules({});
+    },
+    [t]
+  );
 
   // Tally roles assigned
   const roleCounts: Record<string, number> = {};
@@ -262,6 +282,8 @@ export default function SetupScreen() {
               ))}
             </section>
           )}
+
+          <QuickGuide onApplyPreset={applyStarterPreset} />
 
           {/* Errors */}
           {errors.length > 0 && (

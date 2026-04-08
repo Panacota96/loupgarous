@@ -70,6 +70,20 @@ export interface NightStep {
   completed: boolean;
 }
 
+export interface NightStepState {
+  eliminatedThisNight: string[];
+  usedGameAbilities: string[];
+  enchantedPlayerIds: string[];
+  infectedPlayerIds: string[];
+  loversIds: [string, string] | null;
+  players: Player[];
+  foxPowerActive: boolean;
+  wolfVictimId: string | null;
+  ravenCursedId: string | null;
+  wildChildModelId: string | null;
+  wolfDogChoice: 'villager' | 'werewolf' | null;
+}
+
 export interface Vote {
   targetId: string;
   count: number;
@@ -102,4 +116,5 @@ export interface GameState {
   wolfVictimId: string | null;           // wolf's chosen victim for this night (persists across steps for Witch)
   ravenCursedId: string | null;          // player cursed by Raven last night (+2 votes)
   language: Language;
+  nightStepStates: NightStepState[];     // checkpoints for each night step to allow back navigation
 }
