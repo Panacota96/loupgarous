@@ -25,6 +25,7 @@ export default function DayPhase() {
   const setVote = useGameStore((s) => s.setVote);
   const clearVotes = useGameStore((s) => s.clearVotes);
   const eliminatePlayer = useGameStore((s) => s.eliminatePlayer);
+  const addLog = useGameStore((s) => s.addLog);
   const togglePhase = useGameStore((s) => s.togglePhase);
 
   const [showTieBreaker, setShowTieBreaker] = useState(false);
@@ -287,7 +288,19 @@ export default function DayPhase() {
           </div>
         )}
 
-        {showTieBreaker && <TieBreaker />}
+        {showTieBreaker && (
+          <TieBreaker
+            players={alivePlayers}
+            t={t}
+            onLog={addLog}
+            onEliminate={(id) => {
+              eliminatePlayer(id);
+              clearVotes();
+              setShowTieBreaker(false);
+            }}
+            onClose={() => setShowTieBreaker(false)}
+          />
+        )}
       </section>
 
       {/* Night transition */}
