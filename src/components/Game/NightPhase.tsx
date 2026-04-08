@@ -7,6 +7,7 @@ import {
   getRoleName,
   isPlayerWolfIdentity,
 } from '../../data/roles';
+import ActionSurface from '../Shared/ActionSurface';
 import { getCampLabel, useI18n } from '../../i18n';
 import '../../styles/night.css';
 
@@ -31,6 +32,7 @@ export default function NightPhase() {
   const protectedPlayerId = useGameStore((s) => s.protectedPlayerId);
   const lastProtectedPlayerId = useGameStore((s) => s.lastProtectedPlayerId);
   const loversIds = useGameStore((s) => s.loversIds);
+  const seatOrder = useGameStore((s) => s.seatOrder);
 
   const completeNightStep = useGameStore((s) => s.completeNightStep);
   const setEliminatedThisNight = useGameStore((s) => s.setEliminatedThisNight);
@@ -168,9 +170,23 @@ export default function NightPhase() {
   }, [players, selectedFoxCenterId]);
   const foxFoundWolf = foxTrioPlayers.some((p) => isWolfIdentity(p));
   const nightResolutionPreview = useMemo(
-    () => resolveNightEliminations(allPlayers, eliminatedThisNight, infectedPlayerIds, loversIds),
-    [allPlayers, eliminatedThisNight, infectedPlayerIds, loversIds]
+    () => resolveNightEliminations(allPlayers, eliminatedThisNight, infectedPlayerIds, loversIds, seatOrder),
+    [allPlayers, eliminatedThisNight, infectedPlayerIds, loversIds, seatOrder]
   );
+  const metrics = [
+    { label: '🫀', value: String(players.length), tone: 'neutral' as const },
+    { label: '🐺', value: String(alivePureWolves.length), tone: 'danger' as const },
+    {
+      label: '📍',
+      value: allStepsDone ? t.night.nightEnds : `${Math.min(currentNightStepIndex + 1, nightSteps.length)}/${nightSteps.length}`,
+      tone: 'night' as const,
+    },
+    {
+      label: '🌤',
+      value: String(nightResolutionPreview.finalEliminated.length),
+      tone: nightResolutionPreview.finalEliminated.length > 0 ? 'day' as const : 'success' as const,
+    },
+  ];
 
   const resetLocalState = () => {
     setWolfVictim('');
@@ -670,14 +686,67 @@ export default function NightPhase() {
   };
 
   return (
-    <div className="night-phase" data-testid="night-phase">
-      <div className="night-header">
-        <span className="phase-icon">&#127769;</span>
-        <div>
-          <h2>{t.night.title(round)}</h2>
-          <p className="night-subtitle">{t.night.subtitle}</p>
+    <ActionSurface
+      phase="night"
+      title={t.night.title(round)}
+      subtitle={t.night.subtitle}
+      metrics={metrics}
+      className="night-phase"
+      quickPanel={
+        <div className="gm-quick-panel">
+          <div className="gm-quick-panel__header">
+            <strong>{currentRole ? `${currentRole.emoji} ${currentRoleName}` : t.night.nightEnds}</strong>
+          </div>
+          <div className="gm-quick-panel__stack">
+            {currentNightStepIndex > 0 && (
+              <button className="btn btn-ghost btn-sm" onClick={handleBackStep}>
+                {t.night.goBack}
+              </button>
+            )}
+            {!allStepsDone && currentNightStepIndex + 1 < nightSteps.length && (
+              <span className="gm-quick-panel__hint">
+                {ROLE_MAP[nightSteps[currentNightStepIndex + 1]?.roleId]?.emoji}{' '}
+                {ROLE_MAP[nightSteps[currentNightStepIndex + 1]?.roleId]
+                  ? getRoleName(ROLE_MAP[nightSteps[currentNightStepIndex + 1].roleId], language)
+                  : ''}
+              </span>
+            )}
+          </div>
         </div>
-      </div>
+      }
+      footer={
+        !allStepsDone ? (
+          <div className="sticky-action-bar">
+            <button
+              className="btn btn-primary btn-large"
+              data-testid="night-next"
+              onClick={handleCompleteStep}
+              disabled={!canCompleteStep}
+            >
+              &#9989; Done &mdash; Next
+            </button>
+          </div>
+        ) : (
+          <div className="sticky-action-bar sticky-action-bar--split">
+            <button
+              className="btn btn-ghost"
+              onClick={handleBackStep}
+              disabled={currentNightStepIndex <= 0}
+            >
+              {t.night.goBack}
+            </button>
+            <button
+              className="btn btn-primary btn-large"
+              data-testid="reveal-day"
+              onClick={applyNightResults}
+            >
+              {t.night.revealDay}
+            </button>
+          </div>
+        )
+      }
+    >
+      <div data-testid="night-phase">
 
       {round === 1 && passiveReminderRoles.length > 0 && (
         <div className="gm-checklist" data-testid="passive-checklist">
@@ -745,20 +814,12 @@ export default function NightPhase() {
       {!allStepsDone ? (
         <>
           {renderStepContent()}
-          <button
-            className="btn btn-primary btn-large"
-            data-testid="night-next"
-            onClick={handleCompleteStep}
-            disabled={!canCompleteStep}
-          >
-            &#9989; Done &mdash; Next
-          </button>
         </>
       ) : (
         <div className="night-summary">
-          <h3>&#127749; Night ends</h3>
+          <h3>{t.night.nightEnds}</h3>
           {nightResolutionPreview.finalEliminated.length === 0 ? (
-            <p>No one was eliminated tonight. &#128570;</p>
+            <p>{t.night.noElim}</p>
           ) : (
             <p>
               {t.night.eliminated}{' '}
@@ -769,24 +830,30 @@ export default function NightPhase() {
               </strong>
             </p>
           )}
-          <div className="night-actions summary-actions">
-            <button
-              className="btn btn-ghost"
-              onClick={handleBackStep}
-              disabled={currentNightStepIndex <= 0}
-            >
-              {t.night.goBack}
-            </button>
-            <button
-              className="btn btn-primary btn-large"
-              data-testid="reveal-day"
-              onClick={applyNightResults}
-            >
-              {t.night.revealDay}
-            </button>
-          </div>
+          {!!currentProtectedPlayerId && (
+            <p className="night-summary-note">
+              🛡️ {allPlayers.find((player) => player.id === currentProtectedPlayerId)?.name}
+            </p>
+          )}
+          {(nightResolutionPreview.knightLog || nightResolutionPreview.loversLog) && (
+            <div className="resolution-list">
+              {nightResolutionPreview.knightLog && (
+                <div className="resolution-item resolution-item--chain">
+                  <strong>⚔️</strong>
+                  <p>{nightResolutionPreview.knightLog}</p>
+                </div>
+              )}
+              {nightResolutionPreview.loversLog && (
+                <div className="resolution-item resolution-item--chain">
+                  <strong>💘</strong>
+                  <p>{nightResolutionPreview.loversLog}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
-    </div>
+      </div>
+    </ActionSurface>
   );
 }

@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
-  padding: 1.1rem;
+  padding: 0;
 }
 
 .night-header {
@@ -187,6 +187,10 @@
   box-shadow: 0 12px 30px rgba(0,0,0,0.38);
 }
 .night-summary h3 { font-size: 1.2rem; font-weight: 800; }
+.night-summary-note {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
 
 /* New role elements */
 .role-wake-badges {
@@ -358,6 +362,22 @@
 .fox-result-summary--none {
   border-color: rgba(46,160,67,0.4);
   background: rgba(46,160,67,0.12);
+}
+
+@keyframes wakeCard {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.night-step-content,
+.night-summary {
+  animation: wakeCard 220ms ease-out;
 }
 
 /* Camp badge in seer reveal */

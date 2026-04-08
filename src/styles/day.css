@@ -3,7 +3,7 @@
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
-  padding: 1.1rem;
+  padding: 0;
 }
 
 .day-header {
@@ -41,6 +41,18 @@
   gap: 0.6rem;
   box-shadow: 0 12px 28px rgba(0,0,0,0.35);
 }
+.day-panel {
+  background: linear-gradient(120deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1rem 1.1rem;
+}
+
+.day-trigger-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
 .day-triggers h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.2rem; }
 .day-trigger-item {
   font-size: 0.88rem;
@@ -55,7 +67,7 @@
 .day-players h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.7rem; }
 .players-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: 1fr;
   gap: 0.7rem;
 }
 
@@ -69,6 +81,46 @@
   flex-direction: column;
   gap: 0.8rem;
   box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+}
+.vote-assist-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.vote-assist-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.vote-assist-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.75rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.05);
+  background: rgba(255,255,255,0.03);
+}
+
+.vote-assist-row p {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  margin-top: 0.2rem;
+}
+
+.vote-assist-row--novote {
+  border-color: rgba(185,42,58,0.4);
+  background: rgba(185,42,58,0.08);
+}
+
+.vote-assist-actions {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 .voting-header {
   display: flex;
@@ -151,4 +203,21 @@
   font-size: 0.9rem;
   color: #f7cf5e;
   margin-bottom: 0.6rem;
+}
+
+@media (min-width: 760px) {
+  .players-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .vote-assist-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .vote-assist-actions {
+    justify-content: stretch;
+  }
 }
