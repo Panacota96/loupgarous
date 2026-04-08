@@ -14,7 +14,7 @@ test('protector marks the saved player for wolves and cannot repeat the same tar
 
   await page.getByTestId('start-game').click();
 
-  const protectorSelect = page.locator('.night-input:has-text("Protector guards") select');
+  const protectorSelect = page.locator('.night-input:has-text("Protector shields this player tonight") select');
   await expect(protectorSelect).toBeVisible();
   await protectorSelect.selectOption({ label: 'Villager A' });
   await page.getByTestId('night-next').click();
@@ -35,8 +35,8 @@ test('protector marks the saved player for wolves and cannot repeat the same tar
   await expect(page.getByTestId('day-phase')).toBeVisible();
   await page.getByRole('button', { name: /Start Night Phase/ }).click();
 
-  const nightTwoProtectorSelect = page.locator('.night-input:has-text("Protector guards") select');
-  await expect(page.locator('.protect-note')).toContainText('Last night');
+  const nightTwoProtectorSelect = page.locator('.night-input:has-text("Protector shields this player tonight") select');
+  await expect(page.locator('.night-input')).toContainText('Last protection');
   const options = await nightTwoProtectorSelect.locator('option').allTextContents();
   expect(options.some((opt) => opt.includes('Villager A'))).toBeFalsy();
 });
@@ -60,7 +60,7 @@ test('lovers still die together at night even when one lover was protected', asy
   await cupidRow.locator('select').nth(1).selectOption({ label: 'Lover B' });
   await page.getByTestId('night-next').click();
 
-  const protectorSelect = page.locator('.night-input:has-text("Protector guards") select');
+  const protectorSelect = page.locator('.night-input:has-text("Protector shields this player tonight") select');
   await protectorSelect.selectOption({ label: 'Lover A' });
   await page.getByTestId('night-next').click();
 

@@ -83,6 +83,8 @@ export interface NightStepState {
   wildChildModelId: string | null;
   wolfDogChoice: 'villager' | 'werewolf' | null;
   protectorHistory: ProtectorRecord[];
+  protectedPlayerId: string | null;
+  lastProtectedPlayerId: string | null;
 }
 
 export interface ProtectorRecord {
@@ -115,6 +117,9 @@ export interface GameState {
   angelWon: boolean;                     // true if Angel was first Day-1 execution
   wolfVictimId: string | null;           // wolf's chosen victim for this night (persists across steps for Witch)
   ravenCursedId: string | null;          // player cursed by Raven last night (+2 votes)
+  language: Language;
+  nightStepStates: NightStepState[];     // checkpoints for each night step to allow back navigation
+  protectorHistory: ProtectorRecord[];   // records per-night Protector targets
   protectedPlayerId: string | null;      // player protected by Protector for the current night
   lastProtectedPlayerId: string | null;  // player protected on the previous night
 }

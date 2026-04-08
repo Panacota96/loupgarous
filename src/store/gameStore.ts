@@ -6,7 +6,6 @@ import type {
   NightStep,
   NightStepState,
   Language,
-  ProtectorRecord,
 } from '../types/game.types';
 import { getNightOrder, WOLF_ROLE_IDS } from '../data/roles';
 import { getStrings } from '../i18n';
@@ -35,7 +34,6 @@ interface StoreActions {
   setFoxPowerActive: (active: boolean) => void;
   setWolfVictimId: (id: string | null) => void;
   setRavenCursed: (id: string | null) => void;
-  setProtectedPlayerId: (id: string | null) => void;
   togglePhase: () => void;
   startTimer: () => void;
   stopTimer: () => void;
@@ -84,6 +82,7 @@ const defaultGame: GameState = {
   angelWon: false,
   wolfVictimId: null,
   ravenCursedId: null,
+  language: 'en',
   protectedPlayerId: null,
   lastProtectedPlayerId: null,
 };
@@ -126,6 +125,8 @@ function captureNightState(state: GameStore): NightStepState {
     wildChildModelId: state.wildChildModelId,
     wolfDogChoice: state.wolfDogChoice,
     protectorHistory: state.protectorHistory.map((p) => ({ ...p })),
+    protectedPlayerId: state.protectedPlayerId,
+    lastProtectedPlayerId: state.lastProtectedPlayerId,
   };
 }
 
@@ -136,10 +137,9 @@ export function resolveNightEliminations(
   loversIds: [string, string] | null
 ) {
   const finalEliminated = [...eliminatedThisNight];
-  let extraLog = '';
+  let knightLog = '';
+  let loversLog = '';
 
-  // Knight with Rusty Sword: if Knight was killed by wolves,
-  // the first wolf to their LEFT (seating order) dies at dawn.
   const knightPlayer = players.find((p) => p.isAlive && p.roleId === 'knight');
   if (knightPlayer && finalEliminated.includes(knightPlayer.id)) {
     const total = players.length;
@@ -153,14 +153,13 @@ export function resolveNightEliminations(
       ) {
         if (!finalEliminated.includes(candidate.id)) {
           finalEliminated.push(candidate.id);
-          extraLog = ` ⚔️ Knight's rusty sword: ${candidate.name} dies of tetanus!`;
+          knightLog = `⚔️ Knight's rusty sword: ${candidate.name} dies of tetanus!`;
         }
         break;
       }
     }
   }
 
-  let loversLog = '';
   if (loversIds) {
     const [loverAId, loverBId] = loversIds;
     const loverAEliminated = finalEliminated.includes(loverAId);
@@ -173,14 +172,13 @@ export function resolveNightEliminations(
 
       if (chainedPlayer?.isAlive && !finalEliminated.includes(chainedId)) {
         finalEliminated.push(chainedId);
-        const chainedName = chainedPlayer.name;
         const fallenName = players.find((p) => p.id === fallenId)?.name ?? 'Unknown';
-        loversLog = ` 💘 Lovers: ${chainedName} dies with ${fallenName}.`;
+        loversLog = `💘 Lovers: ${chainedPlayer.name} dies with ${fallenName}.`;
       }
     }
   }
 
-  return { finalEliminated, extraLog, loversLog };
+  return { finalEliminated, knightLog, loversLog };
 }
 
 export const useGameStore = create<GameStore>()(
@@ -217,27 +215,31 @@ export const useGameStore = create<GameStore>()(
           players,
           nightSteps,
           currentNightStepIndex: 0,
-          eliminatedThisNight: [] as string[],
+          eliminatedThisNight: [],
           timerRemaining: discussionTime,
           discussionTimeSeconds: discussionTime,
           loversIds: null,
           mayorId: null,
           log: [strings.logs.gameStarted(players.length)],
-          usedGameAbilities: [] as string[],
+          usedGameAbilities: [],
           optionalRules,
           foxPowerActive: true,
-          protectorHistory: [] as ProtectorRecord[],
+          protectorHistory: [],
           wildChildModelId: null,
           wildChildTransformed: false,
           wolfDogChoice: null,
-          enchantedPlayerIds: [] as string[],
-          infectedPlayerIds: [] as string[],
+          enchantedPlayerIds: [],
+          infectedPlayerIds: [],
           angelWon: false,
           wolfVictimId: null,
           ravenCursedId: null,
+          language: language ?? 'en',
           protectedPlayerId: null,
           lastProtectedPlayerId: null,
-        });
+        };
+        const snapshotBase = { ...get(), ...nextState, nightStepStates: [] } as GameStore;
+        const nightStepStates = [captureNightState(snapshotBase)];
+        set({ ...nextState, nightStepStates });
       },
 
       resetGame: () => set((s) => ({ ...defaultSetup, ...defaultGame, language: s.language })),
@@ -280,6 +282,8 @@ export const useGameStore = create<GameStore>()(
             wildChildModelId: snapshot.wildChildModelId,
             wolfDogChoice: snapshot.wolfDogChoice,
             protectorHistory: snapshot.protectorHistory.map((p) => ({ ...p })),
+            protectedPlayerId: snapshot.protectedPlayerId,
+            lastProtectedPlayerId: snapshot.lastProtectedPlayerId,
             nightSteps,
             currentNightStepIndex: target,
             nightStepStates: history.slice(0, target + 1),
@@ -305,20 +309,43 @@ export const useGameStore = create<GameStore>()(
       setFoxPowerActive: (active) => set({ foxPowerActive: active }),
       setWolfVictimId: (id) => set({ wolfVictimId: id }),
       setRavenCursed: (id) => set({ ravenCursedId: id }),
-      setProtectedPlayerId: (id) => set({ protectedPlayerId: id }),
+      setProtectorTarget: (targetId) =>
+        set((s) => {
+          const withoutCurrentRound = s.protectorHistory.filter((p) => p.round !== s.round);
+          return {
+            protectorHistory: [...withoutCurrentRound, { round: s.round, targetId }],
+            protectedPlayerId: targetId,
+          };
+        }),
 
       applyNightResults: () => {
         const {
-          players, eliminatedThisNight, round, discussionTimeSeconds, optionalRules,
-          infectedPlayerIds, wildChildModelId, wildChildTransformed, log,
-          loversIds, protectedPlayerId,
+          players,
+          eliminatedThisNight,
+          round,
+          discussionTimeSeconds,
+          optionalRules,
+          infectedPlayerIds,
+          wildChildModelId,
+          wildChildTransformed,
+          log,
+          foxPowerActive,
+          usedGameAbilities,
+          protectorHistory,
+          loversIds,
+          protectedPlayerId,
         } = get();
-        const { finalEliminated, extraLog, loversLog } = resolveNightEliminations(
+        const strings = getStrings(get().language);
+        const extraLogParts: string[] = [];
+        const { finalEliminated, knightLog, loversLog } = resolveNightEliminations(
           players,
           eliminatedThisNight,
           infectedPlayerIds,
           loversIds
         );
+
+        if (knightLog) extraLogParts.push(knightLog);
+        if (loversLog) extraLogParts.push(loversLog);
 
         const witchHealUsed = usedGameAbilities.includes('witch_heal');
         const witchPoisonUsed = usedGameAbilities.includes('witch_poison');
@@ -353,9 +380,16 @@ export const useGameStore = create<GameStore>()(
         const newRound = round + 1;
         const nightSteps = buildNightSteps(roleIds, newRound, foxPowerActive, usedGameAbilities);
 
-        const nightMsg = finalEliminated.length
-          ? `Night ${round}: ${finalEliminated.map((id) => updated.find((p) => p.id === id)?.name).join(', ')} were eliminated.${extraLog}${loversLog}`
-          : `Night ${round}: No one was eliminated (peaceful night).`;
+        const eliminatedNames = finalEliminated
+          .map((id) => updated.find((p) => p.id === id)?.name)
+          .filter(Boolean)
+          .join(', ');
+
+        const nightMsg = strings.logs.nightSummary(
+          round,
+          eliminatedNames || null,
+          extraLogParts.length > 0 ? ` ${extraLogParts.join(' ')}` : ''
+        );
 
         set({
           players: updated,
@@ -376,7 +410,13 @@ export const useGameStore = create<GameStore>()(
 
       togglePhase: () => {
         const {
-          phase, round, players, discussionTimeSeconds, optionalRules, foxPowerActive, usedGameAbilities
+          phase,
+          round,
+          players,
+          discussionTimeSeconds,
+          optionalRules,
+          foxPowerActive,
+          usedGameAbilities,
         } = get();
         if (phase === 'day') {
           const roleIds = [...new Set(players.filter((p) => p.isAlive).map((p) => p.roleId))];
@@ -387,11 +427,14 @@ export const useGameStore = create<GameStore>()(
             round: newRound,
             nightSteps,
             currentNightStepIndex: 0,
-            eliminatedThisNight: [] as string[],
+            eliminatedThisNight: [],
             optionalRules,
             ravenCursedId: null,
             protectedPlayerId: null,
-          });
+          };
+          const snapshotBase = { ...get(), ...nextState, nightStepStates: [] } as GameStore;
+          const nightStepStates = [captureNightState(snapshotBase)];
+          set({ ...nextState, nightStepStates });
         } else {
           set({ phase: 'day', timerRemaining: discussionTimeSeconds, nightStepStates: [] });
         }
