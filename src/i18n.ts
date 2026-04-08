@@ -138,6 +138,13 @@ interface Strings {
     foxFoundWolf: string;
     foxFoundNone: string;
     foxReminder: string;
+    protectorLabel: string;
+    protectorNone: string;
+    protectorLast: (name: string, round: number) => string;
+    protectorLastNone: (round: number) => string;
+    protectorNoPrevious: string;
+    protectorCannotRepeat: (name: string) => string;
+    protectorUnknown: string;
     goBack: string;
     backHint: string;
     done: string;
@@ -204,6 +211,8 @@ interface Strings {
     knightRustySword: (name: string) => string;
     witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) => string;
     witchPotionsSpent: string;
+    protectorProtected: (name: string) => string;
+    protectorNoProtection: string;
   };
   camps: Record<Camp, string>;
 }
@@ -424,6 +433,15 @@ const translations: Record<Language, Strings> = {
       foxFoundNone: '❌ No wolves (power lost)',
       foxReminder:
         'If the 3 chosen seats have no werewolves, the Fox loses this power for the rest of the game.',
+      protectorLabel: '🛡️ Protector shields this player tonight:',
+      protectorNone: '— No protection tonight —',
+      protectorLast: (name: string, prevRound: number) =>
+        `Last protection (night ${prevRound}): ${name}`,
+      protectorLastNone: (prevRound: number) =>
+        `Last protection (night ${prevRound}): none`,
+      protectorNoPrevious: 'No previous protection recorded.',
+      protectorCannotRepeat: (name: string) => `Cannot protect ${name} two nights in a row.`,
+      protectorUnknown: 'unknown',
       goBack: '↩️ Back to previous step',
       backHint: 'Tap any completed role above to rewind and fix that step.',
       done: '✅ Done — Next',
@@ -495,6 +513,8 @@ const translations: Record<Language, Strings> = {
       witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
         `🧙‍♀️ Witch potions — Healing: ${healUsed ? 'USED' : 'available'}, Death: ${poisonUsed ? 'USED' : 'available'}.`,
       witchPotionsSpent: '🧙‍♀️ Witch has no potions left and will skip future wake-ups.',
+      protectorProtected: (name: string) => `🛡️ Protector guarded ${name} tonight.`,
+      protectorNoProtection: '🛡️ Protector did not shield anyone tonight.',
     },
     camps: campLabels.en,
   },
@@ -687,6 +707,16 @@ const translations: Record<Language, Strings> = {
       foxFoundNone: '❌ Aucun loup (pouvoir perdu)',
       foxReminder:
         'Si les 3 joueurs choisis ne comptent aucun loup, le Renard perd ce pouvoir pour toute la partie.',
+      protectorLabel: '🛡️ Le Salvateur protège ce joueur ce soir :',
+      protectorNone: '— Pas de protection cette nuit —',
+      protectorLast: (name: string, prevRound: number) =>
+        `Protection précédente (nuit ${prevRound}) : ${name}`,
+      protectorLastNone: (prevRound: number) =>
+        `Protection précédente (nuit ${prevRound}) : aucune`,
+      protectorNoPrevious: 'Aucune protection enregistrée auparavant.',
+      protectorCannotRepeat: (name: string) =>
+        `Ne peut pas protéger ${name} deux nuits de suite.`,
+      protectorUnknown: 'inconnu',
       goBack: '↩️ Retour à l’étape précédente',
       backHint: 'Touchez un rôle déjà validé pour revenir en arrière et corriger.',
       done: '✅ Terminé — Suivant',
@@ -758,6 +788,8 @@ const translations: Record<Language, Strings> = {
       witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
         `🧙‍♀️ Potions de la Sorcière — Vie : ${healUsed ? 'UTILISÉE' : 'disponible'}, Mort : ${poisonUsed ? 'UTILISÉE' : 'disponible'}.`,
       witchPotionsSpent: '🧙‍♀️ La Sorcière n’a plus de potions et ne se réveillera plus.',
+      protectorProtected: (name: string) => `🛡️ Le Salvateur a protégé ${name} cette nuit.`,
+      protectorNoProtection: '🛡️ Le Salvateur n’a protégé personne cette nuit.',
     },
     camps: campLabels.fr,
   },
