@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { ROLES } from '../../data/roles';
 import RoleReference from '../Roles/RoleReference';
+import QuickGuide from './QuickGuide';
 import '../../styles/setup.css';
 
 const MIN_PLAYERS = 5;
@@ -13,7 +14,7 @@ export default function SetupScreen() {
   const setSetup = useGameStore((s) => s.setSetup);
   const startGame = useGameStore((s) => s.startGame);
 
-  const [tab, setTab] = useState<'setup' | 'roles'>('setup');
+  const [tab, setTab] = useState<'setup' | 'roles' | 'guide'>('setup');
   const [playerCount, setPlayerCount] = useState(6);
   const [playerNames, setPlayerNames] = useState<string[]>(
     Array.from({ length: 6 }, (_, i) => `Joueur ${i + 1}`)
@@ -125,10 +126,17 @@ export default function SetupScreen() {
         >
           📚 Roles
         </button>
+        <button
+          className={`tab-btn ${tab === 'guide' ? 'active' : ''}`}
+          onClick={() => setTab('guide')}
+          data-testid="setup-tab-guide"
+        >
+          📘 Quick Guide
+        </button>
       </div>
 
       {tab === 'setup' ? (
-        <>
+        <div data-testid="setup-main-tab">
           {/* Player Count */}
           <section className="setup-section">
             <h2>👥 Number of Players</h2>
@@ -264,13 +272,25 @@ export default function SetupScreen() {
           >
             🐺 Start Game
           </button>
-        </>
-      ) : (
+        </div>
+      ) : tab === 'roles' ? (
         <section className="roles-tab-panel" data-testid="setup-roles-tab">
           <p className="roles-tab-hint">
             Review what each role does before you assign them to players.
           </p>
           <RoleReference />
+          <div className="roles-tab-actions">
+            <button className="btn btn-primary btn-large" onClick={() => setTab('setup')}>
+              ↩️ Back to setup
+            </button>
+          </div>
+        </section>
+      ) : (
+        <section className="roles-tab-panel guide-tab-panel" data-testid="setup-guide-tab">
+          <p className="roles-tab-hint">
+            Keep the balance notes out of the main setup flow and open them only when needed.
+          </p>
+          <QuickGuide />
           <div className="roles-tab-actions">
             <button className="btn btn-primary btn-large" onClick={() => setTab('setup')}>
               ↩️ Back to setup
