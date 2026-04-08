@@ -648,8 +648,8 @@ export function isPlayerWolfIdentity(
   );
 }
 
-/** Role IDs that are loners (win alone, not with village or wolves) */
-export const LONER_ROLE_IDS = ['white_werewolf', 'pied_piper', 'angel'];
+/** Independent loners that should be excluded from village/wolf endgame parity. */
+export const INDEPENDENT_LONER_ROLE_IDS = ['pied_piper', 'angel'];
 
 /** Returns night-phase roles in night order (ascending) for a given set of roleIds and round */
 export function getNightOrder(

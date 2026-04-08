@@ -99,8 +99,8 @@ export default function SetupScreen() {
     if (count < def.minCount)
       errors.push(t.setup.errors.notEnough(roleLabel, def.minCount));
   });
-  const wolfCount = roleCounts['werewolf'] ?? 0;
-  if (wolfCount === 0)
+  const wolfSideCount = (roleCounts['werewolf'] ?? 0) + (roleCounts['white_werewolf'] ?? 0);
+  if (wolfSideCount === 0)
     errors.push(t.setup.errors.needWolf);
   const sistersDef = SETUP_ROLES.find((r) => r.id === 'soeurs');
   if (sistersDef && (roleCounts['soeurs'] ?? 0) === 1)
