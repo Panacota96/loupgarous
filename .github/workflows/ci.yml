@@ -116,6 +116,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Sync web assets into Capacitor Android
+        run: npm run cap:sync
+
       - name: Ensure Gradle wrapper is executable
         run: chmod +x android/gradlew
 
