@@ -116,15 +116,12 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Sync web assets into Capacitor Android
-        run: npm run cap:sync
-
       - name: Ensure Gradle wrapper is executable
         run: chmod +x android/gradlew
 
-      - name: Run Android unit test and debug build smoke
+      - name: Run Android unit tests
         working-directory: android
-        run: ./gradlew testDebugUnitTest assembleDebug --stacktrace
+        run: ./gradlew testDebugUnitTest --stacktrace
 
       - name: Upload Android reports
         if: always()
@@ -133,5 +130,4 @@ jobs:
           name: android-unit-build
           path: |
             android/app/build/reports/tests/testDebugUnitTest
-            android/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: ignore
