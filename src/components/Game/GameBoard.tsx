@@ -21,43 +21,40 @@ export default function GameBoard() {
   const infectedPlayerIds = useGameStore((s) => s.infectedPlayerIds);
   const enchantedPlayerIds = useGameStore((s) => s.enchantedPlayerIds);
   const angelWon = useGameStore((s) => s.angelWon);
+  const uiMode = useGameStore((s) => s.uiMode);
+  const setUiMode = useGameStore((s) => s.setUiMode);
+  const privacyMode = useGameStore((s) => s.privacyMode);
+  const togglePrivacyMode = useGameStore((s) => s.togglePrivacyMode);
+  const undoLastAction = useGameStore((s) => s.undoLastAction);
+  const resolutionQueue = useGameStore((s) => s.resolutionQueue);
+  const saveNamedSession = useGameStore((s) => s.saveNamedSession);
   const { t } = useI18n();
 
   const [tab, setTab] = useState<Tab>('game');
   const [isConfigOpen, setIsConfigOpen] = useState(false);
 
-  const alivePlayers = players.filter((p) => p.isAlive);
+  const alivePlayers = players.filter((player) => player.isAlive);
 
-  /** Returns true if this player is wolf-aligned (including transforms) */
-  const isWolfAligned = (p: typeof players[0]) =>
-    WOLF_ROLE_IDS.includes(p.roleId) ||
-    (p.roleId === 'wolf_dog' && wolfDogChoice === 'werewolf') ||
-    (p.roleId === 'wild_child' && wildChildTransformed) ||
-    infectedPlayerIds.includes(p.id);
+  const isWolfAligned = (player: typeof players[0]) =>
+    WOLF_ROLE_IDS.includes(player.roleId) ||
+    (player.roleId === 'wolf_dog' && wolfDogChoice === 'werewolf') ||
+    (player.roleId === 'wild_child' && wildChildTransformed) ||
+    infectedPlayerIds.includes(player.id);
 
   const packWolfCount = alivePlayers.filter(isWolfAligned).length;
-  const whiteWolfAlive = alivePlayers.some((p) => p.roleId === 'white_werewolf');
-
-  // Village parity excludes pack wolves, White Werewolf, and truly independent loners.
+  const whiteWolfAlive = alivePlayers.some((player) => player.roleId === 'white_werewolf');
   const villageCount = alivePlayers.filter(
-    (p) => (
-      !isWolfAligned(p) &&
-      p.roleId !== 'white_werewolf' &&
-      !INDEPENDENT_LONER_ROLE_IDS.includes(p.roleId)
-    )
+    (player) =>
+      !isWolfAligned(player) &&
+      player.roleId !== 'white_werewolf' &&
+      !INDEPENDENT_LONER_ROLE_IDS.includes(player.roleId)
   ).length;
 
-  // Pied Piper wins when ALL other alive players are enchanted
-  const piedPiperAlive = alivePlayers.find((p) => p.roleId === 'pied_piper');
+  const piedPiperAlive = alivePlayers.find((player) => player.roleId === 'pied_piper');
   const piedPiperWins =
     !!piedPiperAlive &&
-    alivePlayers.every((p) => p.roleId === 'pied_piper' || enchantedPlayerIds.includes(p.id));
-
-  // White Werewolf wins as sole survivor
-  const whiteWolfWins =
-    alivePlayers.length === 1 && alivePlayers[0]?.roleId === 'white_werewolf';
-
-  // Standard win conditions
+    alivePlayers.every((player) => player.roleId === 'pied_piper' || enchantedPlayerIds.includes(player.id));
+  const whiteWolfWins = alivePlayers.length === 1 && alivePlayers[0]?.roleId === 'white_werewolf';
   const villageWins = packWolfCount === 0 && !whiteWolfAlive && !piedPiperWins && !whiteWolfWins && !angelWon;
   const wolvesWin =
     packWolfCount > 0 &&
@@ -65,33 +62,78 @@ export default function GameBoard() {
     !piedPiperWins &&
     !whiteWolfWins &&
     !angelWon;
-
   const gameOver = villageWins || wolvesWin || piedPiperWins || whiteWolfWins || angelWon;
 
-  let winner: 'village' | 'werewolves' | 'pied_piper' | 'white_werewolf' | 'angel' = 'village';
-  if (wolvesWin) winner = 'werewolves';
-  else if (piedPiperWins) winner = 'pied_piper';
-  else if (whiteWolfWins) winner = 'white_werewolf';
-  else if (angelWon) winner = 'angel';
+  const winner = (() => {
+    if (wolvesWin) return 'werewolves';
+    if (piedPiperWins) return 'pied_piper';
+    if (whiteWolfWins) return 'white_werewolf';
+    if (angelWon) return 'angel';
+    return 'village';
+  })();
+
+  const endReason = (() => {
+    if (winner === 'village') return t.game.endReasons.village;
+    if (winner === 'werewolves') return t.game.endReasons.werewolves(packWolfCount, villageCount);
+    if (winner === 'pied_piper') return t.game.endReasons.piedPiper;
+    if (winner === 'white_werewolf') return t.game.endReasons.whiteWerewolf;
+    return t.game.endReasons.angel;
+  })();
 
   const openTab = (nextTab: Tab) => {
     setTab(nextTab);
+    setUiMode(nextTab === 'game' ? 'run' : 'reference');
     setIsConfigOpen(false);
   };
 
+  const exportRecap = () => {
+    const lines = [
+      `${t.appTitle} - ${t.game.recapTitle}`,
+      `${t.game.phaseChip(phase, round)}`,
+      '',
+      ...players.map((player) => `${player.name}: ${player.roleId} - ${player.isAlive ? 'alive' : 'dead'}`),
+      '',
+      ...log,
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `loupgarous-recap-round-${round}.txt`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className={`gameboard ${phase}`}>
-      {/* Top bar */}
+    <div className={`gameboard ${phase} ${privacyMode ? 'privacy-on' : ''}`}>
       <div className="gameboard-topbar">
         <div className="topbar-left">
-          <span className="phase-chip">
-            {t.game.phaseChip(phase, round)}
-          </span>
+          <span className="phase-chip">{t.game.phaseChip(phase, round)}</span>
           <span className="alive-chip">{t.game.alive(alivePlayers.length)}</span>
           <span className="wolf-chip">{t.game.wolves(packWolfCount)}</span>
+          <span className="queue-chip">{t.game.unresolved(resolutionQueue.length)}</span>
         </div>
         <div className="topbar-right">
           <LanguageToggle compact />
+          <button className="btn btn-ghost btn-sm" onClick={undoLastAction}>
+            {t.game.undo}
+          </button>
+          <button
+            className="btn btn-ghost btn-sm"
+            data-testid="save-live-session"
+            onClick={() => {
+              const name = window.prompt(
+                t.setup.sessionNamePlaceholder,
+                t.setup.defaultSessionName(players.length)
+              );
+              if (name) saveNamedSession(name);
+            }}
+          >
+            {t.setup.saveSession}
+          </button>
+          <button className="btn btn-ghost btn-sm" onClick={togglePrivacyMode} data-testid="privacy-toggle">
+            {privacyMode ? t.game.privacyOff : t.game.privacyOn}
+          </button>
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => {
@@ -103,7 +145,6 @@ export default function GameBoard() {
         </div>
       </div>
 
-      {/* Win screen */}
       {gameOver && (
         <div className={`win-screen win-${winner}`}>
           {winner === 'village' && (
@@ -141,13 +182,21 @@ export default function GameBoard() {
               <p>{t.game.wins.angel.body}</p>
             </>
           )}
-          <button className="btn btn-primary" onClick={resetGame}>
-            {t.game.newGame}
-          </button>
+          <div className="win-explainer">
+            <strong>{t.game.endReason}</strong>
+            <p>{endReason}</p>
+          </div>
+          <div className="win-actions">
+            <button className="btn btn-ghost" onClick={exportRecap}>
+              {t.game.exportRecap}
+            </button>
+            <button className="btn btn-primary" onClick={resetGame}>
+              {t.game.newGame}
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Tabs */}
       {!gameOver && (
         <>
           <div className="tabs">
@@ -164,14 +213,14 @@ export default function GameBoard() {
                 onClick={() => openTab('roles')}
                 data-testid="gameboard-tab-roles"
               >
-                📚 Roles
+                {t.game.tabs.roles}
               </button>
               <button
                 className={`tab-btn ${tab === 'log' ? 'active' : ''}`}
                 onClick={() => openTab('log')}
                 data-testid="gameboard-tab-log"
               >
-                📜 Log
+                {t.game.tabs.log}
               </button>
             </div>
             <div className="tabs-mobile-config">
@@ -192,7 +241,7 @@ export default function GameBoard() {
                     role="menuitem"
                     data-testid="gameboard-conf-roles"
                   >
-                    📚 Roles
+                    {t.game.tabs.roles}
                   </button>
                   <button
                     className={`conf-menu-item ${tab === 'log' ? 'active' : ''}`}
@@ -200,24 +249,34 @@ export default function GameBoard() {
                     role="menuitem"
                     data-testid="gameboard-conf-log"
                   >
-                    📜 Log
+                    {t.game.tabs.log}
                   </button>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="tab-content">
-            {tab === 'game' && (
-              phase === 'night' ? <NightPhase /> : <DayPhase />
+          <div className={`tab-content ${uiMode === 'reference' ? 'tab-content--reference' : ''}`}>
+            {privacyMode && tab === 'game' && (
+              <div className="privacy-overlay">
+                <strong>{t.game.privacyTitle}</strong>
+                <p>{t.game.privacyBody}</p>
+              </div>
             )}
+
+            {tab === 'game' && (phase === 'night' ? <NightPhase /> : <DayPhase />)}
             {tab === 'roles' && <RoleReference />}
             {tab === 'log' && (
               <div className="game-log">
-                <h3>{t.game.log.title}</h3>
+                <div className="game-log-header">
+                  <h3>{t.game.log.title}</h3>
+                  <button className="btn btn-ghost btn-sm" onClick={exportRecap}>
+                    {t.game.exportRecap}
+                  </button>
+                </div>
                 {log.length === 0 && <p className="log-empty">{t.game.log.empty}</p>}
-                {[...log].reverse().map((entry, i) => (
-                  <div key={i} className="log-entry">
+                {[...log].reverse().map((entry, index) => (
+                  <div key={`${entry}-${index}`} className="log-entry">
                     {entry}
                   </div>
                 ))}

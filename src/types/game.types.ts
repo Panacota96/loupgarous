@@ -1,5 +1,6 @@
 export type Phase = 'setup' | 'night' | 'day';
 export type Language = 'en' | 'fr';
+export type UIMode = 'prepare' | 'run' | 'reference';
 export type Camp =
   | 'village'
   | 'werewolves'
@@ -92,7 +93,39 @@ export interface ProtectorRecord {
   targetId: string | null;
 }
 
-export interface GameState {
+export interface PlayerStatus {
+  protected: boolean;
+  cursed: boolean;
+  silenced: boolean;
+  noVote: boolean;
+  cannotBeProtected: boolean;
+  enchanted: boolean;
+  infected: boolean;
+  lovers: boolean;
+  mayor: boolean;
+  roleLocked: boolean;
+  revealed: boolean;
+  transformed: boolean;
+}
+
+export interface ResolutionItem {
+  id: string;
+  round: number;
+  phase: Exclude<Phase, 'setup'>;
+  type: 'death' | 'save' | 'chain' | 'reminder' | 'status' | 'vote';
+  title: string;
+  detail: string;
+  playerIds: string[];
+  public: boolean;
+}
+
+export interface VoteState {
+  active: boolean;
+  votes: Record<string, number>;
+  noVoteIds: string[];
+}
+
+export interface SessionState {
   phase: Phase;
   round: number;
   players: Player[];
@@ -122,4 +155,29 @@ export interface GameState {
   protectorHistory: ProtectorRecord[];   // records per-night Protector targets
   protectedPlayerId: string | null;      // player protected by Protector for the current night
   lastProtectedPlayerId: string | null;  // player protected on the previous night
+  seatOrder: string[];
+  playerStatuses: Record<string, PlayerStatus>;
+  resolutionQueue: ResolutionItem[];
+  uiMode: UIMode;
+  privacyMode: boolean;
+  voteAssist: VoteState | null;
+}
+
+export interface SessionSnapshot {
+  id: string;
+  reason: string;
+  createdAt: number;
+  state: SessionState;
+}
+
+export interface SavedSession {
+  id: string;
+  name: string;
+  createdAt: number;
+  updatedAt: number;
+  state: SessionState;
+}
+
+export interface GameState extends SessionState {
+  sessionSnapshots: SessionSnapshot[];
 }
