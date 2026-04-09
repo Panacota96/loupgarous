@@ -27,9 +27,21 @@ env:
   PACKAGE_NAME: com.panacota96.loupgarous
 
 jobs:
+  validate-ref:
+    name: Validate Release Ref
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce release/mobile for manual publishing
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ "${GITHUB_REF_NAME}" != "release/mobile" ]; then
+            echo "::error::Manual Android publishing must be run from the release/mobile branch."
+            exit 1
+          fi
+
   build-release:
     name: Android Release Bundle
     runs-on: ubuntu-latest
+    needs: validate-ref
     outputs:
       release_version: ${{ steps.release_meta.outputs.release_version }}
       android_version_name: ${{ steps.release_meta.outputs.android_version_name }}
@@ -64,6 +76,24 @@ jobs:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         run: |
           printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/release.keystore
+
+      - name: Validate Android signing configuration
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          missing=()
+          [ -z "${ANDROID_KEYSTORE_BASE64:-}" ] && missing+=("ANDROID_KEYSTORE_BASE64")
+          [ -z "${ANDROID_STORE_PASSWORD:-}" ] && missing+=("ANDROID_STORE_PASSWORD")
+          [ -z "${ANDROID_KEY_ALIAS:-}" ] && missing+=("ANDROID_KEY_ALIAS")
+          [ -z "${ANDROID_KEY_PASSWORD:-}" ] && missing+=("ANDROID_KEY_PASSWORD")
+
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::Missing required Android signing secrets: ${missing[*]}"
+            exit 1
+          fi
 
       - name: Sync Capacitor Android assets
         run: npm run cap:sync

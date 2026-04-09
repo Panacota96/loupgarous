@@ -16,9 +16,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  validate-ref:
+    name: Validate Deploy Ref
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enforce release/web for manual production deploys
+        run: |
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ] && [ "${GITHUB_REF_NAME}" != "release/web" ]; then
+            echo "::error::Manual production deploys must be run from the release/web branch."
+            exit 1
+          fi
+
   build:
     name: Web Release Build
     runs-on: ubuntu-latest
+    needs: validate-ref
     outputs:
       release_version: ${{ steps.release_meta.outputs.release_version }}
       release_notes_file: ${{ steps.release_meta.outputs.release_notes_file }}
