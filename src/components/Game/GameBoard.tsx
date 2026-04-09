@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { WOLF_ROLE_IDS, INDEPENDENT_LONER_ROLE_IDS } from '../../data/roles';
 import NightPhase from './NightPhase';
@@ -64,21 +64,21 @@ export default function GameBoard() {
     !angelWon;
   const gameOver = villageWins || wolvesWin || piedPiperWins || whiteWolfWins || angelWon;
 
-  const winner = useMemo(() => {
+  const winner = (() => {
     if (wolvesWin) return 'werewolves';
     if (piedPiperWins) return 'pied_piper';
     if (whiteWolfWins) return 'white_werewolf';
     if (angelWon) return 'angel';
     return 'village';
-  }, [angelWon, piedPiperWins, villageWins, whiteWolfWins, wolvesWin]);
+  })();
 
-  const endReason = useMemo(() => {
+  const endReason = (() => {
     if (winner === 'village') return t.game.endReasons.village;
     if (winner === 'werewolves') return t.game.endReasons.werewolves(packWolfCount, villageCount);
     if (winner === 'pied_piper') return t.game.endReasons.piedPiper;
     if (winner === 'white_werewolf') return t.game.endReasons.whiteWerewolf;
     return t.game.endReasons.angel;
-  }, [packWolfCount, t, villageCount, winner]);
+  })();
 
   const openTab = (nextTab: Tab) => {
     setTab(nextTab);

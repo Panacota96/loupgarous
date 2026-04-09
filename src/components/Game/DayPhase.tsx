@@ -269,6 +269,14 @@ export default function DayPhase() {
                     .join(', ')}
                 </div>
               )}
+
+              {ravenCursedName && !voteAssist && (
+                <div className="day-trigger-item day-raven-bar">{t.day.ravenCurse(ravenCursedName)}</div>
+              )}
+
+              {mayorAlive && !voteAssist && (
+                <div className="day-trigger-item day-mayor-bar">{t.day.mayorReminder(mayorAlive.name)}</div>
+              )}
             </div>
           </section>
         )}
