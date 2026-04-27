@@ -6,7 +6,7 @@ import {
   getRoleName,
 } from '../../data/roles';
 import { useI18n } from '../../i18n';
-import { getPlayerRoleLabel, getPlayerRoleLabelById } from '../../utils/playerLabels';
+import { getPlayerRoleLabelById } from '../../utils/playerLabels';
 import '../../styles/night.css';
 
 const PASSIVE_REMINDER_ROLE_IDS = ['bear_tamer', 'elder', 'hunter', 'angel'];
@@ -17,25 +17,20 @@ export default function NightPhase() {
   const currentNightStepIndex = useGameStore((s) => s.currentNightStepIndex);
   const eliminatedThisNight = useGameStore((s) => s.eliminatedThisNight);
   const allPlayers = useGameStore((s) => s.players);
-  const players = useMemo(() => allPlayers.filter((p) => p.isAlive), [allPlayers]);
   const usedGameAbilities = useGameStore((s) => s.usedGameAbilities);
   const round = useGameStore((s) => s.round);
   const infectedPlayerIds = useGameStore((s) => s.infectedPlayerIds);
-  const wolfVictimId = useGameStore((s) => s.wolfVictimId);
   const loversIds = useGameStore((s) => s.loversIds);
 
   const completeNightStep = useGameStore((s) => s.completeNightStep);
-  const setEliminatedThisNight = useGameStore((s) => s.setEliminatedThisNight);
   const recordAbilityUsed = useGameStore((s) => s.useGameAbility);
   const applyNightResults = useGameStore((s) => s.applyNightResults);
   const setWolfDogChoiceStore = useGameStore((s) => s.setWolfDogChoice);
-  const setRavenCursed = useGameStore((s) => s.setRavenCursed);
   const goToNightStepStore = useGameStore((s) => s.goToNightStep);
 
   const [witchSave, setWitchSave] = useState(false);
   const [witchPoison, setWitchPoison] = useState(false);
   const [wolfDogChoice, setWolfDogChoiceLocal] = useState<'villager' | 'werewolf' | ''>('');
-  const [ravenTarget, setRavenTarget] = useState('');
   const [passiveChecks, setPassiveChecks] = useState<Record<string, boolean>>({});
 
   const allStepsDone = currentNightStepIndex >= nightSteps.length;
@@ -43,8 +38,6 @@ export default function NightPhase() {
   const currentRole = currentStep ? ROLE_MAP[currentStep.roleId] : null;
   const currentRoleText = currentRole ? getRoleTexts(currentRole, language) : null;
   const currentRoleName = currentRole ? getRoleName(currentRole, language) : '';
-  const playerLabel = (player: typeof allPlayers[number]) =>
-    getPlayerRoleLabel(player, allPlayers, language);
   const playerLabelById = (id: string | null | undefined, fallback = 'Unknown') =>
     getPlayerRoleLabelById(id, allPlayers, language, fallback);
 
@@ -71,7 +64,6 @@ export default function NightPhase() {
     setWitchSave(false);
     setWitchPoison(false);
     setWolfDogChoiceLocal('');
-    setRavenTarget('');
   };
 
   const handleCompleteStep = () => {
@@ -79,19 +71,13 @@ export default function NightPhase() {
     if (!canCompleteStep) return;
 
     if (currentRole.id === 'witch') {
-      // No normal wolf victim is recorded; this only applies to older/restored games.
-      const victimToSave = wolfVictimId ?? '';
       if (witchSave && !witchHealUsed) {
         recordAbilityUsed('witch_heal');
-        setEliminatedThisNight(eliminatedThisNight.filter((id) => id !== victimToSave));
       }
       if (witchPoison && !witchPoisonUsed) {
         recordAbilityUsed('witch_poison');
       }
     }
-
-    if (currentRole.id === 'raven' && ravenTarget)
-      setRavenCursed(ravenTarget);
 
     if (currentRole.id === 'wolf_dog' && wolfDogChoice)
       setWolfDogChoiceStore(wolfDogChoice);
@@ -116,11 +102,6 @@ export default function NightPhase() {
   const renderStepContent = () => {
     if (!currentRole) return null;
 
-    const currentVictimId = wolfVictimId || eliminatedThisNight[0] || '';
-    const currentVictimLabel = currentVictimId
-      ? playerLabelById(currentVictimId)
-      : null;
-
     return (
       <div className="night-step-content">
         <div className="role-wake">
@@ -141,9 +122,6 @@ export default function NightPhase() {
         {/* Witch */}
         {currentRole.id === 'witch' && (
           <div className="night-input">
-            {currentVictimLabel
-              ? <p className="witch-victim-info">{t.night.witchVictim(currentVictimLabel)}</p>
-              : <p className="witch-victim-info">{t.night.witchVictim(null)}</p>}
             <label className="witch-option">
               <input type="checkbox" checked={witchSave} onChange={(e) => setWitchSave(e.target.checked)} disabled={witchHealUsed} />
               <span>{t.night.witchHeal} {witchHealUsed && <span className="used-badge">{t.night.usedBadge}</span>}</span>
@@ -187,25 +165,6 @@ export default function NightPhase() {
               {t.night.sistersIntro(round === 1)}
             </p>
             <p className="infect-note">{t.night.sistersNote}</p>
-          </div>
-        )}
-
-        {/* Raven: curse a player (+2 votes next day) */}
-        {currentRole.id === 'raven' && (
-          <div className="night-input">
-            <label>{t.night.ravenLabel}</label>
-            <select value={ravenTarget} onChange={(e) => setRavenTarget(e.target.value)}>
-              <option value="">&mdash; {t.night.ravenNone} &mdash;</option>
-              {players.map((p) => <option key={p.id} value={p.id}>{playerLabel(p)}</option>)}
-            </select>
-            {ravenTarget && (() => {
-              const cursedName = playerLabelById(ravenTarget, '');
-              return (
-                <p className="infect-note">
-                  {t.night.ravenNote(cursedName)}
-                </p>
-              );
-            })()}
           </div>
         )}
       </div>

@@ -92,6 +92,10 @@ export default function GameBoard() {
     suggestedWinner && !confirmedWinner && suggestionKey !== dismissedSuggestionKey
       ? suggestedWinner
       : null;
+  const dismissedWinner =
+    suggestedWinner && !confirmedWinner && suggestionKey === dismissedSuggestionKey
+      ? suggestedWinner
+      : null;
   const gameOver = confirmedWinner !== null;
 
   const openTab = (nextTab: Tab) => {
@@ -117,6 +121,15 @@ export default function GameBoard() {
           <span className="wolf-chip">{t.game.wolves(packWolfCount)}</span>
         </div>
         <div className="topbar-right">
+          {dismissedWinner && (
+            <button
+              className="btn btn-yellow btn-sm"
+              onClick={() => setDismissedSuggestionKey(null)}
+              data-testid="review-winner"
+            >
+              {t.game.reviewWin}
+            </button>
+          )}
           <LanguageToggle compact />
           <button
             className="btn btn-ghost btn-sm"

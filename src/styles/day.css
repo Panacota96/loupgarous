@@ -128,16 +128,6 @@
   margin-left: 0.5rem;
 }
 
-.raven-curse-bar {
-  background: rgba(100,65,165,0.14);
-  border: 1px solid rgba(100,65,165,0.45);
-  border-radius: 8px;
-  padding: 0.55rem 0.85rem;
-  font-size: 0.9rem;
-  color: #d7b3ff;
-  margin-bottom: 0.55rem;
-}
-
 .mayor-vote-bar {
   display: flex;
   align-items: center;

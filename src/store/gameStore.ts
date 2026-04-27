@@ -35,8 +35,6 @@ interface StoreActions {
   setAngelWon: (val: boolean) => void;
   setFoxPowerActive: (active: boolean) => void;
   setRolePowerOverride: (roleId: string, active: boolean | null) => void;
-  setWolfVictimId: (id: string | null) => void;
-  setRavenCursed: (id: string | null) => void;
   togglePhase: () => void;
   startTimer: () => void;
   stopTimer: () => void;
@@ -83,8 +81,6 @@ const defaultGame: GameState = {
   enchantedPlayerIds: [],
   infectedPlayerIds: [],
   angelWon: false,
-  wolfVictimId: null,
-  ravenCursedId: null,
   language: 'en',
   protectedPlayerId: null,
   lastProtectedPlayerId: null,
@@ -184,8 +180,6 @@ function captureNightState(state: GameStore): NightStepState {
     loversIds: state.loversIds ? [...state.loversIds] as [string, string] : null,
     players: clonePlayers(state.players),
     foxPowerActive: state.foxPowerActive,
-    wolfVictimId: state.wolfVictimId,
-    ravenCursedId: state.ravenCursedId,
     wildChildModelId: state.wildChildModelId,
     wolfDogChoice: state.wolfDogChoice,
     protectorHistory: state.protectorHistory.map((p) => ({ ...p })),
@@ -303,8 +297,6 @@ export const useGameStore = create<GameStore>()(
           enchantedPlayerIds: [],
           infectedPlayerIds: [],
           angelWon: false,
-          wolfVictimId: null,
-          ravenCursedId: null,
           language: language ?? 'en',
           protectedPlayerId: null,
           lastProtectedPlayerId: null,
@@ -350,8 +342,6 @@ export const useGameStore = create<GameStore>()(
             loversIds: snapshot.loversIds ? [...snapshot.loversIds] as [string, string] : null,
             players: clonePlayers(snapshot.players),
             foxPowerActive: snapshot.foxPowerActive,
-            wolfVictimId: snapshot.wolfVictimId,
-            ravenCursedId: snapshot.ravenCursedId,
             wildChildModelId: snapshot.wildChildModelId,
             wolfDogChoice: snapshot.wolfDogChoice,
             protectorHistory: snapshot.protectorHistory.map((p) => ({ ...p })),
@@ -402,16 +392,29 @@ export const useGameStore = create<GameStore>()(
             ...step,
             completed: index < currentNightStepIndex,
           }));
+          const fallbackSnapshot = captureNightState({
+            ...state,
+            rolePowerOverrides,
+            nightSteps,
+            currentNightStepIndex,
+          } as GameStore);
+          const existingHistory = state.nightStepStates ?? [];
+          const nightStepStates = Array.from(
+            { length: currentNightStepIndex + 1 },
+            (_, index) => ({
+              ...(existingHistory[index] ?? fallbackSnapshot),
+              rolePowerOverrides: { ...rolePowerOverrides },
+            })
+          );
+          nightStepStates[currentNightStepIndex] = fallbackSnapshot;
 
           return {
             rolePowerOverrides,
             nightSteps,
             currentNightStepIndex,
-            nightStepStates: [],
+            nightStepStates,
           };
         }),
-      setWolfVictimId: (id) => set({ wolfVictimId: id }),
-      setRavenCursed: (id) => set({ ravenCursedId: id }),
       setProtectorTarget: (targetId) =>
         set((s) => {
           const withoutCurrentRound = s.protectorHistory.filter((p) => p.round !== s.round);
@@ -522,7 +525,6 @@ export const useGameStore = create<GameStore>()(
           log: [...log, nightMsg],
           optionalRules,
           wildChildTransformed: newWildChildTransformed,
-          wolfVictimId: null,
           protectedPlayerId: null,
           lastProtectedPlayerId: protectedPlayerId,
         });
@@ -561,7 +563,6 @@ export const useGameStore = create<GameStore>()(
             currentNightStepIndex: 0,
             eliminatedThisNight: [],
             optionalRules,
-            ravenCursedId: null,
             protectedPlayerId: null,
           };
           const snapshotBase = { ...get(), ...nextState, nightStepStates: [] } as GameStore;

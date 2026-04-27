@@ -94,6 +94,7 @@ interface Strings {
     confirmWinBody: string;
     confirmWin: string;
     keepPlaying: string;
+    reviewWin: string;
     newGame: string;
   };
   night: {
@@ -121,7 +122,6 @@ interface Strings {
     seerLabel: string;
     selectPlayer: string;
     dmReveal: (name: string, role: string) => string;
-    witchVictim: (name: string | null) => string;
     witchHeal: string;
     witchDeath: string;
     none: string;
@@ -141,9 +141,6 @@ interface Strings {
     piperOneTarget: string;
     piperNoTargets: string;
     enchantNote: string;
-    ravenLabel: string;
-    ravenNone: string;
-    ravenNote: (name: string) => string;
     foxActive: string;
     foxLost: string;
     foxCenterLabel: string;
@@ -191,10 +188,7 @@ interface Strings {
     tieResolutionNeedPlayers: string;
     tieResolutionResolve: string;
     tieResolutionCancel: string;
-    ravenCurse: (name: string) => string;
     mayorReminder: (mayorName: string) => string;
-    scapegoatResolution: (scapegoatName: string, tiedNames: string) => string;
-    confirmScapegoat: (scapegoatName: string) => string;
     nightButton: string;
   };
   timer: {
@@ -225,7 +219,6 @@ interface Strings {
     nightSummary: (round: number, names: string | null, extraLog: string) => string;
     dayElimination: (round: number, names: string) => string;
     tieBreaker: (name: string) => string;
-    scapegoatTie: (name: string) => string;
     knightRustySword: (name: string) => string;
     witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) => string;
     witchPotionsSpent: string;
@@ -419,6 +412,7 @@ const translations: Record<Language, Strings> = {
       confirmWinBody: 'Confirm before ending the game.',
       confirmWin: 'Confirm winner',
       keepPlaying: 'Keep playing',
+      reviewWin: 'Review win',
       newGame: '🔄 New Game',
     },
     night: {
@@ -447,9 +441,7 @@ const translations: Record<Language, Strings> = {
       seerLabel: '🪄 Seer looks at player:',
       selectPlayer: '— Select player —',
       dmReveal: (name: string, role: string) => `DM only: ${name} is ${role}`,
-      witchVictim: (name: string | null) =>
-        name ? `🐺 Wolf victim tonight: ${name}` : '🌙 No wolf victim tonight.',
-      witchHeal: '💖 Use Healing Potion (save victim)',
+      witchHeal: '💖 Use Healing Potion',
       witchDeath: '☠️ Use Death Potion',
       none: '— None —',
       cupidLabel: '💘 Cupid links these two lovers:',
@@ -472,9 +464,6 @@ const translations: Record<Language, Strings> = {
       piperOneTarget: 'Only one eligible target remains to enchant this night.',
       piperNoTargets: 'All eligible players are already enchanted. Continue to skip this action.',
       enchantNote: 'Enchanted players acknowledge secretly (e.g. thumb up under the table).',
-      ravenLabel: '🦅 Raven places a curse on (optional):',
-      ravenNone: '— No curse this night —',
-      ravenNote: (name: string) => `☠️ ${name} will have +2 votes against them tomorrow.`,
       foxActive: '🦊 Fox still has its sniffing power.',
       foxLost: '🦊 Fox already lost its sniffing power.',
       foxCenterLabel: '🦊 Center seat of the trio to sniff:',
@@ -528,12 +517,8 @@ const translations: Record<Language, Strings> = {
       tieResolutionNeedPlayers: 'Select at least 2 tied players before resolving the tie.',
       tieResolutionResolve: 'Resolve Tie',
       tieResolutionCancel: 'Cancel',
-      ravenCurse: (name: string) => `🦅 Raven curse: ${name} has +2 votes today.`,
       mayorReminder: (mayorName: string) =>
         `🎖️ Mayor reminder: ${mayorName} is still the Mayor at the table.`,
-      scapegoatResolution: (scapegoatName: string, tiedNames: string) =>
-        `🪢 Tie between ${tiedNames}. Scapegoat ${scapegoatName} is eliminated instead.`,
-      confirmScapegoat: (scapegoatName: string) => `☠️ Eliminate ${scapegoatName}`,
       nightButton: '🌙 Start Night Phase',
     },
     timer: {
@@ -565,7 +550,6 @@ const translations: Record<Language, Strings> = {
         names ? `Night ${round}: ${names} were eliminated.${extraLog}` : `Night ${round}: No one was eliminated (peaceful night).`,
       dayElimination: (round: number, names: string) => `Day ${round}: ${names} eliminated.`,
       tieBreaker: (name: string) => `Tie-breaker: ${name} was randomly selected for elimination.`,
-      scapegoatTie: (name: string) => `Scapegoat: ${name} was eliminated because the village vote ended in a tie.`,
       knightRustySword: (name: string) => ` ⚔️ Knight's rusty sword: ${name} dies of tetanus!`,
       witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
         `🧙‍♀️ Witch potions — Healing: ${healUsed ? 'USED' : 'available'}, Death: ${poisonUsed ? 'USED' : 'available'}.`,
@@ -732,6 +716,7 @@ const translations: Record<Language, Strings> = {
       confirmWinBody: 'Confirmez avant de terminer la partie.',
       confirmWin: 'Confirmer le vainqueur',
       keepPlaying: 'Continuer la partie',
+      reviewWin: 'Revoir la victoire',
       newGame: '🔄 Nouvelle partie',
     },
     night: {
@@ -760,9 +745,7 @@ const translations: Record<Language, Strings> = {
       seerLabel: '🪄 La Voyante regarde le joueur :',
       selectPlayer: '— Choisir un joueur —',
       dmReveal: (name: string, role: string) => `MDJ seulement : ${name} est ${role}`,
-      witchVictim: (name: string | null) =>
-        name ? `🐺 Victime des loups : ${name}` : '🌙 Aucune victime cette nuit.',
-      witchHeal: '💖 Utiliser la potion de vie (sauver la victime)',
+      witchHeal: '💖 Utiliser la potion de vie',
       witchDeath: '☠️ Utiliser la potion de mort',
       none: '— Aucun —',
       cupidLabel: '💘 Cupidon lie ces deux amoureux :',
@@ -785,9 +768,6 @@ const translations: Record<Language, Strings> = {
       piperOneTarget: "Plus qu'une seule cible éligible à envoûter cette nuit.",
       piperNoTargets: 'Tous les joueurs éligibles sont déjà envoûtés. Continuez pour passer cette action.',
       enchantNote: 'Les joueurs envoûtés acquiescent discrètement (ex : pouce levé).',
-      ravenLabel: '🦅 Le Corbeau place une malédiction sur (optionnel) :',
-      ravenNone: '— Pas de malédiction cette nuit —',
-      ravenNote: (name: string) => `☠️ ${name} aura +2 voix contre lui demain.`,
       foxActive: '🦊 Le Renard a toujours son pouvoir de flair.',
       foxLost: '🦊 Le Renard a déjà perdu son pouvoir de flair.',
       foxCenterLabel: '🦊 Siège central du trio à flairer :',
@@ -842,12 +822,8 @@ const translations: Record<Language, Strings> = {
       tieResolutionNeedPlayers: 'Sélectionnez au moins 2 joueurs à égalité avant de résoudre.',
       tieResolutionResolve: 'Résoudre l’égalité',
       tieResolutionCancel: 'Annuler',
-      ravenCurse: (name: string) => `🦅 Malédiction du Corbeau : ${name} a +2 voix aujourd’hui.`,
       mayorReminder: (mayorName: string) =>
         `🎖️ Rappel Maire : ${mayorName} est toujours le Maire à la table.`,
-      scapegoatResolution: (scapegoatName: string, tiedNames: string) =>
-        `🪢 Égalité entre ${tiedNames}. Le Bouc Émissaire ${scapegoatName} est éliminé à la place.`,
-      confirmScapegoat: (scapegoatName: string) => `☠️ Éliminer ${scapegoatName}`,
       nightButton: '🌙 Commencer la nuit',
     },
     timer: {
@@ -879,7 +855,6 @@ const translations: Record<Language, Strings> = {
         names ? `Nuit ${round} : ${names} ont été éliminés.${extraLog}` : `Nuit ${round} : Personne éliminé (nuit paisible).`,
       dayElimination: (round: number, names: string) => `Jour ${round} : ${names} éliminé(s).`,
       tieBreaker: (name: string) => `Bris d’égalité : ${name} a été tiré au sort pour être éliminé.`,
-      scapegoatTie: (name: string) => `Bouc émissaire : ${name} est éliminé car le vote du village s’est terminé à égalité.`,
       knightRustySword: (name: string) => ` ⚔️ Épée rouillée du Chevalier : ${name} meurt du tétanos !`,
       witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
         `🧙‍♀️ Potions de la Sorcière — Vie : ${healUsed ? 'UTILISÉE' : 'disponible'}, Mort : ${poisonUsed ? 'UTILISÉE' : 'disponible'}.`,

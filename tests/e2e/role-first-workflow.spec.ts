@@ -54,6 +54,24 @@ test('manual power override removes a role from the current night steps', async 
   await expect(page.getByText(/Witch wakes up/i)).toBeVisible();
 });
 
+test('manual power override keeps previous night steps reachable', async ({ page }) => {
+  await page.goto('/');
+
+  const roles = ['werewolf', 'fox', 'witch', 'villager', 'villager', 'villager'];
+  for (const [index, roleId] of roles.entries()) {
+    await page.getByTestId(`player-row-${index}`).getByTestId('role-select').selectOption(roleId);
+  }
+
+  await page.getByTestId('start-game').click();
+  await page.getByTestId('night-next').click();
+  await expect(page.getByRole('heading', { name: /Fox wakes up/i })).toBeVisible();
+
+  await page.getByTestId('power-toggle-witch').uncheck();
+  await page.locator('.step-pip.clickable').first().click();
+
+  await expect(page.getByRole('heading', { name: /Werewolf wakes up/i })).toBeVisible();
+});
+
 test('role pools cap wolves at three and hide removed roles', async ({ page }) => {
   await page.goto('/');
 

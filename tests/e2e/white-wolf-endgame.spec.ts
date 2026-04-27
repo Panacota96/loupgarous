@@ -92,6 +92,11 @@ test('village win is suggested before it is confirmed', async ({ page }) => {
 
   await expect(page.locator('.win-screen')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'It looks like the villagers have won.' })).toBeVisible();
+  await page.getByTestId('keep-playing').click();
+  await expect(page.getByTestId('day-phase')).toBeVisible();
+  await expect(page.getByTestId('review-winner')).toBeVisible();
+  await page.getByTestId('review-winner').click();
+  await expect(page.getByRole('heading', { name: 'It looks like the villagers have won.' })).toBeVisible();
   await page.getByTestId('confirm-winner').click();
 
   await expect(page.locator('.win-screen')).toHaveCount(1);

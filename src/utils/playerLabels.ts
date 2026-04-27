@@ -2,7 +2,7 @@ import type { Language, Player } from '../types/game.types';
 import { ROLE_MAP, getRoleName } from '../data/roles';
 
 export function getSeatNumber(player: Player, players: Player[]) {
-  if (player.seatNumber) return player.seatNumber;
+  if (typeof player.seatNumber === 'number') return player.seatNumber;
   const index = players.findIndex((p) => p.id === player.id);
   return index >= 0 ? index + 1 : Number(player.id.replace(/\D/g, '')) + 1 || 0;
 }
