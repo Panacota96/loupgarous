@@ -8,7 +8,13 @@ import type {
   Language,
   Player as GamePlayer,
 } from '../types/game.types';
-import { getNightOrder, isPlayerWolfIdentity, WOLF_ROLE_IDS } from '../data/roles';
+import {
+  getNightOrder,
+  isPlayerWolfIdentity,
+  REMOVED_ROLE_IDS,
+  SETUP_ROLE_IDS,
+  WOLF_ROLE_IDS,
+} from '../data/roles';
 import { getStrings } from '../i18n';
 import { getPlayerRoleLabelById } from '../utils/playerLabels';
 
@@ -81,6 +87,7 @@ const defaultGame: GameState = {
   enchantedPlayerIds: [],
   infectedPlayerIds: [],
   angelWon: false,
+  firstDayExecutionDone: false,
   language: 'en',
   protectedPlayerId: null,
   lastProtectedPlayerId: null,
@@ -129,6 +136,17 @@ export function isNightRoleAvailable(roleId: string, context: NightStepContext) 
 
 function buildNightSteps(context: NightStepContext): NightStep[] {
   const roleIds = [...new Set(context.players.filter((p) => p.isAlive).map((p) => p.roleId))];
+  const hasPackWolf = context.players.some(
+    (p) =>
+      p.isAlive &&
+      p.roleId !== 'white_werewolf' &&
+      isPlayerWolfIdentity(p, {
+        infectedPlayerIds: context.infectedPlayerIds,
+        wolfDogChoice: context.wolfDogChoice,
+        wildChildTransformed: context.wildChildTransformed,
+      })
+  );
+  if (hasPackWolf && !roleIds.includes('werewolf')) roleIds.push('werewolf');
 
   return getNightOrder(roleIds, context.round, true)
     .filter((r) => isNightRoleAvailable(r.id, context))
@@ -194,7 +212,8 @@ export function resolveNightEliminations(
   eliminatedThisNight: string[],
   infectedPlayerIds: string[],
   loversIds: [string, string] | null,
-  language: Language = 'en'
+  language: Language = 'en',
+  eliminationCauses: Record<string, 'wolves' | 'other'> = {}
 ) {
   const finalEliminated = [...eliminatedThisNight];
   let knightLog = '';
@@ -202,7 +221,11 @@ export function resolveNightEliminations(
   const labelFor = (id: string) => getPlayerRoleLabelById(id, players, language);
 
   const knightPlayer = players.find((p) => p.isAlive && p.roleId === 'knight');
-  if (knightPlayer && finalEliminated.includes(knightPlayer.id)) {
+  if (
+    knightPlayer &&
+    finalEliminated.includes(knightPlayer.id) &&
+    eliminationCauses[knightPlayer.id] === 'wolves'
+  ) {
     const total = players.length;
     const knightIdx = players.findIndex((p) => p.id === knightPlayer.id);
     for (let offset = 1; offset < total; offset++) {
@@ -297,6 +320,7 @@ export const useGameStore = create<GameStore>()(
           enchantedPlayerIds: [],
           infectedPlayerIds: [],
           angelWon: false,
+          firstDayExecutionDone: false,
           language: language ?? 'en',
           protectedPlayerId: null,
           lastProtectedPlayerId: null,
@@ -587,7 +611,16 @@ export const useGameStore = create<GameStore>()(
         set((s) => ({ timerRemaining: s.discussionTimeSeconds, timerRunning: false })),
 
       eliminatePlayer: (id) => {
-        const { players, loversIds, log, round, wildChildModelId, wildChildTransformed } = get();
+        const {
+          phase,
+          players,
+          loversIds,
+          log,
+          round,
+          wildChildModelId,
+          wildChildTransformed,
+          firstDayExecutionDone,
+        } = get();
         const strings = getStrings(get().language);
         const language = get().language;
         const toElim = [id];
@@ -596,6 +629,13 @@ export const useGameStore = create<GameStore>()(
           if (other) toElim.push(other);
         }
         const updated = players.map((p) => toElim.includes(p.id) ? { ...p, isAlive: false } : p);
+        const isFirstDayExecution = phase === 'day' && round === 1 && !firstDayExecutionDone;
+        const executedPlayer = players.find((p) => p.id === id);
+        const angelWins = isFirstDayExecution && executedPlayer?.roleId === 'angel';
+        const finalPlayers =
+          isFirstDayExecution && !angelWins
+            ? updated.map((p) => (p.isAlive && p.roleId === 'angel' ? { ...p, roleId: 'villager' } : p))
+            : updated;
         const newWildChildTransformed =
           wildChildTransformed ||
           (wildChildModelId !== null && toElim.includes(wildChildModelId));
@@ -604,8 +644,10 @@ export const useGameStore = create<GameStore>()(
           .filter(Boolean)
           .join(' & ');
         set({
-          players: updated,
+          players: finalPlayers,
           wildChildTransformed: newWildChildTransformed,
+          angelWon: angelWins || get().angelWon,
+          firstDayExecutionDone: firstDayExecutionDone || isFirstDayExecution,
           log: [
             ...log,
             strings.logs.dayElimination(round, elimNames),
@@ -639,18 +681,87 @@ export const useGameStore = create<GameStore>()(
         }
 
         const rest = { ...(persistedState as Record<string, unknown>) };
+        const sanitizeRoleId = (roleId: unknown) =>
+          typeof roleId === 'string' && SETUP_ROLE_IDS.has(roleId) && !REMOVED_ROLE_IDS.has(roleId)
+            ? roleId
+            : 'villager';
+        const normalizePlayer = (player: unknown, index: number) => {
+          const raw = player && typeof player === 'object' ? player as Record<string, unknown> : {};
+          return {
+            ...raw,
+            id: typeof raw.id === 'string' ? raw.id : `p${index}`,
+            name: typeof raw.name === 'string' ? raw.name : '',
+            seatNumber: typeof raw.seatNumber === 'number' ? raw.seatNumber : index + 1,
+            roleId: sanitizeRoleId(raw.roleId),
+            isAlive: typeof raw.isAlive === 'boolean' ? raw.isAlive : true,
+            isMayor: typeof raw.isMayor === 'boolean' ? raw.isMayor : false,
+            isLover: typeof raw.isLover === 'boolean' ? raw.isLover : false,
+            extraVotes: typeof raw.extraVotes === 'number' ? raw.extraVotes : 0,
+            usedAbilities: Array.isArray(raw.usedAbilities) ? raw.usedAbilities : [],
+          } as Player;
+        };
+        const normalizeOverrides = (value: unknown) => {
+          if (!value || typeof value !== 'object') return {};
+          return Object.fromEntries(
+            Object.entries(value as Record<string, unknown>).filter(
+              ([roleId, active]) => SETUP_ROLE_IDS.has(roleId) && typeof active === 'boolean'
+            )
+          ) as Record<string, boolean>;
+        };
+        const normalizeProtectorHistory = (value: unknown) =>
+          Array.isArray(value)
+            ? value
+              .map((entry) => {
+                const raw = entry && typeof entry === 'object' ? entry as Record<string, unknown> : {};
+                return {
+                  round: typeof raw.round === 'number' ? raw.round : 0,
+                  targetId: typeof raw.targetId === 'string' ? raw.targetId : null,
+                };
+              })
+              .filter((entry) => entry.round > 0)
+            : [];
+
         delete rest.votes;
-        if (!rest.rolePowerOverrides || typeof rest.rolePowerOverrides !== 'object') {
-          rest.rolePowerOverrides = {};
-        }
+        rest.rolePowerOverrides = normalizeOverrides(rest.rolePowerOverrides);
+        if (typeof rest.firstDayExecutionDone !== 'boolean') rest.firstDayExecutionDone = false;
+        if (Array.isArray(rest.roleIds)) rest.roleIds = rest.roleIds.map(sanitizeRoleId);
         if (Array.isArray(rest.players)) {
-          rest.players = rest.players.map((player, index) => ({
-            ...(player as Record<string, unknown>),
-            seatNumber:
-              typeof (player as Record<string, unknown>).seatNumber === 'number'
-                ? (player as Record<string, unknown>).seatNumber
-                : index + 1,
-          }));
+          rest.players = rest.players.map(normalizePlayer);
+        }
+        if (Array.isArray(rest.nightSteps)) {
+          rest.nightSteps = rest.nightSteps.filter((step) => {
+            const roleId = step && typeof step === 'object'
+              ? (step as Record<string, unknown>).roleId
+              : null;
+            return typeof roleId === 'string' && SETUP_ROLE_IDS.has(roleId);
+          });
+        }
+        if (Array.isArray(rest.nightStepStates)) {
+          rest.nightStepStates = rest.nightStepStates.map((snapshot) => {
+            const raw = snapshot && typeof snapshot === 'object'
+              ? snapshot as Record<string, unknown>
+              : {};
+            return {
+              ...raw,
+              eliminatedThisNight: Array.isArray(raw.eliminatedThisNight) ? raw.eliminatedThisNight : [],
+              usedGameAbilities: Array.isArray(raw.usedGameAbilities) ? raw.usedGameAbilities : [],
+              enchantedPlayerIds: Array.isArray(raw.enchantedPlayerIds) ? raw.enchantedPlayerIds : [],
+              infectedPlayerIds: Array.isArray(raw.infectedPlayerIds) ? raw.infectedPlayerIds : [],
+              loversIds: Array.isArray(raw.loversIds) && raw.loversIds.length === 2
+                ? raw.loversIds as [string, string]
+                : null,
+              players: Array.isArray(raw.players) ? raw.players.map(normalizePlayer) : [],
+              foxPowerActive: typeof raw.foxPowerActive === 'boolean' ? raw.foxPowerActive : true,
+              wildChildModelId: typeof raw.wildChildModelId === 'string' ? raw.wildChildModelId : null,
+              wolfDogChoice: raw.wolfDogChoice === 'villager' || raw.wolfDogChoice === 'werewolf'
+                ? raw.wolfDogChoice
+                : null,
+              protectorHistory: normalizeProtectorHistory(raw.protectorHistory),
+              protectedPlayerId: typeof raw.protectedPlayerId === 'string' ? raw.protectedPlayerId : null,
+              lastProtectedPlayerId: typeof raw.lastProtectedPlayerId === 'string' ? raw.lastProtectedPlayerId : null,
+              rolePowerOverrides: normalizeOverrides(raw.rolePowerOverrides),
+            } satisfies NightStepState;
+          });
         }
         return rest as unknown as GameStore;
       },

@@ -81,6 +81,22 @@ test('eliminating the last pack wolf while white wolf lives does not give the vi
   await expect(page.getByTestId('day-phase')).toBeVisible();
 });
 
+test('wolves do not win while the white wolf is still alive', async ({ page }) => {
+  await setupGame(
+    page,
+    ['white_werewolf', 'werewolf', 'werewolf', 'villager', 'villager', 'villager']
+  );
+
+  await advanceToDay(page);
+  await eliminatePlayer(page, 'p3');
+  await eliminatePlayer(page, 'p4');
+  await eliminatePlayer(page, 'p5');
+
+  await expect(page.locator('.win-screen')).toHaveCount(0);
+  await expect(page.locator('.win-suggestion-screen')).toHaveCount(0);
+  await expect(page.getByTestId('day-phase')).toBeVisible();
+});
+
 test('village win is suggested before it is confirmed', async ({ page }) => {
   await setupGame(
     page,
@@ -101,6 +117,23 @@ test('village win is suggested before it is confirmed', async ({ page }) => {
 
   await expect(page.locator('.win-screen')).toHaveCount(1);
   await expect(page.getByRole('heading', { name: 'Village Wins!' })).toBeVisible();
+});
+
+test('angel win is suggested when Angel is the first Day 1 execution', async ({ page }) => {
+  await setupGame(
+    page,
+    ['angel', 'werewolf', 'villager', 'villager', 'villager', 'villager']
+  );
+
+  await advanceToDay(page);
+  await eliminatePlayer(page, 'p0');
+
+  await expect(page.locator('.win-screen')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'It looks like the Angel has won.' })).toBeVisible();
+  await page.getByTestId('confirm-winner').click();
+
+  await expect(page.locator('.win-screen')).toHaveCount(1);
+  await expect(page.getByRole('heading', { name: 'Angel Wins!' })).toBeVisible();
 });
 
 test('white wolf wins when it becomes the sole survivor', async ({ page }) => {
