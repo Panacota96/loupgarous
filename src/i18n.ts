@@ -85,12 +85,15 @@ interface Strings {
     };
     log: { title: string; empty: string };
     wins: {
-      village: { title: string; body: string };
-      werewolves: { title: string; body: string };
-      pied_piper: { title: string; body: string };
-      white_werewolf: { title: string; body: string };
-      angel: { title: string; body: string };
+      village: { title: string; body: string; suggestion: string };
+      werewolves: { title: string; body: string; suggestion: string };
+      pied_piper: { title: string; body: string; suggestion: string };
+      white_werewolf: { title: string; body: string; suggestion: string };
+      angel: { title: string; body: string; suggestion: string };
     };
+    confirmWinBody: string;
+    confirmWin: string;
+    keepPlaying: string;
     newGame: string;
   };
   night: {
@@ -114,8 +117,6 @@ interface Strings {
     infectInstead: string;
     skipInfect: string;
     infectNote: (name: string) => string;
-    whiteWolfLabel: string;
-    skipWhiteWolf: string;
     noOtherWolves: string;
     seerLabel: string;
     selectPlayer: string;
@@ -389,12 +390,35 @@ const translations: Record<Language, Strings> = {
         empty: 'No events yet.',
       },
       wins: {
-        village: { title: 'Village Wins!', body: 'All werewolves have been eliminated.' },
-        werewolves: { title: 'Werewolves Win!', body: 'The wolves now control the village.' },
-        pied_piper: { title: 'Pied Piper Wins!', body: 'All players have been enchanted by the Pied Piper!' },
-        white_werewolf: { title: 'White Werewolf Wins!', body: 'The White Werewolf is the last survivor!' },
-        angel: { title: 'Angel Wins!', body: 'The Angel was the first to be executed on Day 1!' },
+        village: {
+          title: 'Village Wins!',
+          body: 'All werewolves have been eliminated.',
+          suggestion: 'It looks like the villagers have won.',
+        },
+        werewolves: {
+          title: 'Werewolves Win!',
+          body: 'The wolves now control the village.',
+          suggestion: 'It looks like the werewolves have won.',
+        },
+        pied_piper: {
+          title: 'Pied Piper Wins!',
+          body: 'All players have been enchanted by the Pied Piper!',
+          suggestion: 'It looks like the Pied Piper has won.',
+        },
+        white_werewolf: {
+          title: 'White Werewolf Wins!',
+          body: 'The White Werewolf is the last survivor!',
+          suggestion: 'It looks like the White Werewolf has won.',
+        },
+        angel: {
+          title: 'Angel Wins!',
+          body: 'The Angel was the first to be executed on Day 1!',
+          suggestion: 'It looks like the Angel has won.',
+        },
       },
+      confirmWinBody: 'Confirm before ending the game.',
+      confirmWin: 'Confirm winner',
+      keepPlaying: 'Keep playing',
       newGame: '🔄 New Game',
     },
     night: {
@@ -419,8 +443,6 @@ const translations: Record<Language, Strings> = {
       skipInfect: '— Do not infect —',
       infectNote: (name: string) =>
         `⚠️ If infected, ${name} stays alive and secretly joins the wolves.`,
-      whiteWolfLabel: '⬛ OPTIONAL — devour one of the other werewolves:',
-      skipWhiteWolf: '— Skip —',
       noOtherWolves: 'No other werewolves are alive.',
       seerLabel: '🪄 Seer looks at player:',
       selectPlayer: '— Select player —',
@@ -428,7 +450,7 @@ const translations: Record<Language, Strings> = {
       witchVictim: (name: string | null) =>
         name ? `🐺 Wolf victim tonight: ${name}` : '🌙 No wolf victim tonight.',
       witchHeal: '💖 Use Healing Potion (save victim)',
-      witchDeath: '☠️ Use Death Potion on:',
+      witchDeath: '☠️ Use Death Potion',
       none: '— None —',
       cupidLabel: '💘 Cupid links these two lovers:',
       player1: '— Player 1 —',
@@ -681,12 +703,35 @@ const translations: Record<Language, Strings> = {
         empty: 'Aucun événement pour le moment.',
       },
       wins: {
-        village: { title: 'Victoire du village !', body: 'Tous les loups-garous sont éliminés.' },
-        werewolves: { title: 'Victoire des loups-garous !', body: 'Les loups contrôlent désormais le village.' },
-        pied_piper: { title: 'Victoire du Joueur de Flûte !', body: 'Tous les joueurs ont été envoûtés par le Joueur de Flûte !' },
-        white_werewolf: { title: 'Victoire du Loup-Garou Blanc !', body: 'Le Loup-Garou Blanc est le dernier survivant !' },
-        angel: { title: "Victoire de l'Ange !", body: "L'Ange a été le premier exécuté du Jour 1 !" },
+        village: {
+          title: 'Victoire du village !',
+          body: 'Tous les loups-garous sont éliminés.',
+          suggestion: 'On dirait que les villageois ont gagné.',
+        },
+        werewolves: {
+          title: 'Victoire des loups-garous !',
+          body: 'Les loups contrôlent désormais le village.',
+          suggestion: 'On dirait que les loups-garous ont gagné.',
+        },
+        pied_piper: {
+          title: 'Victoire du Joueur de Flûte !',
+          body: 'Tous les joueurs ont été envoûtés par le Joueur de Flûte !',
+          suggestion: 'On dirait que le Joueur de Flûte a gagné.',
+        },
+        white_werewolf: {
+          title: 'Victoire du Loup-Garou Blanc !',
+          body: 'Le Loup-Garou Blanc est le dernier survivant !',
+          suggestion: 'On dirait que le Loup-Garou Blanc a gagné.',
+        },
+        angel: {
+          title: "Victoire de l'Ange !",
+          body: "L'Ange a été le premier exécuté du Jour 1 !",
+          suggestion: "On dirait que l'Ange a gagné.",
+        },
       },
+      confirmWinBody: 'Confirmez avant de terminer la partie.',
+      confirmWin: 'Confirmer le vainqueur',
+      keepPlaying: 'Continuer la partie',
       newGame: '🔄 Nouvelle partie',
     },
     night: {
@@ -711,8 +756,6 @@ const translations: Record<Language, Strings> = {
       skipInfect: '— Ne pas infecter —',
       infectNote: (name: string) =>
         `⚠️ Si infecté, ${name} reste en vie et rejoint secrètement les loups.`,
-      whiteWolfLabel: '⬛ OPTION — dévorer un autre loup :',
-      skipWhiteWolf: '— Passer —',
       noOtherWolves: "Aucun autre loup-garou n'est en vie.",
       seerLabel: '🪄 La Voyante regarde le joueur :',
       selectPlayer: '— Choisir un joueur —',
@@ -720,7 +763,7 @@ const translations: Record<Language, Strings> = {
       witchVictim: (name: string | null) =>
         name ? `🐺 Victime des loups : ${name}` : '🌙 Aucune victime cette nuit.',
       witchHeal: '💖 Utiliser la potion de vie (sauver la victime)',
-      witchDeath: '☠️ Utiliser la potion de mort sur :',
+      witchDeath: '☠️ Utiliser la potion de mort',
       none: '— Aucun —',
       cupidLabel: '💘 Cupidon lie ces deux amoureux :',
       player1: '— Joueur 1 —',

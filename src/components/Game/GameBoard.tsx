@@ -10,6 +10,15 @@ import { useI18n } from '../../i18n';
 import '../../styles/gameboard.css';
 
 type Tab = 'game' | 'roles' | 'log';
+type Winner = 'village' | 'werewolves' | 'pied_piper' | 'white_werewolf' | 'angel';
+
+const winnerEmoji: Record<Winner, string> = {
+  village: '🎉',
+  werewolves: '🐺',
+  pied_piper: '🎶',
+  white_werewolf: '⬛',
+  angel: '👼',
+};
 
 export default function GameBoard() {
   const phase = useGameStore((s) => s.phase);
@@ -26,6 +35,8 @@ export default function GameBoard() {
 
   const [tab, setTab] = useState<Tab>('game');
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [confirmedWinner, setConfirmedWinner] = useState<Winner | null>(null);
+  const [dismissedSuggestionKey, setDismissedSuggestionKey] = useState<string | null>(null);
 
   const alivePlayers = players.filter((p) => p.isAlive);
 
@@ -67,17 +78,31 @@ export default function GameBoard() {
     !whiteWolfWins &&
     !angelWon;
 
-  const gameOver = villageWins || wolvesWin || piedPiperWins || whiteWolfWins || angelWon;
+  let suggestedWinner: Winner | null = null;
+  if (wolvesWin) suggestedWinner = 'werewolves';
+  else if (piedPiperWins) suggestedWinner = 'pied_piper';
+  else if (whiteWolfWins) suggestedWinner = 'white_werewolf';
+  else if (angelWon) suggestedWinner = 'angel';
+  else if (villageWins) suggestedWinner = 'village';
 
-  let winner: 'village' | 'werewolves' | 'pied_piper' | 'white_werewolf' | 'angel' = 'village';
-  if (wolvesWin) winner = 'werewolves';
-  else if (piedPiperWins) winner = 'pied_piper';
-  else if (whiteWolfWins) winner = 'white_werewolf';
-  else if (angelWon) winner = 'angel';
+  const suggestionKey = suggestedWinner
+    ? `${suggestedWinner}:${alivePlayers.map((p) => p.id).join(',')}`
+    : null;
+  const pendingWinner =
+    suggestedWinner && !confirmedWinner && suggestionKey !== dismissedSuggestionKey
+      ? suggestedWinner
+      : null;
+  const gameOver = confirmedWinner !== null;
 
   const openTab = (nextTab: Tab) => {
     setTab(nextTab);
     setIsConfigOpen(false);
+  };
+
+  const handleResetGame = () => {
+    setConfirmedWinner(null);
+    setDismissedSuggestionKey(null);
+    resetGame();
   };
 
   return (
@@ -96,7 +121,7 @@ export default function GameBoard() {
           <button
             className="btn btn-ghost btn-sm"
             onClick={() => {
-              if (window.confirm(t.game.resetConfirm)) resetGame();
+              if (window.confirm(t.game.resetConfirm)) handleResetGame();
             }}
           >
             {t.game.reset}
@@ -104,52 +129,47 @@ export default function GameBoard() {
         </div>
       </div>
 
+      {/* Winner suggestion */}
+      {pendingWinner && (
+        <div className={`win-suggestion-screen win-${pendingWinner}`}>
+          <div className="win-emoji">{winnerEmoji[pendingWinner]}</div>
+          <h2>{t.game.wins[pendingWinner].suggestion}</h2>
+          <p>{t.game.confirmWinBody}</p>
+          <div className="win-actions">
+            <button
+              className="btn btn-primary"
+              onClick={() => setConfirmedWinner(pendingWinner)}
+              data-testid="confirm-winner"
+            >
+              {t.game.confirmWin}
+            </button>
+            <button
+              className="btn btn-ghost"
+              onClick={() => {
+                if (suggestionKey) setDismissedSuggestionKey(suggestionKey);
+              }}
+              data-testid="keep-playing"
+            >
+              {t.game.keepPlaying}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Win screen */}
       {gameOver && (
-        <div className={`win-screen win-${winner}`}>
-          {winner === 'village' && (
-            <>
-              <div className="win-emoji">🎉</div>
-              <h2>{t.game.wins.village.title}</h2>
-              <p>{t.game.wins.village.body}</p>
-            </>
-          )}
-          {winner === 'werewolves' && (
-            <>
-              <div className="win-emoji">🐺</div>
-              <h2>{t.game.wins.werewolves.title}</h2>
-              <p>{t.game.wins.werewolves.body}</p>
-            </>
-          )}
-          {winner === 'pied_piper' && (
-            <>
-              <div className="win-emoji">🎶</div>
-              <h2>{t.game.wins.pied_piper.title}</h2>
-              <p>{t.game.wins.pied_piper.body}</p>
-            </>
-          )}
-          {winner === 'white_werewolf' && (
-            <>
-              <div className="win-emoji">⬛</div>
-              <h2>{t.game.wins.white_werewolf.title}</h2>
-              <p>{t.game.wins.white_werewolf.body}</p>
-            </>
-          )}
-          {winner === 'angel' && (
-            <>
-              <div className="win-emoji">👼</div>
-              <h2>{t.game.wins.angel.title}</h2>
-              <p>{t.game.wins.angel.body}</p>
-            </>
-          )}
-          <button className="btn btn-primary" onClick={resetGame}>
+        <div className={`win-screen win-${confirmedWinner}`}>
+          <div className="win-emoji">{winnerEmoji[confirmedWinner]}</div>
+          <h2>{t.game.wins[confirmedWinner].title}</h2>
+          <p>{t.game.wins[confirmedWinner].body}</p>
+          <button className="btn btn-primary" onClick={handleResetGame}>
             {t.game.newGame}
           </button>
         </div>
       )}
 
       {/* Tabs */}
-      {!gameOver && (
+      {!pendingWinner && !gameOver && (
         <>
           <div className="tabs">
             <button

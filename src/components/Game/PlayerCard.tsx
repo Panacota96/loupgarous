@@ -15,7 +15,6 @@ export default function PlayerCard({ playerId, showRole = false }: Props) {
   const player = useGameStore((s) => s.players.find((p) => p.id === playerId));
   const players = useGameStore((s) => s.players);
   const eliminatePlayer = useGameStore((s) => s.eliminatePlayer);
-  const electMayor = useGameStore((s) => s.electMayor);
 
   if (!player) return null;
 
@@ -27,9 +26,7 @@ export default function PlayerCard({ playerId, showRole = false }: Props) {
 
   return (
     <div
-      className={`player-card ${!player.isAlive ? 'dead' : ''} ${
-        player.isMayor ? 'mayor' : ''
-      } ${player.isLover ? 'lover' : ''}`}
+      className={`player-card ${!player.isAlive ? 'dead' : ''} ${player.isLover ? 'lover' : ''}`}
       data-testid={`player-card-${player.id}`}
     >
       <div className="player-card-header">
@@ -52,16 +49,6 @@ export default function PlayerCard({ playerId, showRole = false }: Props) {
 
       {player.isAlive && (
         <div className="player-actions">
-          {!player.isMayor && (
-            <button
-              className="btn btn-sm btn-ghost"
-              onClick={() => electMayor(player.id)}
-              data-testid={`elect-mayor-${player.id}`}
-              title={t.playerCard.mayorTitle}
-            >
-              {t.playerCard.makeMayor}
-            </button>
-          )}
           <button
             className="btn btn-sm btn-danger"
             onClick={() => eliminatePlayer(player.id)}

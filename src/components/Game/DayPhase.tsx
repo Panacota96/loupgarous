@@ -276,7 +276,6 @@ export default function DayPhase() {
                     onClick={() => toggleTiePlayer(player.id)}
                   >
                     {playerLabel(player)}
-                    {player.isMayor && ' 🎖️'}
                   </button>
                 );
               })}

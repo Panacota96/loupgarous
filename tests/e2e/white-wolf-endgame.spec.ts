@@ -49,6 +49,25 @@ test('two wolves plus white wolf does not auto-end on parity at game start', asy
   await expect(page.locator('.wolf-chip')).toContainText('2 wolves');
 });
 
+test('white wolf night step no longer asks the GM to mark a wolf victim', async ({ page }) => {
+  await setupGame(
+    page,
+    ['white_werewolf', 'werewolf', 'villager', 'villager', 'villager', 'villager']
+  );
+
+  await page.getByTestId('night-next').click();
+  await expect(page.getByRole('heading', { name: /Night ends/i })).toBeVisible();
+
+  await page.getByTestId('reveal-day').click();
+  await page.getByRole('button', { name: /Start Night Phase/ }).click();
+
+  await page.getByTestId('night-next').click();
+  await expect(page.getByRole('heading', { name: /White Werewolf wakes up/i })).toBeVisible();
+  await expect(page.getByText(/OPTIONAL.*devour one of the other werewolves/i)).toHaveCount(0);
+  await expect(page.getByText(/Skip/i)).toHaveCount(0);
+  await expect(page.locator('.night-input select')).toHaveCount(0);
+});
+
 test('eliminating the last pack wolf while white wolf lives does not give the village the win', async ({ page }) => {
   await setupGame(
     page,
@@ -60,6 +79,23 @@ test('eliminating the last pack wolf while white wolf lives does not give the vi
 
   await expect(page.locator('.win-screen')).toHaveCount(0);
   await expect(page.getByTestId('day-phase')).toBeVisible();
+});
+
+test('village win is suggested before it is confirmed', async ({ page }) => {
+  await setupGame(
+    page,
+    ['werewolf', 'villager', 'villager', 'villager', 'villager', 'villager']
+  );
+
+  await advanceToDay(page);
+  await eliminatePlayer(page, 'p0');
+
+  await expect(page.locator('.win-screen')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'It looks like the villagers have won.' })).toBeVisible();
+  await page.getByTestId('confirm-winner').click();
+
+  await expect(page.locator('.win-screen')).toHaveCount(1);
+  await expect(page.getByRole('heading', { name: 'Village Wins!' })).toBeVisible();
 });
 
 test('white wolf wins when it becomes the sole survivor', async ({ page }) => {
@@ -74,6 +110,10 @@ test('white wolf wins when it becomes the sole survivor', async ({ page }) => {
   await eliminatePlayer(page, 'p3');
   await eliminatePlayer(page, 'p4');
   await eliminatePlayer(page, 'p5');
+
+  await expect(page.locator('.win-screen')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'It looks like the White Werewolf has won.' })).toBeVisible();
+  await page.getByTestId('confirm-winner').click();
 
   await expect(page.locator('.win-screen')).toHaveCount(1);
   await expect(page.getByRole('heading', { name: 'White Werewolf Wins!' })).toBeVisible();

@@ -23,9 +23,8 @@ test('day phase removes vote counting controls but keeps DM reminders and manual
   await expect(page.getByRole('button', { name: /Execute/ })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /Reset Votes|Réinitialiser les votes/ })).toHaveCount(0);
   await expect(page.locator('.mayor-vote-select')).toHaveCount(0);
-
-  await page.getByTestId('elect-mayor-p0').click();
-  await expect(page.getByText(/Mayor reminder: #1 Werewolf is still the Mayor at the table\./)).toBeVisible();
+  await expect(page.getByTestId('elect-mayor-p0')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '🎖️ Mayor' })).toHaveCount(0);
 
   await page.getByTestId('eliminate-p0').click();
   await expect(page.locator('.player-card.dead')).toHaveCount(1);

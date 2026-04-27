@@ -2,12 +2,10 @@ import { useMemo, useState } from 'react';
 import { resolveNightEliminations, useGameStore } from '../../store/gameStore';
 import {
   ROLE_MAP,
-  WOLF_ROLE_IDS,
   getRoleTexts,
   getRoleName,
-  isPlayerWolfIdentity,
 } from '../../data/roles';
-import { getCampLabel, useI18n } from '../../i18n';
+import { useI18n } from '../../i18n';
 import { getPlayerRoleLabel, getPlayerRoleLabelById } from '../../utils/playerLabels';
 import '../../styles/night.css';
 
@@ -24,10 +22,6 @@ export default function NightPhase() {
   const round = useGameStore((s) => s.round);
   const infectedPlayerIds = useGameStore((s) => s.infectedPlayerIds);
   const wolfVictimId = useGameStore((s) => s.wolfVictimId);
-  const wolfDogChoiceStore = useGameStore((s) => s.wolfDogChoice);
-  const wildChildTransformed = useGameStore((s) => s.wildChildTransformed);
-  const foxPowerActive = useGameStore((s) => s.foxPowerActive);
-  const enchantedPlayerIds = useGameStore((s) => s.enchantedPlayerIds);
   const loversIds = useGameStore((s) => s.loversIds);
 
   const completeNightStep = useGameStore((s) => s.completeNightStep);
@@ -35,21 +29,14 @@ export default function NightPhase() {
   const recordAbilityUsed = useGameStore((s) => s.useGameAbility);
   const applyNightResults = useGameStore((s) => s.applyNightResults);
   const setWolfDogChoiceStore = useGameStore((s) => s.setWolfDogChoice);
-  const addEnchanted = useGameStore((s) => s.addEnchanted);
   const setRavenCursed = useGameStore((s) => s.setRavenCursed);
-  const setFoxPowerActiveStore = useGameStore((s) => s.setFoxPowerActive);
   const goToNightStepStore = useGameStore((s) => s.goToNightStep);
 
   const [witchSave, setWitchSave] = useState(false);
-  const [witchKill, setWitchKill] = useState('');
-  const [seerTarget, setSeerTarget] = useState('');
+  const [witchPoison, setWitchPoison] = useState(false);
   const [wolfDogChoice, setWolfDogChoiceLocal] = useState<'villager' | 'werewolf' | ''>('');
-  const [whiteWolfTarget, setWhiteWolfTarget] = useState('');
-  const [pipedP1, setPipedP1] = useState('');
-  const [pipedP2, setPipedP2] = useState('');
   const [ravenTarget, setRavenTarget] = useState('');
   const [passiveChecks, setPassiveChecks] = useState<Record<string, boolean>>({});
-  const [foxCenterTarget, setFoxCenterTarget] = useState('');
 
   const allStepsDone = currentNightStepIndex >= nightSteps.length;
   const currentStep = nightSteps[currentNightStepIndex];
@@ -74,63 +61,22 @@ export default function NightPhase() {
   const witchHealUsed = usedGameAbilities.includes('witch_heal');
   const witchPoisonUsed = usedGameAbilities.includes('witch_poison');
 
-  const alivePureWolves = players.filter(
-    (p) => WOLF_ROLE_IDS.includes(p.roleId) && p.roleId !== 'white_werewolf'
-  );
-
-  const isWolfIdentity = (p: typeof players[0]) =>
-    isPlayerWolfIdentity(p, {
-      infectedPlayerIds,
-      wolfDogChoice: wolfDogChoiceStore,
-      wildChildTransformed,
-    });
-
-  const piperEligiblePlayers = useMemo(
-    () => players.filter((p) => !enchantedPlayerIds.includes(p.id)),
-    [players, enchantedPlayerIds]
-  );
-  const piperEligibleIds = useMemo(
-    () => new Set(piperEligiblePlayers.map((p) => p.id)),
-    [piperEligiblePlayers]
-  );
   const canCompleteStep = true;
-  const foxHasSingleTrio = players.length === 3;
-  const foxCenterOptions = useMemo(
-    () => (foxHasSingleTrio ? players.slice(0, 1) : players),
-    [foxHasSingleTrio, players]
-  );
-  const selectedFoxCenterId = foxCenterTarget || foxCenterOptions[0]?.id || '';
-  const foxTrioPlayers = useMemo(() => {
-    if (players.length < 3 || !selectedFoxCenterId) return [];
-    const centerIndex = players.findIndex((p) => p.id === selectedFoxCenterId);
-    if (centerIndex === -1) return [];
-    if (players.length === 3) return players;
-    return [-1, 0, 1].map((offset) => players[(centerIndex + offset + players.length) % players.length]);
-  }, [players, selectedFoxCenterId]);
-  const foxFoundWolf = foxTrioPlayers.some((p) => isWolfIdentity(p));
   const nightResolutionPreview = useMemo(
     () => resolveNightEliminations(allPlayers, eliminatedThisNight, infectedPlayerIds, loversIds),
     [allPlayers, eliminatedThisNight, infectedPlayerIds, loversIds]
   );
 
   const resetLocalState = () => {
-    setSeerTarget('');
     setWitchSave(false);
-    setWitchKill('');
+    setWitchPoison(false);
     setWolfDogChoiceLocal('');
-    setWhiteWolfTarget('');
-    setPipedP1('');
-    setPipedP2('');
     setRavenTarget('');
-    setFoxCenterTarget('');
   };
 
   const handleCompleteStep = () => {
     if (!currentRole) return;
     if (!canCompleteStep) return;
-
-    if (currentRole.id === 'white_werewolf' && whiteWolfTarget)
-      setEliminatedThisNight([...eliminatedThisNight.filter((id) => id !== whiteWolfTarget), whiteWolfTarget]);
 
     if (currentRole.id === 'witch') {
       // No normal wolf victim is recorded; this only applies to older/restored games.
@@ -139,29 +85,16 @@ export default function NightPhase() {
         recordAbilityUsed('witch_heal');
         setEliminatedThisNight(eliminatedThisNight.filter((id) => id !== victimToSave));
       }
-      if (witchKill && !witchPoisonUsed) {
+      if (witchPoison && !witchPoisonUsed) {
         recordAbilityUsed('witch_poison');
-        setEliminatedThisNight([...eliminatedThisNight, witchKill]);
       }
     }
 
     if (currentRole.id === 'raven' && ravenTarget)
       setRavenCursed(ravenTarget);
 
-    if (currentRole.id === 'fox') {
-      if (foxTrioPlayers.length > 0 && !foxFoundWolf) setFoxPowerActiveStore(false);
-      else if (foxPowerActive) setFoxPowerActiveStore(true);
-    }
-
     if (currentRole.id === 'wolf_dog' && wolfDogChoice)
       setWolfDogChoiceStore(wolfDogChoice);
-
-    if (currentRole.id === 'pied_piper') {
-      const toEnchant = [pipedP1, pipedP2].filter(
-        (id): id is string => !!id && piperEligibleIds.has(id)
-      );
-      if (toEnchant.length > 0) addEnchanted(toEnchant);
-    }
 
     completeNightStep();
     resetLocalState();
@@ -205,94 +138,6 @@ export default function NightPhase() {
 
         <div className="night-instruction">{currentRoleText?.nightActionDescription}</div>
 
-        {/* White Werewolf: devour a fellow wolf */}
-        {currentRole.id === 'white_werewolf' && (
-          <div className="night-input">
-            <label>{t.night.whiteWolfLabel}</label>
-            <select value={whiteWolfTarget} onChange={(e) => setWhiteWolfTarget(e.target.value)}>
-              <option value="">&mdash; {t.night.skipWhiteWolf} &mdash;</option>
-              {alivePureWolves.map((p) => <option key={p.id} value={p.id}>{playerLabel(p)}</option>)}
-            </select>
-            {alivePureWolves.length === 0 && <p className="infect-note">{t.night.noOtherWolves}</p>}
-          </div>
-        )}
-
-        {/* Fox: sniff result */}
-        {currentRole.id === 'fox' && (
-          <div className="night-input">
-            {foxPowerActive ? (
-              <p className="witch-victim-info">{t.night.foxActive}</p>
-            ) : (
-              <div className="used-banner">{t.night.foxLost}</div>
-            )}
-            <label>{t.night.foxCenterLabel}</label>
-            {foxHasSingleTrio ? (
-              <p className="witch-victim-info">{t.night.foxSingleTrio}</p>
-            ) : (
-              <select
-                value={selectedFoxCenterId}
-                onChange={(e) => setFoxCenterTarget(e.target.value)}
-                data-testid="fox-center-select"
-              >
-                {foxCenterOptions.map((p) => <option key={p.id} value={p.id}>{playerLabel(p)}</option>)}
-              </select>
-            )}
-            {foxTrioPlayers.length > 0 && (
-              <div className="fox-trio" data-testid="fox-trio-preview">
-                <p className="fox-trio__label">{t.night.foxPreviewLabel}</p>
-                <div className="fox-trio__cards">
-                  {foxTrioPlayers.map((player) => {
-                    const isWolfSeat = isWolfIdentity(player);
-                    return (
-                      <div
-                        key={player.id}
-                        className={`fox-trio-seat ${isWolfSeat ? 'fox-trio-seat--wolf' : ''}`}
-                        data-testid="fox-trio-seat"
-                      >
-                        <span className="fox-trio-seat__name">{playerLabel(player)}</span>
-                        {isWolfSeat && (
-                          <span className="fox-trio-seat__badge" data-testid="fox-trio-seat-wolf">
-                            🐺
-                          </span>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            <div
-              className={`fox-result-summary ${foxFoundWolf ? 'fox-result-summary--wolf' : 'fox-result-summary--none'}`}
-              data-testid="fox-result-summary"
-            >
-              <span>{t.night.foxResultLabel}</span>
-              <strong>{foxFoundWolf ? t.night.foxFoundWolf : t.night.foxFoundNone}</strong>
-            </div>
-            <p className="infect-note">{t.night.foxReminder}</p>
-          </div>
-        )}
-
-        {/* Seer: DM-only card peek */}
-        {currentRole.id === 'seer' && (
-          <div className="night-input">
-            <label>{t.night.seerLabel}</label>
-            <select value={seerTarget} onChange={(e) => setSeerTarget(e.target.value)}>
-              <option value="">&mdash; {t.night.selectPlayer} &mdash;</option>
-              {players.map((p) => <option key={p.id} value={p.id}>{playerLabel(p)}</option>)}
-            </select>
-            {seerTarget && (() => {
-              const target = allPlayers.find((p) => p.id === seerTarget);
-              const targetRole = target ? ROLE_MAP[target.roleId] : null;
-              return targetRole ? (
-                <div className="seer-reveal">
-                  <strong>{t.night.dmReveal(target ? playerLabel(target) : '', getRoleName(targetRole, language))}</strong>{' '}
-                  <span className={`camp-badge camp-${targetRole.camp}`}>{getCampLabel(targetRole.camp, language)}</span>
-                </div>
-              ) : null;
-            })()}
-          </div>
-        )}
-
         {/* Witch */}
         {currentRole.id === 'witch' && (
           <div className="night-input">
@@ -304,13 +149,13 @@ export default function NightPhase() {
               <span>{t.night.witchHeal} {witchHealUsed && <span className="used-badge">{t.night.usedBadge}</span>}</span>
             </label>
             <label className="witch-option">
-              <span>{t.night.witchDeath}</span>
-              {witchPoisonUsed ? <span className="used-badge">{t.night.usedBadge}</span> : (
-                <select value={witchKill} onChange={(e) => setWitchKill(e.target.value)}>
-                  <option value="">&mdash; {t.night.none} &mdash;</option>
-                  {players.map((p) => <option key={p.id} value={p.id}>{playerLabel(p)}</option>)}
-                </select>
-              )}
+              <input
+                type="checkbox"
+                checked={witchPoison}
+                onChange={(e) => setWitchPoison(e.target.checked)}
+                disabled={witchPoisonUsed}
+              />
+              <span>{t.night.witchDeath} {witchPoisonUsed && <span className="used-badge">{t.night.usedBadge}</span>}</span>
             </label>
           </div>
         )}
@@ -342,44 +187,6 @@ export default function NightPhase() {
               {t.night.sistersIntro(round === 1)}
             </p>
             <p className="infect-note">{t.night.sistersNote}</p>
-          </div>
-        )}
-
-        {/* Pied Piper: enchant 2 */}
-        {currentRole.id === 'pied_piper' && (
-          <div className="night-input">
-            <label>{t.night.piperLabel}</label>
-            <div className="lovers-row">
-              <select
-                value={pipedP1}
-                onChange={(e) => setPipedP1(e.target.value)}
-                disabled={piperEligiblePlayers.length === 0}
-              >
-                <option value="">&mdash; {t.night.player1} &mdash;</option>
-                {piperEligiblePlayers
-                  .filter((p) => p.id !== pipedP2)
-                  .map((p) => <option key={p.id} value={p.id}>{playerLabel(p)}</option>)}
-              </select>
-              <span>&#127926;</span>
-              <select
-                value={pipedP2}
-                onChange={(e) => setPipedP2(e.target.value)}
-                disabled={piperEligiblePlayers.length <= 1}
-              >
-                <option value="">&mdash; {t.night.player2} &mdash;</option>
-                {piperEligiblePlayers
-                  .filter((p) => p.id !== pipedP1)
-                  .map((p) => <option key={p.id} value={p.id}>{playerLabel(p)}</option>)}
-              </select>
-            </div>
-            {piperEligiblePlayers.length <= 1 && (
-              <p className="infect-note">
-                {piperEligiblePlayers.length === 0
-                  ? t.night.piperNoTargets
-                  : t.night.piperOneTarget}
-              </p>
-            )}
-            <p className="infect-note">{t.night.enchantNote}</p>
           </div>
         )}
 
