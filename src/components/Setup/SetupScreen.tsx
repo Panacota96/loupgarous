@@ -1,4 +1,4 @@
-import { useState, useCallback, type CSSProperties } from 'react';
+import { useState, useCallback } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { SETUP_ROLE_IDS, SETUP_ROLES, getRoleName, getRoleTexts } from '../../data/roles';
 import RoleReference from '../Roles/RoleReference';
@@ -296,25 +296,24 @@ export default function SetupScreen() {
           </section>
 
           <section className="setup-section">
-            <h2>◯ {t.setup.tablePreview}</h2>
-            <div className="table-preview" data-testid="table-preview">
+            <h2>▣ {t.setup.roleTray}</h2>
+            <div className="role-tray" data-testid="role-tray" aria-label={t.setup.roleTray}>
               {roleAssignment.slice(0, playerCount).map((roleId, i) => {
                 const role = SETUP_ROLES.find((r) => r.id === roleId);
-                const style = {
-                  '--seat-index': i,
-                  '--seat-count': playerCount,
-                } as CSSProperties;
+                const roleName = role ? getRoleName(role, language) : roleId;
                 return (
                   <div
                     key={`${roleId}-${i}`}
-                    className={`table-seat camp-${role?.camp ?? 'neutral'}`}
-                    style={style}
-                    data-testid={`table-seat-${i}`}
+                    className={`role-tray-chip camp-${role?.camp ?? 'neutral'}`}
+                    data-testid={`role-tray-seat-${i}`}
+                    title={`#${i + 1} ${roleName}`}
+                    aria-label={`#${i + 1} ${roleName}`}
                   >
-                    <span className="table-seat-number">#{i + 1}</span>
-                    <span className="table-seat-role">
-                      {role ? `${role.emoji} ${getRoleName(role, language)}` : roleId}
+                    <span className="role-tray-number">#{i + 1}</span>
+                    <span className="role-tray-emoji" aria-hidden="true">
+                      {role?.emoji ?? '❔'}
                     </span>
+                    <span className="sr-only">{roleName}</span>
                   </div>
                 );
               })}

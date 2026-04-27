@@ -15,7 +15,7 @@ interface Strings {
     discussionTimer: string;
     optionalRules: string;
     orderedRoles: string;
-    tablePreview: string;
+    roleTray: string;
     addRole: string;
     removeRole: string;
     moveUp: string;
@@ -274,7 +274,7 @@ const translations: Record<Language, Strings> = {
       discussionTimer: 'Discussion Timer',
       optionalRules: 'Optional Rules',
       orderedRoles: 'Ordered Roles',
-      tablePreview: 'Table Order',
+      roleTray: 'Role Tray',
       addRole: 'Add role',
       removeRole: 'Remove role',
       moveUp: 'Move up',
@@ -578,7 +578,7 @@ const translations: Record<Language, Strings> = {
       discussionTimer: 'Minuteur de discussion',
       optionalRules: 'Règles optionnelles',
       orderedRoles: 'Rôles ordonnés',
-      tablePreview: 'Ordre de table',
+      roleTray: 'Plateau des rôles',
       addRole: 'Ajouter un rôle',
       removeRole: 'Retirer le rôle',
       moveUp: 'Monter',

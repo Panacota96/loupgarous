@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('role-first setup uses ordered seats, table preview, and seat labels', async ({ page }) => {
+test('role-first setup uses ordered seats, role tray, and seat labels', async ({ page }) => {
   await page.goto('/');
 
   await expect(page.getByTestId('player-row-0').getByRole('textbox')).toHaveCount(0);
@@ -15,11 +15,11 @@ test('role-first setup uses ordered seats, table preview, and seat labels', asyn
   await page.getByTestId('player-row-3').getByTestId('role-select').selectOption('villager');
   await expect(page.getByTestId('player-row-4').getByTestId('role-select')).toContainText('Cupid');
 
-  await expect(page.getByTestId('table-preview')).toContainText('#1');
-  await expect(page.getByTestId('table-seat-1')).toContainText('Fox');
+  await expect(page.getByTestId('role-tray')).toContainText('#1');
+  await expect(page.getByTestId('role-tray-seat-1')).toHaveAttribute('aria-label', /Fox/);
 
   await page.getByTestId('move-seat-down-1').click();
-  await expect(page.getByTestId('table-seat-2')).toContainText('Fox');
+  await expect(page.getByTestId('role-tray-seat-2')).toHaveAttribute('aria-label', /Fox/);
 
   await page.getByTestId('add-role-slot').click();
   await expect(page.getByTestId('player-row-6')).toBeVisible();
