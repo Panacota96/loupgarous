@@ -54,7 +54,7 @@ test('base 6-player game flow stays visible and interactive', async ({ page }, t
   await test.step('day 1 actions and role verification', async () => {
     await expect(page.getByTestId('day-phase')).toBeVisible();
 
-    await page.getByTestId('dm-view-toggle').click();
+    await expect(page.getByTestId('dm-view-toggle')).toHaveCount(0);
     await expect(page.locator('.player-role').filter({ hasText: /Werewolf|Loup-Garou/i })).toHaveCount(2);
 
     await expect(page.locator('.vote-row')).toHaveCount(0);

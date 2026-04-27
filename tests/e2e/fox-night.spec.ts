@@ -1,11 +1,10 @@
 import { test, expect, type Page } from '@playwright/test';
 
-async function setupGame(page: Page, roles: string[], names: string[]) {
+async function setupGame(page: Page, roles: string[]) {
   await page.goto('/');
 
   for (const [index, roleId] of roles.entries()) {
     const row = page.getByTestId(`player-row-${index}`);
-    await row.getByRole('textbox').fill(names[index]);
     await row.getByTestId('role-select').selectOption(roleId);
   }
 
@@ -16,20 +15,19 @@ async function setupGame(page: Page, roles: string[], names: string[]) {
 test('fox preview highlights a standard werewolf inside the chosen trio', async ({ page }) => {
   await setupGame(
     page,
-    ['werewolf', 'fox', 'villager', 'villager', 'villager', 'villager'],
-    ['Wolf A', 'Fox', 'Villager A', 'Villager B', 'Villager C', 'Villager D']
+    ['werewolf', 'fox', 'villager', 'villager', 'villager', 'villager']
   );
 
   await page.getByTestId('night-next').click();
 
   await expect(page.getByTestId('fox-center-select')).toBeVisible();
-  await page.getByTestId('fox-center-select').selectOption({ label: 'Fox' });
+  await page.getByTestId('fox-center-select').selectOption('p1');
 
   const preview = page.getByTestId('fox-trio-preview');
   await expect(preview).toBeVisible();
   await expect(preview.getByTestId('fox-trio-seat')).toHaveCount(3);
   await expect(preview.locator('.fox-trio-seat--wolf')).toHaveCount(1);
-  await expect(preview.locator('.fox-trio-seat--wolf')).toContainText('Wolf A');
+  await expect(preview.locator('.fox-trio-seat--wolf')).toContainText('#1 Werewolf');
   await expect(preview.getByTestId('fox-trio-seat-wolf')).toHaveCount(1);
   await expect(page.getByTestId('fox-result-summary')).toContainText('Wolf nearby');
 });
@@ -37,13 +35,12 @@ test('fox preview highlights a standard werewolf inside the chosen trio', async 
 test('fox loses power when the chosen trio contains no wolves and is skipped on later nights', async ({ page }) => {
   await setupGame(
     page,
-    ['werewolf', 'fox', 'villager', 'villager', 'villager', 'villager'],
-    ['Wolf A', 'Fox', 'Villager A', 'Villager B', 'Villager C', 'Villager D']
+    ['werewolf', 'fox', 'villager', 'villager', 'villager', 'villager']
   );
 
   await page.getByTestId('night-next').click();
 
-  await page.getByTestId('fox-center-select').selectOption({ label: 'Villager B' });
+  await page.getByTestId('fox-center-select').selectOption('p3');
   await expect(page.locator('.fox-trio-seat--wolf')).toHaveCount(0);
   await expect(page.getByTestId('fox-result-summary')).toContainText('No wolves');
 
@@ -61,15 +58,14 @@ test('fox loses power when the chosen trio contains no wolves and is skipped on 
 test('fox preview treats White Werewolf as a wolf identity', async ({ page }) => {
   await setupGame(
     page,
-    ['white_werewolf', 'villager', 'fox', 'villager', 'villager', 'werewolf'],
-    ['White Wolf', 'Neighbor', 'Fox', 'Villager B', 'Villager C', 'Pack Wolf']
+    ['white_werewolf', 'villager', 'fox', 'villager', 'villager', 'werewolf']
   );
 
   await page.getByTestId('night-next').click();
 
-  await page.getByTestId('fox-center-select').selectOption({ label: 'Neighbor' });
+  await page.getByTestId('fox-center-select').selectOption('p1');
   const wolfSeat = page.locator('.fox-trio-seat--wolf');
   await expect(wolfSeat).toHaveCount(1);
-  await expect(wolfSeat).toContainText('White Wolf');
+  await expect(wolfSeat).toContainText('#1 White Werewolf');
   await expect(page.getByTestId('fox-result-summary')).toContainText('Wolf nearby');
 });

@@ -55,6 +55,7 @@ export interface PlayerSetup {
 export interface Player {
   id: string;
   name: string;
+  seatNumber: number;
   roleId: string;
   isAlive: boolean;
   isMayor: boolean;
@@ -85,6 +86,7 @@ export interface NightStepState {
   protectorHistory: ProtectorRecord[];
   protectedPlayerId: string | null;
   lastProtectedPlayerId: string | null;
+  rolePowerOverrides: Record<string, boolean>;
 }
 
 export interface ProtectorRecord {
@@ -122,4 +124,5 @@ export interface GameState {
   protectorHistory: ProtectorRecord[];   // records per-night Protector targets
   protectedPlayerId: string | null;      // player protected by Protector for the current night
   lastProtectedPlayerId: string | null;  // player protected on the previous night
+  rolePowerOverrides: Record<string, boolean>; // manual GM overrides for role power availability
 }

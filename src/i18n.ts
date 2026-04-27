@@ -14,6 +14,13 @@ interface Strings {
     roleSummary: string;
     discussionTimer: string;
     optionalRules: string;
+    orderedRoles: string;
+    tablePreview: string;
+    addRole: string;
+    removeRole: string;
+    moveUp: string;
+    moveDown: string;
+    seatLabel: (seat: number) => string;
     startGame: string;
     rolesTabHint: string;
     backToSetup: string;
@@ -69,6 +76,13 @@ interface Strings {
     resetConfirm: string;
     reset: string;
     tabs: { game: string; roles: string; log: string };
+    powerStatus: {
+      title: string;
+      auto: string;
+      active: string;
+      inactive: string;
+      resetAuto: string;
+    };
     log: { title: string; empty: string };
     wins: {
       village: { title: string; body: string };
@@ -100,9 +114,6 @@ interface Strings {
     infectInstead: string;
     skipInfect: string;
     infectNote: (name: string) => string;
-    bigBadWolfLocked: string;
-    bigBadWolfLabel: string;
-    skipExtra: string;
     whiteWolfLabel: string;
     skipWhiteWolf: string;
     noOtherWolves: string;
@@ -268,6 +279,13 @@ const translations: Record<Language, Strings> = {
       roleSummary: 'Role Summary',
       discussionTimer: 'Discussion Timer',
       optionalRules: 'Optional Rules',
+      orderedRoles: 'Ordered Roles',
+      tablePreview: 'Table Order',
+      addRole: 'Add role',
+      removeRole: 'Remove role',
+      moveUp: 'Move up',
+      moveDown: 'Move down',
+      seatLabel: (seat: number) => `Seat ${seat}`,
       startGame: '🐺 Start Game',
       rolesTabHint: 'Review what each role does before you assign them to players.',
       backToSetup: '↩️ Back to setup',
@@ -286,12 +304,12 @@ const translations: Record<Language, Strings> = {
       balance: [
         'Start near 1 wolf for 4–5 players; add a wolf sooner if you run many info roles.',
         'Keep at least as many plain Villagers as special roles so the village still needs deduction.',
-        'Introduce only 1–2 swingy roles (Raven, Fox, Cupid) at a time to avoid chaos.',
+        'Introduce only 1–2 swingy roles (Fox, Cupid, Bear Tamer) at a time to avoid chaos.',
       ],
       difficultyTitle: 'Role difficulty',
       beginner: 'Beginner friendly: Seer, Protector, Witch, Hunter, Mayor / Captain',
       spicy:
-        'Advanced / swingy: Little Girl, Big Bad Wolf, Infect Père des Loups, Village Idiot, Scapegoat, Bear Tamer, Raven, Fox, Cupid',
+        'Advanced / swingy: Little Girl, Big Bad Wolf, Infect Père des Loups, Bear Tamer, Fox, Cupid',
       ratioTitle: 'Suggested wolf count',
       ratios: [
         '5–6 players: 1 wolf (light pressure)',
@@ -322,9 +340,9 @@ const translations: Record<Language, Strings> = {
         {
           id: 'spicy-10',
           title: 'Spicy but fair (10p)',
-          description: 'Three wolves plus Raven pressure; still keeps clear information roles.',
+          description: 'Three wolves plus Fox pressure; still keeps clear information roles.',
           players: 10,
-          roles: ['werewolf', 'werewolf', 'werewolf', 'seer', 'witch', 'cupid', 'raven', 'bear_tamer', 'villager', 'villager'],
+          roles: ['werewolf', 'werewolf', 'werewolf', 'seer', 'witch', 'cupid', 'fox', 'bear_tamer', 'villager', 'villager'],
         },
       ],
     },
@@ -358,6 +376,13 @@ const translations: Record<Language, Strings> = {
         game: '🎮 Game',
         roles: '📚 Roles',
         log: '📜 Log',
+      },
+      powerStatus: {
+        title: 'Power Status',
+        auto: 'Auto',
+        active: 'Active',
+        inactive: 'Inactive',
+        resetAuto: 'Use auto',
       },
       log: {
         title: '📜 Game Log',
@@ -394,10 +419,6 @@ const translations: Record<Language, Strings> = {
       skipInfect: '— Do not infect —',
       infectNote: (name: string) =>
         `⚠️ If infected, ${name} stays alive and secretly joins the wolves.`,
-      bigBadWolfLocked:
-        '⚠️ A wolf has been eliminated — Big Bad Wolf’s extra kill power is gone.',
-      bigBadWolfLabel: '🐗 OPTIONAL extra victim (while no wolf eliminated):',
-      skipExtra: '— Skip extra kill —',
       whiteWolfLabel: '⬛ OPTIONAL — devour one of the other werewolves:',
       skipWhiteWolf: '— Skip —',
       noOtherWolves: 'No other werewolves are alive.',
@@ -550,6 +571,13 @@ const translations: Record<Language, Strings> = {
       roleSummary: 'Résumé des rôles',
       discussionTimer: 'Minuteur de discussion',
       optionalRules: 'Règles optionnelles',
+      orderedRoles: 'Rôles ordonnés',
+      tablePreview: 'Ordre de table',
+      addRole: 'Ajouter un rôle',
+      removeRole: 'Retirer le rôle',
+      moveUp: 'Monter',
+      moveDown: 'Descendre',
+      seatLabel: (seat: number) => `Siège ${seat}`,
       startGame: '🐺 Lancer la partie',
       rolesTabHint: 'Relisez chaque rôle avant de les attribuer aux joueurs.',
       backToSetup: '↩️ Retour à la préparation',
@@ -568,12 +596,12 @@ const translations: Record<Language, Strings> = {
       balance: [
         'Commencez avec 1 loup pour 4–5 joueurs ; ajoutez-en un plus tôt si vous jouez beaucoup de rôles d’information.',
         'Gardez au moins autant de simples Villageois que de rôles spéciaux pour que le village doive déduire.',
-        'Introduisez seulement 1–2 rôles chaotiques (Corbeau, Renard, Cupidon) à la fois pour éviter le chaos.',
+        'Introduisez seulement 1–2 rôles chaotiques (Renard, Cupidon, Montreur d’Ours) à la fois pour éviter le chaos.',
       ],
       difficultyTitle: 'Difficulté des rôles',
       beginner: 'Faciles : Voyante, Salvateur, Sorcière, Chasseur, Maire / Capitaine',
       spicy:
-        'Avancés / swingy : Petite Fille, Grand Méchant Loup, Infect Père des Loups, Idiot du Village, Bouc Émissaire, Montreur d’Ours, Corbeau, Renard, Cupidon',
+        'Avancés / swingy : Petite Fille, Grand Méchant Loup, Infect Père des Loups, Montreur d’Ours, Renard, Cupidon',
       ratioTitle: 'Nombre de loups suggéré',
       ratios: [
         '5–6 joueurs : 1 loup (pression légère)',
@@ -604,9 +632,9 @@ const translations: Record<Language, Strings> = {
         {
           id: 'spicy-10',
           title: 'Épicé mais lisible (10j)',
-          description: 'Trois loups avec pression du Corbeau et des rôles d’info clairs.',
+          description: 'Trois loups avec pression du Renard et des rôles d’info clairs.',
           players: 10,
-          roles: ['werewolf', 'werewolf', 'werewolf', 'seer', 'witch', 'cupid', 'raven', 'bear_tamer', 'villager', 'villager'],
+          roles: ['werewolf', 'werewolf', 'werewolf', 'seer', 'witch', 'cupid', 'fox', 'bear_tamer', 'villager', 'villager'],
         },
       ],
     },
@@ -640,6 +668,13 @@ const translations: Record<Language, Strings> = {
         game: '🎮 Partie',
         roles: '📚 Rôles',
         log: '📜 Journal',
+      },
+      powerStatus: {
+        title: 'État des pouvoirs',
+        auto: 'Auto',
+        active: 'Actif',
+        inactive: 'Inactif',
+        resetAuto: 'Auto',
       },
       log: {
         title: '📜 Journal de partie',
@@ -676,10 +711,6 @@ const translations: Record<Language, Strings> = {
       skipInfect: '— Ne pas infecter —',
       infectNote: (name: string) =>
         `⚠️ Si infecté, ${name} reste en vie et rejoint secrètement les loups.`,
-      bigBadWolfLocked:
-        '⚠️ Un loup a été éliminé — le pouvoir de mise à mort supplémentaire du Grand Méchant Loup est perdu.',
-      bigBadWolfLabel: '🐗 VICTIME OPTIONNELLE (tant qu’aucun loup éliminé) :',
-      skipExtra: '— Passer —',
       whiteWolfLabel: '⬛ OPTION — dévorer un autre loup :',
       skipWhiteWolf: '— Passer —',
       noOtherWolves: "Aucun autre loup-garou n'est en vie.",

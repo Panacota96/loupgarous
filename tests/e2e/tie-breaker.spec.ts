@@ -1,12 +1,12 @@
 import { test, expect, type Page } from '@playwright/test';
 
 const BASE_PLAYERS = [
-  { name: 'Alice', roleId: 'werewolf' },
-  { name: 'Bob', roleId: 'werewolf' },
-  { name: 'Charlie', roleId: 'villager' },
-  { name: 'Diana', roleId: 'villager' },
-  { name: 'Eve', roleId: 'villager' },
-  { name: 'Frank', roleId: 'villager' },
+  { roleId: 'werewolf' },
+  { roleId: 'werewolf' },
+  { roleId: 'villager' },
+  { roleId: 'villager' },
+  { roleId: 'villager' },
+  { roleId: 'villager' },
 ];
 
 async function setupDayPhase(page: Page, players = BASE_PLAYERS) {
@@ -14,7 +14,6 @@ async function setupDayPhase(page: Page, players = BASE_PLAYERS) {
 
   for (const [index, player] of players.entries()) {
     const row = page.getByTestId(`player-row-${index}`);
-    await row.getByRole('textbox').fill(player.name);
     await row.getByTestId('role-select').selectOption(player.roleId);
   }
 
@@ -37,8 +36,8 @@ test('manual tie flow requires at least two players and resolves through the tie
   await page.getByTestId('tie-resolution-resolve').click();
   await expect(page.getByTestId('tie-resolution-error')).toContainText('Select at least 2 tied players');
 
-  await panel.getByRole('button', { name: 'Alice' }).click();
-  await panel.getByRole('button', { name: 'Bob' }).click();
+  await panel.getByTestId('tie-player-p0').click();
+  await panel.getByTestId('tie-player-p1').click();
 
   await page.evaluate(() => {
     Math.random = () => 0.75;
@@ -48,37 +47,12 @@ test('manual tie flow requires at least two players and resolves through the tie
 
   const tieBreakerPanel = page.getByTestId('tie-breaker-panel');
   await expect(tieBreakerPanel).toBeVisible();
-  await expect(tieBreakerPanel).toContainText('Alice');
-  await expect(tieBreakerPanel).toContainText('Bob');
-  await expect(tieBreakerPanel).not.toContainText('Charlie');
-  await expect(page.getByTestId('tie-breaker-result')).toContainText('Bob');
+  await expect(tieBreakerPanel).toContainText('#1 Werewolf');
+  await expect(tieBreakerPanel).toContainText('#2 Werewolf');
+  await expect(tieBreakerPanel).not.toContainText('#3 Villager');
+  await expect(page.getByTestId('tie-breaker-result')).toContainText('#2 Werewolf');
 
   await page.getByRole('button', { name: /Confirm Elimination/ }).click();
-  await expect(page.locator('.player-card.dead').filter({ hasText: 'Bob' })).toBeVisible();
+  await expect(page.getByTestId('player-card-p1')).toHaveClass(/dead/);
 });
 
-test('manual tie flow eliminates the Scapegoat automatically when present', async ({ page }) => {
-  await setupDayPhase(page, [
-    { name: 'Alice', roleId: 'werewolf' },
-    { name: 'Bob', roleId: 'villager' },
-    { name: 'Charlie', roleId: 'scapegoat' },
-    { name: 'Diana', roleId: 'villager' },
-    { name: 'Eve', roleId: 'villager' },
-    { name: 'Frank', roleId: 'villager' },
-  ]);
-
-  await page.getByTestId('tie-resolution-start').click();
-  const panel = page.getByTestId('tie-resolution-panel');
-  await panel.getByRole('button', { name: 'Alice' }).click();
-  await panel.getByRole('button', { name: 'Bob' }).click();
-  await page.getByTestId('tie-resolution-resolve').click();
-
-  await expect(page.getByTestId('scapegoat-resolution')).toContainText('Charlie');
-  await expect(page.getByTestId('tie-breaker-panel')).toHaveCount(0);
-
-  await page.getByRole('button', { name: /Eliminate Charlie/ }).click();
-  await expect(page.locator('.player-card.dead').filter({ hasText: 'Charlie' })).toBeVisible();
-
-  await page.getByTestId('gameboard-tab-log').click();
-  await expect(page.getByText(/Scapegoat: Charlie was eliminated because the village vote ended in a tie\./)).toBeVisible();
-});

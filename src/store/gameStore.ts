@@ -6,9 +6,11 @@ import type {
   NightStep,
   NightStepState,
   Language,
+  Player as GamePlayer,
 } from '../types/game.types';
-import { getNightOrder, WOLF_ROLE_IDS } from '../data/roles';
+import { getNightOrder, isPlayerWolfIdentity, WOLF_ROLE_IDS } from '../data/roles';
 import { getStrings } from '../i18n';
+import { getPlayerRoleLabelById } from '../utils/playerLabels';
 
 interface SetupState {
   playerNames: string[];
@@ -32,6 +34,7 @@ interface StoreActions {
   infectPlayer: (id: string) => void;
   setAngelWon: (val: boolean) => void;
   setFoxPowerActive: (active: boolean) => void;
+  setRolePowerOverride: (roleId: string, active: boolean | null) => void;
   setWolfVictimId: (id: string | null) => void;
   setRavenCursed: (id: string | null) => void;
   togglePhase: () => void;
@@ -85,21 +88,54 @@ const defaultGame: GameState = {
   language: 'en',
   protectedPlayerId: null,
   lastProtectedPlayerId: null,
+  rolePowerOverrides: {},
 };
 
-function buildNightSteps(
-  roleIds: string[],
-  round: number,
-  foxPowerActive = true,
-  usedGameAbilities: string[] = []
-): NightStep[] {
+interface NightStepContext {
+  players: GamePlayer[];
+  round: number;
+  foxPowerActive: boolean;
+  usedGameAbilities: string[];
+  infectedPlayerIds: string[];
+  wolfDogChoice: 'villager' | 'werewolf' | null;
+  wildChildTransformed: boolean;
+  rolePowerOverrides: Record<string, boolean>;
+}
+
+export function getAutoNightRoleAvailability(roleId: string, context: NightStepContext) {
   const witchPotionsAvailable = !(
-    usedGameAbilities.includes('witch_heal') &&
-    usedGameAbilities.includes('witch_poison')
+    context.usedGameAbilities.includes('witch_heal') &&
+    context.usedGameAbilities.includes('witch_poison')
   );
 
-  return getNightOrder(roleIds, round, foxPowerActive)
-    .filter((r) => r.id !== 'witch' || witchPotionsAvailable)
+  if (roleId === 'witch') return witchPotionsAvailable;
+  if (roleId === 'fox') return context.foxPowerActive;
+  if (roleId === 'infect_pere') return !context.usedGameAbilities.includes('infect_pere');
+  if (roleId === 'big_bad_wolf') {
+    return !context.players.some(
+      (p) =>
+        !p.isAlive &&
+        isPlayerWolfIdentity(p, {
+          infectedPlayerIds: context.infectedPlayerIds,
+          wolfDogChoice: context.wolfDogChoice,
+          wildChildTransformed: context.wildChildTransformed,
+        })
+    );
+  }
+  return true;
+}
+
+export function isNightRoleAvailable(roleId: string, context: NightStepContext) {
+  const manualOverride = context.rolePowerOverrides[roleId];
+  if (typeof manualOverride === 'boolean') return manualOverride;
+  return getAutoNightRoleAvailability(roleId, context);
+}
+
+function buildNightSteps(context: NightStepContext): NightStep[] {
+  const roleIds = [...new Set(context.players.filter((p) => p.isAlive).map((p) => p.roleId))];
+
+  return getNightOrder(roleIds, context.round, true)
+    .filter((r) => isNightRoleAvailable(r.id, context))
     .map((r, i) => ({
       roleId: r.id,
       stepIndex: i,
@@ -109,6 +145,34 @@ function buildNightSteps(
 
 function clonePlayers(players: Player[]) {
   return players.map((p) => ({ ...p }));
+}
+
+function buildNightStepsForState(
+  state: Pick<
+    GameStore,
+    | 'players'
+    | 'round'
+    | 'foxPowerActive'
+    | 'usedGameAbilities'
+    | 'infectedPlayerIds'
+    | 'wolfDogChoice'
+    | 'wildChildTransformed'
+    | 'rolePowerOverrides'
+  >,
+  overrides = state.rolePowerOverrides,
+  players = state.players,
+  round = state.round
+) {
+  return buildNightSteps({
+    players,
+    round,
+    foxPowerActive: state.foxPowerActive,
+    usedGameAbilities: state.usedGameAbilities,
+    infectedPlayerIds: state.infectedPlayerIds,
+    wolfDogChoice: state.wolfDogChoice,
+    wildChildTransformed: state.wildChildTransformed,
+    rolePowerOverrides: overrides,
+  });
 }
 
 function captureNightState(state: GameStore): NightStepState {
@@ -127,6 +191,7 @@ function captureNightState(state: GameStore): NightStepState {
     protectorHistory: state.protectorHistory.map((p) => ({ ...p })),
     protectedPlayerId: state.protectedPlayerId,
     lastProtectedPlayerId: state.lastProtectedPlayerId,
+    rolePowerOverrides: { ...state.rolePowerOverrides },
   };
 }
 
@@ -134,11 +199,13 @@ export function resolveNightEliminations(
   players: Player[],
   eliminatedThisNight: string[],
   infectedPlayerIds: string[],
-  loversIds: [string, string] | null
+  loversIds: [string, string] | null,
+  language: Language = 'en'
 ) {
   const finalEliminated = [...eliminatedThisNight];
   let knightLog = '';
   let loversLog = '';
+  const labelFor = (id: string) => getPlayerRoleLabelById(id, players, language);
 
   const knightPlayer = players.find((p) => p.isAlive && p.roleId === 'knight');
   if (knightPlayer && finalEliminated.includes(knightPlayer.id)) {
@@ -153,7 +220,7 @@ export function resolveNightEliminations(
       ) {
         if (!finalEliminated.includes(candidate.id)) {
           finalEliminated.push(candidate.id);
-          knightLog = `⚔️ Knight's rusty sword: ${candidate.name} dies of tetanus!`;
+          knightLog = `⚔️ Knight's rusty sword: ${labelFor(candidate.id)} dies of tetanus!`;
         }
         break;
       }
@@ -172,8 +239,7 @@ export function resolveNightEliminations(
 
       if (chainedPlayer?.isAlive && !finalEliminated.includes(chainedId)) {
         finalEliminated.push(chainedId);
-        const fallenName = players.find((p) => p.id === fallenId)?.name ?? 'Unknown';
-        loversLog = `💘 Lovers: ${chainedPlayer.name} dies with ${fallenName}.`;
+        loversLog = `💘 Lovers: ${labelFor(chainedPlayer.id)} dies with ${labelFor(fallenId)}.`;
       }
     }
   }
@@ -190,12 +256,13 @@ export const useGameStore = create<GameStore>()(
       setSetup: (s) => set({ ...s }),
 
       startGame: () => {
-        const { playerNames, roleIds, discussionTime, optionalRules, language } = get();
+        const { roleIds, discussionTime, optionalRules, language } = get();
         const strings = getStrings(language);
-        const players: Player[] = playerNames.map((name, i) => ({
+        const players: Player[] = roleIds.map((roleId, i) => ({
           id: `p${i}`,
-          name,
-          roleId: roleIds[i] ?? 'villager',
+          name: '',
+          seatNumber: i + 1,
+          roleId: roleId ?? 'villager',
           isAlive: true,
           isMayor: false,
           isLover: false,
@@ -203,12 +270,17 @@ export const useGameStore = create<GameStore>()(
           usedAbilities: [],
         }));
         const round = 1;
-        const nightSteps = buildNightSteps(
-          [...new Set(players.map((p) => p.roleId))],
+        const rolePowerOverrides: Record<string, boolean> = {};
+        const nightSteps = buildNightSteps({
+          players,
           round,
-          true,
-          []
-        );
+          foxPowerActive: true,
+          usedGameAbilities: [],
+          infectedPlayerIds: [],
+          wolfDogChoice: null,
+          wildChildTransformed: false,
+          rolePowerOverrides,
+        });
         const nextState: Partial<GameStore> = {
           phase: 'night',
           round,
@@ -236,6 +308,7 @@ export const useGameStore = create<GameStore>()(
           language: language ?? 'en',
           protectedPlayerId: null,
           lastProtectedPlayerId: null,
+          rolePowerOverrides,
         };
         const snapshotBase = { ...get(), ...nextState, nightStepStates: [] } as GameStore;
         const nightStepStates = [captureNightState(snapshotBase)];
@@ -284,6 +357,7 @@ export const useGameStore = create<GameStore>()(
             protectorHistory: snapshot.protectorHistory.map((p) => ({ ...p })),
             protectedPlayerId: snapshot.protectedPlayerId,
             lastProtectedPlayerId: snapshot.lastProtectedPlayerId,
+            rolePowerOverrides: { ...(snapshot.rolePowerOverrides ?? {}) },
             nightSteps,
             currentNightStepIndex: target,
             nightStepStates: history.slice(0, target + 1),
@@ -307,6 +381,35 @@ export const useGameStore = create<GameStore>()(
         })),
       setAngelWon: (val) => set({ angelWon: val }),
       setFoxPowerActive: (active) => set({ foxPowerActive: active }),
+      setRolePowerOverride: (roleId, active) =>
+        set((state) => {
+          const rolePowerOverrides = { ...state.rolePowerOverrides };
+          if (active === null) delete rolePowerOverrides[roleId];
+          else rolePowerOverrides[roleId] = active;
+
+          if (state.phase !== 'night') return { rolePowerOverrides };
+
+          const previousRoleId = state.nightSteps[state.currentNightStepIndex]?.roleId;
+          const nextNightSteps = buildNightStepsForState(state, rolePowerOverrides);
+          const nextRoleIndex = previousRoleId
+            ? nextNightSteps.findIndex((step) => step.roleId === previousRoleId)
+            : -1;
+          const currentNightStepIndex =
+            nextRoleIndex >= 0
+              ? nextRoleIndex
+              : Math.min(state.currentNightStepIndex, nextNightSteps.length);
+          const nightSteps = nextNightSteps.map((step, index) => ({
+            ...step,
+            completed: index < currentNightStepIndex,
+          }));
+
+          return {
+            rolePowerOverrides,
+            nightSteps,
+            currentNightStepIndex,
+            nightStepStates: [],
+          };
+        }),
       setWolfVictimId: (id) => set({ wolfVictimId: id }),
       setRavenCursed: (id) => set({ ravenCursedId: id }),
       setProtectorTarget: (targetId) =>
@@ -334,14 +437,18 @@ export const useGameStore = create<GameStore>()(
           protectorHistory,
           loversIds,
           protectedPlayerId,
+          rolePowerOverrides,
+          wolfDogChoice,
         } = get();
         const strings = getStrings(get().language);
+        const language = get().language;
         const extraLogParts: string[] = [];
         const { finalEliminated, knightLog, loversLog } = resolveNightEliminations(
           players,
           eliminatedThisNight,
           infectedPlayerIds,
-          loversIds
+          loversIds,
+          language
         );
 
         if (knightLog) extraLogParts.push(knightLog);
@@ -359,7 +466,12 @@ export const useGameStore = create<GameStore>()(
         const protectionEntry = protectorHistory.find((p) => p.round === round);
         if (protectionEntry) {
           const targetName = protectionEntry.targetId
-            ? players.find((p) => p.id === protectionEntry.targetId)?.name ?? strings.night.protectorUnknown
+            ? getPlayerRoleLabelById(
+              protectionEntry.targetId,
+              players,
+              language,
+              strings.night.protectorUnknown
+            )
             : '';
           extraLogParts.push(
             protectionEntry.targetId
@@ -376,12 +488,20 @@ export const useGameStore = create<GameStore>()(
           wildChildTransformed ||
           (wildChildModelId !== null && finalEliminated.includes(wildChildModelId));
 
-        const roleIds = [...new Set(updated.filter((p) => p.isAlive).map((p) => p.roleId))];
         const newRound = round + 1;
-        const nightSteps = buildNightSteps(roleIds, newRound, foxPowerActive, usedGameAbilities);
+        const nightSteps = buildNightSteps({
+          players: updated,
+          round: newRound,
+          foxPowerActive,
+          usedGameAbilities,
+          infectedPlayerIds,
+          wolfDogChoice,
+          wildChildTransformed: newWildChildTransformed,
+          rolePowerOverrides,
+        });
 
         const eliminatedNames = finalEliminated
-          .map((id) => updated.find((p) => p.id === id)?.name)
+          .map((id) => getPlayerRoleLabelById(id, updated, language, ''))
           .filter(Boolean)
           .join(', ');
 
@@ -417,11 +537,23 @@ export const useGameStore = create<GameStore>()(
           optionalRules,
           foxPowerActive,
           usedGameAbilities,
+          infectedPlayerIds,
+          wolfDogChoice,
+          wildChildTransformed,
+          rolePowerOverrides,
         } = get();
         if (phase === 'day') {
-          const roleIds = [...new Set(players.filter((p) => p.isAlive).map((p) => p.roleId))];
           const newRound = round + 1;
-          const nightSteps = buildNightSteps(roleIds, newRound, foxPowerActive, usedGameAbilities);
+          const nightSteps = buildNightSteps({
+            players,
+            round: newRound,
+            foxPowerActive,
+            usedGameAbilities,
+            infectedPlayerIds,
+            wolfDogChoice,
+            wildChildTransformed,
+            rolePowerOverrides,
+          });
           const nextState: Partial<GameStore> = {
             phase: 'night',
             round: newRound,
@@ -456,6 +588,7 @@ export const useGameStore = create<GameStore>()(
       eliminatePlayer: (id) => {
         const { players, loversIds, log, round, wildChildModelId, wildChildTransformed } = get();
         const strings = getStrings(get().language);
+        const language = get().language;
         const toElim = [id];
         if (loversIds && loversIds.includes(id)) {
           const other = loversIds.find((lid) => lid !== id);
@@ -466,7 +599,7 @@ export const useGameStore = create<GameStore>()(
           wildChildTransformed ||
           (wildChildModelId !== null && toElim.includes(wildChildModelId));
         const elimNames = toElim
-          .map((eid) => players.find((p) => p.id === eid)?.name)
+          .map((eid) => getPlayerRoleLabelById(eid, players, language, ''))
           .filter(Boolean)
           .join(' & ');
         set({
@@ -506,6 +639,18 @@ export const useGameStore = create<GameStore>()(
 
         const rest = { ...(persistedState as Record<string, unknown>) };
         delete rest.votes;
+        if (!rest.rolePowerOverrides || typeof rest.rolePowerOverrides !== 'object') {
+          rest.rolePowerOverrides = {};
+        }
+        if (Array.isArray(rest.players)) {
+          rest.players = rest.players.map((player, index) => ({
+            ...(player as Record<string, unknown>),
+            seatNumber:
+              typeof (player as Record<string, unknown>).seatNumber === 'number'
+                ? (player as Record<string, unknown>).seatNumber
+                : index + 1,
+          }));
+        }
         return rest as unknown as GameStore;
       },
     }

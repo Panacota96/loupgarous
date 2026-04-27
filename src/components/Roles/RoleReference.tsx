@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ROLES, getRoleTexts, getRoleName } from '../../data/roles';
+import { REFERENCE_ROLES, getRoleTexts, getRoleName } from '../../data/roles';
 import { getCampLabel, useI18n } from '../../i18n';
 import '../../styles/roles.css';
 
@@ -7,7 +7,7 @@ export default function RoleReference() {
   const { language, t } = useI18n();
   const [filter, setFilter] = useState<'all' | 'night' | 'day'>('all');
 
-  const filtered = ROLES.filter((r) => {
+  const filtered = REFERENCE_ROLES.filter((r) => {
     if (filter === 'night') return r.nightOrder !== null;
     if (filter === 'day') return r.dayTrigger || r.revealTrigger;
     return true;

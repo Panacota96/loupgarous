@@ -12,7 +12,6 @@
   gap: 0.9rem;
 }
 .day-subtitle { color: var(--text-muted); font-size: 0.88rem; }
-.day-header > *:last-child { margin-left: auto; }
 
 /* Bear signal */
 .bear-signal {

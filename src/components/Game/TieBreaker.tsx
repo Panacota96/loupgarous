@@ -50,7 +50,7 @@ export default function TieBreaker({
       <p className="tb-hint">{t.tieBreaker.hint}</p>
       <div className="tb-player-list">
         {tiedPlayers.map((p) => (
-          <div key={p.id} className="tb-player selected readonly">
+          <div key={p.id} className="tb-player selected readonly" data-testid={`tie-breaker-player-${p.id}`}>
             {p.name}
           </div>
         ))}
