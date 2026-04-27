@@ -55,6 +55,7 @@ export interface PlayerSetup {
 export interface Player {
   id: string;
   name: string;
+  seatNumber: number;
   roleId: string;
   isAlive: boolean;
   isMayor: boolean;
@@ -78,13 +79,12 @@ export interface NightStepState {
   loversIds: [string, string] | null;
   players: Player[];
   foxPowerActive: boolean;
-  wolfVictimId: string | null;
-  ravenCursedId: string | null;
   wildChildModelId: string | null;
   wolfDogChoice: 'villager' | 'werewolf' | null;
   protectorHistory: ProtectorRecord[];
   protectedPlayerId: string | null;
   lastProtectedPlayerId: string | null;
+  rolePowerOverrides: Record<string, boolean>;
 }
 
 export interface ProtectorRecord {
@@ -115,11 +115,10 @@ export interface GameState {
   enchantedPlayerIds: string[];          // players enchanted by Pied Piper
   infectedPlayerIds: string[];           // players infected by Infect Père (secret wolves)
   angelWon: boolean;                     // true if Angel was first Day-1 execution
-  wolfVictimId: string | null;           // wolf's chosen victim for this night (persists across steps for Witch)
-  ravenCursedId: string | null;          // player cursed by Raven last night (+2 votes)
   language: Language;
   nightStepStates: NightStepState[];     // checkpoints for each night step to allow back navigation
   protectorHistory: ProtectorRecord[];   // records per-night Protector targets
   protectedPlayerId: string | null;      // player protected by Protector for the current night
   lastProtectedPlayerId: string | null;  // player protected on the previous night
+  rolePowerOverrides: Record<string, boolean>; // manual GM overrides for role power availability
 }

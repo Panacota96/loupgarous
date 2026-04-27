@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-const ROLE_PRESET = ['raven', 'werewolf', 'villager', 'villager', 'villager', 'villager'];
+const ROLE_PRESET = ['werewolf', 'werewolf', 'villager', 'villager', 'villager', 'villager'];
 
 test('day phase removes vote counting controls but keeps DM reminders and manual elimination', async ({ page }) => {
   await page.goto('./');
@@ -15,9 +15,6 @@ test('day phase removes vote counting controls but keeps DM reminders and manual
   await expect(page.getByTestId('night-phase')).toBeVisible();
 
   await page.getByTestId('night-next').click();
-  const ravenSelect = page.locator('.night-input select').first();
-  await ravenSelect.selectOption({ label: 'Player 2' });
-  await page.getByTestId('night-next').click();
 
   await page.getByTestId('reveal-day').click();
   await expect(page.getByTestId('day-phase')).toBeVisible();
@@ -26,12 +23,9 @@ test('day phase removes vote counting controls but keeps DM reminders and manual
   await expect(page.getByRole('button', { name: /Execute/ })).toHaveCount(0);
   await expect(page.getByRole('button', { name: /Reset Votes|Réinitialiser les votes/ })).toHaveCount(0);
   await expect(page.locator('.mayor-vote-select')).toHaveCount(0);
+  await expect(page.getByTestId('elect-mayor-p0')).toHaveCount(0);
+  await expect(page.getByRole('button', { name: '🎖️ Mayor' })).toHaveCount(0);
 
-  await expect(page.getByText(/Raven curse: Player 2 has \+2 votes today\./)).toBeVisible();
-
-  await page.getByRole('button', { name: '🎖️ Mayor' }).first().click();
-  await expect(page.getByText(/Mayor reminder: Player 1 is still the Mayor at the table\./)).toBeVisible();
-
-  await page.locator('.player-card').first().getByRole('button', { name: /Elim\./ }).click();
+  await page.getByTestId('eliminate-p0').click();
   await expect(page.locator('.player-card.dead')).toHaveCount(1);
 });

@@ -131,6 +131,51 @@
   width: 100%;
 }
 
+.power-status-panel {
+  margin: 1.1rem 1.1rem 0;
+  padding: 0.9rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: linear-gradient(120deg, rgba(255,255,255,0.025), rgba(255,255,255,0));
+  box-shadow: 0 10px 24px rgba(0,0,0,0.32);
+}
+.power-status-panel h3 {
+  margin: 0 0 0.65rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.power-status-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.power-status-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1fr) auto auto auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+}
+.power-status-role,
+.power-status-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.power-status-role strong,
+.power-status-toggle span {
+  font-size: 0.88rem;
+}
+.power-status-auto {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
 /* Game Log */
 .game-log {
   padding: 1.1rem;
@@ -153,7 +198,8 @@
 .log-entry:first-of-type { color: var(--text); border-left-color: var(--primary); background: rgba(185,42,58,0.12); }
 
 /* Win Screen */
-.win-screen {
+.win-screen,
+.win-suggestion-screen {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -165,13 +211,21 @@
   background: radial-gradient(120% 90% at 50% 0%, rgba(185,42,58,0.2), transparent 50%);
 }
 .win-emoji { font-size: 5.5rem; text-shadow: 0 12px 30px rgba(0,0,0,0.5); }
-.win-screen h2 { font-size: 2.2rem; font-weight: 800; letter-spacing: 0.08em; }
+.win-screen h2,
+.win-suggestion-screen h2 { font-size: 2.2rem; font-weight: 800; letter-spacing: 0.08em; }
 .win-village h2 { color: var(--camp-village); }
 .win-werewolves h2 { color: var(--camp-werewolves); }
 .win-pied_piper h2 { color: var(--camp-loner); }
 .win-white_werewolf h2 { color: #e0e0e0; }
 .win-angel h2 { color: #f0c060; }
-.win-screen p { color: var(--text-muted); font-size: 1rem; letter-spacing: 0.04em; }
+.win-screen p,
+.win-suggestion-screen p { color: var(--text-muted); font-size: 1rem; letter-spacing: 0.04em; }
+.win-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.8rem;
+}
 
 @media (max-width: 640px) {
   .gameboard-topbar {
@@ -193,6 +247,11 @@
   .tab-btn {
     padding-inline: 0.85rem;
     font-size: 0.82rem;
+  }
+
+  .power-status-row {
+    grid-template-columns: 1fr;
+    align-items: stretch;
   }
 
   .conf-menu {

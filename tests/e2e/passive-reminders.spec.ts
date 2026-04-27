@@ -1,14 +1,12 @@
 import { test, expect } from '@playwright/test';
 
 const ROLE_SETUP = ['werewolf', 'seer', 'bear_tamer', 'elder', 'villager', 'villager'];
-const NAME_SETUP = ['Wolf', 'Seer', 'Bear Tamer', 'Elder', 'Villager A', 'Villager B'];
 
 test('first-night checklist highlights passive/manual roles without adding night turns', async ({ page }) => {
   await page.goto('/');
 
   for (const [index, roleId] of ROLE_SETUP.entries()) {
     const row = page.getByTestId(`player-row-${index}`);
-    await row.getByRole('textbox').fill(NAME_SETUP[index]);
     await row.getByTestId('role-select').selectOption(roleId);
   }
 

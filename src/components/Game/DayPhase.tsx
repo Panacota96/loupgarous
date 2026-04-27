@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { ROLE_MAP, getRoleTexts, getRoleName, isPlayerWolfIdentity } from '../../data/roles';
 import { useI18n } from '../../i18n';
+import { getPlayerRoleLabel } from '../../utils/playerLabels';
 import PlayerCard from './PlayerCard';
 import Timer from './Timer';
 import TieBreaker from './TieBreaker';
@@ -16,19 +17,18 @@ export default function DayPhase() {
   const enchantedPlayerIds = useGameStore((s) => s.enchantedPlayerIds);
   const wildChildTransformed = useGameStore((s) => s.wildChildTransformed);
   const wolfDogChoice = useGameStore((s) => s.wolfDogChoice);
-  const ravenCursedId = useGameStore((s) => s.ravenCursedId);
   const foxPowerActive = useGameStore((s) => s.foxPowerActive);
   const usedGameAbilities = useGameStore((s) => s.usedGameAbilities);
 
   const eliminatePlayer = useGameStore((s) => s.eliminatePlayer);
   const addLog = useGameStore((s) => s.addLog);
   const togglePhase = useGameStore((s) => s.togglePhase);
+  const playerLabel = (player: typeof players[number]) =>
+    getPlayerRoleLabel(player, players, language);
 
-  const [revealAll, setRevealAll] = useState(false);
   const [isTieFlowOpen, setIsTieFlowOpen] = useState(false);
   const [selectedTieIds, setSelectedTieIds] = useState<string[]>([]);
   const [showTieBreaker, setShowTieBreaker] = useState(false);
-  const [showScapegoatConfirm, setShowScapegoatConfirm] = useState(false);
   const [showTieValidation, setShowTieValidation] = useState(false);
 
   // Bear Tamer morning signal: use full player list (stable seating order)
@@ -70,10 +70,6 @@ export default function DayPhase() {
   })();
 
   const mayorAlive = players.find((p) => p.isAlive && p.isMayor) ?? null;
-  const scapegoatPlayer = alivePlayers.find((p) => p.roleId === 'scapegoat') ?? null;
-  const ravenCursedName = ravenCursedId
-    ? players.find((p) => p.id === ravenCursedId)?.name ?? null
-    : null;
   const foxInGame = players.some((p) => p.roleId === 'fox');
   const witchInGame = players.some((p) => p.roleId === 'witch' && p.isAlive);
   const witchHealUsed = usedGameAbilities.includes('witch_heal');
@@ -84,27 +80,23 @@ export default function DayPhase() {
   const selectedTiePlayers = activeTieIds
     .map((id) => alivePlayers.find((p) => p.id === id))
     .filter((player): player is (typeof alivePlayers)[number] => Boolean(player));
-  const selectedTieNames = selectedTiePlayers.map((p) => p.name).join(' & ');
 
   const resetTieFlow = () => {
     setIsTieFlowOpen(false);
     setSelectedTieIds([]);
     setShowTieBreaker(false);
-    setShowScapegoatConfirm(false);
     setShowTieValidation(false);
   };
 
   const startTieFlow = () => {
     setIsTieFlowOpen(true);
     setShowTieBreaker(false);
-    setShowScapegoatConfirm(false);
     setShowTieValidation(false);
   };
 
   const toggleTiePlayer = (playerId: string) => {
     setShowTieValidation(false);
     setShowTieBreaker(false);
-    setShowScapegoatConfirm(false);
     setSelectedTieIds((ids) =>
       ids.includes(playerId) ? ids.filter((id) => id !== playerId) : [...ids, playerId]
     );
@@ -116,22 +108,8 @@ export default function DayPhase() {
       return;
     }
 
-    if (scapegoatPlayer) {
-      setShowScapegoatConfirm(true);
-      setShowTieBreaker(false);
-      return;
-    }
-
     setShowTieValidation(false);
-    setShowScapegoatConfirm(false);
     setShowTieBreaker(true);
-  };
-
-  const confirmScapegoatTie = () => {
-    if (!scapegoatPlayer) return;
-    eliminatePlayer(scapegoatPlayer.id);
-    addLog(t.logs.scapegoatTie(scapegoatPlayer.name));
-    resetTieFlow();
   };
 
   // Day triggers to remind DM.
@@ -147,13 +125,6 @@ export default function DayPhase() {
           <h2>{t.day.title(round)}</h2>
           <p className="day-subtitle">{t.day.subtitle}</p>
         </div>
-        <button
-          className="btn btn-ghost btn-sm"
-          data-testid="dm-view-toggle"
-          onClick={() => setRevealAll((r) => !r)}
-        >
-          {revealAll ? t.day.dmView.hide : t.day.dmView.show}
-        </button>
       </div>
 
       {bearTamer && (
@@ -212,7 +183,7 @@ export default function DayPhase() {
           {infectedPlayerIds
             .map((id) => players.find((p) => p.id === id))
             .filter(Boolean)
-            .map((p) => p!.name)
+            .map((p) => playerLabel(p!))
             .join(', ')}
         </div>
       )}
@@ -223,7 +194,7 @@ export default function DayPhase() {
         <h3>{t.day.playersTitle(alivePlayers.length)}</h3>
         <div className="players-grid">
           {players.map((p) => (
-            <PlayerCard key={p.id} playerId={p.id} showRole={revealAll} />
+            <PlayerCard key={p.id} playerId={p.id} showRole />
           ))}
         </div>
       </section>
@@ -240,14 +211,8 @@ export default function DayPhase() {
 
         <p className="tb-hint">{t.day.tieResolutionHint}</p>
 
-        {ravenCursedName && (
-          <div className="raven-curse-bar">
-            {t.day.ravenCurse(ravenCursedName)}
-          </div>
-        )}
-
         {mayorAlive && (
-          <div className="mayor-vote-bar">{t.day.mayorReminder(mayorAlive.name)}</div>
+          <div className="mayor-vote-bar">{t.day.mayorReminder(playerLabel(mayorAlive))}</div>
         )}
 
         {!isTieFlowOpen ? (
@@ -275,10 +240,10 @@ export default function DayPhase() {
                     type="button"
                     className={`tb-player ${selected ? 'selected' : ''}`}
                     aria-pressed={selected}
+                    data-testid={`tie-player-${player.id}`}
                     onClick={() => toggleTiePlayer(player.id)}
                   >
-                    {player.name}
-                    {player.isMayor && ' 🎖️'}
+                    {playerLabel(player)}
                   </button>
                 );
               })}
@@ -290,7 +255,7 @@ export default function DayPhase() {
               </div>
             )}
 
-            {!showTieBreaker && !showScapegoatConfirm && (
+            {!showTieBreaker && (
               <button
                 className="btn btn-danger"
                 data-testid="tie-resolution-resolve"
@@ -300,19 +265,13 @@ export default function DayPhase() {
               </button>
             )}
 
-            {showScapegoatConfirm && scapegoatPlayer && (
-              <div className="tie-warning" data-testid="scapegoat-resolution">
-                <span>{t.day.scapegoatResolution(scapegoatPlayer.name, selectedTieNames)}</span>
-                <button className="btn btn-danger" onClick={confirmScapegoatTie}>
-                  {t.day.confirmScapegoat(scapegoatPlayer.name)}
-                </button>
-              </div>
-            )}
-
-            {showTieBreaker && selectedTiePlayers.length > 1 && !scapegoatPlayer && (
+            {showTieBreaker && selectedTiePlayers.length > 1 && (
               <TieBreaker
                 tiedPlayerIds={activeTieIds}
-                players={alivePlayers}
+                players={alivePlayers.map((player) => ({
+                  id: player.id,
+                  name: playerLabel(player),
+                }))}
                 t={t}
                 onLog={addLog}
                 onEliminate={(id) => {

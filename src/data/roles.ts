@@ -25,7 +25,7 @@ export const ROLES: RoleDefinition[] = [
     nameFr: 'Loup-Garou',
     camp: 'werewolves',
     minCount: 0,
-    maxCount: 6,
+    maxCount: 3,
     nightOrder: 40,
     nightAction: {
       description:
@@ -591,7 +591,9 @@ export const ROLES: RoleDefinition[] = [
 ];
 
 /** Roles that can be assigned during pre-game setup (excludes in-game statuses like Mayor) */
-export const SETUP_ROLES = ROLES.filter((r) => r.setupSelectable !== false);
+export const REMOVED_ROLE_IDS = new Set(['raven', 'village_idiot', 'scapegoat']);
+export const REFERENCE_ROLES = ROLES.filter((r) => !REMOVED_ROLE_IDS.has(r.id));
+export const SETUP_ROLES = REFERENCE_ROLES.filter((r) => r.setupSelectable !== false);
 export const SETUP_ROLE_IDS = new Set(SETUP_ROLES.map((r) => r.id));
 
 export function getRoleName(role: RoleDefinition, language: Language) {

@@ -14,6 +14,13 @@ interface Strings {
     roleSummary: string;
     discussionTimer: string;
     optionalRules: string;
+    orderedRoles: string;
+    tablePreview: string;
+    addRole: string;
+    removeRole: string;
+    moveUp: string;
+    moveDown: string;
+    seatLabel: (seat: number) => string;
     startGame: string;
     rolesTabHint: string;
     backToSetup: string;
@@ -69,14 +76,25 @@ interface Strings {
     resetConfirm: string;
     reset: string;
     tabs: { game: string; roles: string; log: string };
+    powerStatus: {
+      title: string;
+      auto: string;
+      active: string;
+      inactive: string;
+      resetAuto: string;
+    };
     log: { title: string; empty: string };
     wins: {
-      village: { title: string; body: string };
-      werewolves: { title: string; body: string };
-      pied_piper: { title: string; body: string };
-      white_werewolf: { title: string; body: string };
-      angel: { title: string; body: string };
+      village: { title: string; body: string; suggestion: string };
+      werewolves: { title: string; body: string; suggestion: string };
+      pied_piper: { title: string; body: string; suggestion: string };
+      white_werewolf: { title: string; body: string; suggestion: string };
+      angel: { title: string; body: string; suggestion: string };
     };
+    confirmWinBody: string;
+    confirmWin: string;
+    keepPlaying: string;
+    reviewWin: string;
     newGame: string;
   };
   night: {
@@ -100,16 +118,10 @@ interface Strings {
     infectInstead: string;
     skipInfect: string;
     infectNote: (name: string) => string;
-    bigBadWolfLocked: string;
-    bigBadWolfLabel: string;
-    skipExtra: string;
-    whiteWolfLabel: string;
-    skipWhiteWolf: string;
     noOtherWolves: string;
     seerLabel: string;
     selectPlayer: string;
     dmReveal: (name: string, role: string) => string;
-    witchVictim: (name: string | null) => string;
     witchHeal: string;
     witchDeath: string;
     none: string;
@@ -129,9 +141,6 @@ interface Strings {
     piperOneTarget: string;
     piperNoTargets: string;
     enchantNote: string;
-    ravenLabel: string;
-    ravenNone: string;
-    ravenNote: (name: string) => string;
     foxActive: string;
     foxLost: string;
     foxCenterLabel: string;
@@ -179,10 +188,7 @@ interface Strings {
     tieResolutionNeedPlayers: string;
     tieResolutionResolve: string;
     tieResolutionCancel: string;
-    ravenCurse: (name: string) => string;
     mayorReminder: (mayorName: string) => string;
-    scapegoatResolution: (scapegoatName: string, tiedNames: string) => string;
-    confirmScapegoat: (scapegoatName: string) => string;
     nightButton: string;
   };
   timer: {
@@ -213,7 +219,6 @@ interface Strings {
     nightSummary: (round: number, names: string | null, extraLog: string) => string;
     dayElimination: (round: number, names: string) => string;
     tieBreaker: (name: string) => string;
-    scapegoatTie: (name: string) => string;
     knightRustySword: (name: string) => string;
     witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) => string;
     witchPotionsSpent: string;
@@ -268,6 +273,13 @@ const translations: Record<Language, Strings> = {
       roleSummary: 'Role Summary',
       discussionTimer: 'Discussion Timer',
       optionalRules: 'Optional Rules',
+      orderedRoles: 'Ordered Roles',
+      tablePreview: 'Table Order',
+      addRole: 'Add role',
+      removeRole: 'Remove role',
+      moveUp: 'Move up',
+      moveDown: 'Move down',
+      seatLabel: (seat: number) => `Seat ${seat}`,
       startGame: '🐺 Start Game',
       rolesTabHint: 'Review what each role does before you assign them to players.',
       backToSetup: '↩️ Back to setup',
@@ -286,12 +298,12 @@ const translations: Record<Language, Strings> = {
       balance: [
         'Start near 1 wolf for 4–5 players; add a wolf sooner if you run many info roles.',
         'Keep at least as many plain Villagers as special roles so the village still needs deduction.',
-        'Introduce only 1–2 swingy roles (Raven, Fox, Cupid) at a time to avoid chaos.',
+        'Introduce only 1–2 swingy roles (Fox, Cupid, Bear Tamer) at a time to avoid chaos.',
       ],
       difficultyTitle: 'Role difficulty',
       beginner: 'Beginner friendly: Seer, Protector, Witch, Hunter, Mayor / Captain',
       spicy:
-        'Advanced / swingy: Little Girl, Big Bad Wolf, Infect Père des Loups, Village Idiot, Scapegoat, Bear Tamer, Raven, Fox, Cupid',
+        'Advanced / swingy: Little Girl, Big Bad Wolf, Infect Père des Loups, Bear Tamer, Fox, Cupid',
       ratioTitle: 'Suggested wolf count',
       ratios: [
         '5–6 players: 1 wolf (light pressure)',
@@ -322,9 +334,9 @@ const translations: Record<Language, Strings> = {
         {
           id: 'spicy-10',
           title: 'Spicy but fair (10p)',
-          description: 'Three wolves plus Raven pressure; still keeps clear information roles.',
+          description: 'Three wolves plus Fox pressure; still keeps clear information roles.',
           players: 10,
-          roles: ['werewolf', 'werewolf', 'werewolf', 'seer', 'witch', 'cupid', 'raven', 'bear_tamer', 'villager', 'villager'],
+          roles: ['werewolf', 'werewolf', 'werewolf', 'seer', 'witch', 'cupid', 'fox', 'bear_tamer', 'villager', 'villager'],
         },
       ],
     },
@@ -359,17 +371,48 @@ const translations: Record<Language, Strings> = {
         roles: '📚 Roles',
         log: '📜 Log',
       },
+      powerStatus: {
+        title: 'Power Status',
+        auto: 'Auto',
+        active: 'Active',
+        inactive: 'Inactive',
+        resetAuto: 'Use auto',
+      },
       log: {
         title: '📜 Game Log',
         empty: 'No events yet.',
       },
       wins: {
-        village: { title: 'Village Wins!', body: 'All werewolves have been eliminated.' },
-        werewolves: { title: 'Werewolves Win!', body: 'The wolves now control the village.' },
-        pied_piper: { title: 'Pied Piper Wins!', body: 'All players have been enchanted by the Pied Piper!' },
-        white_werewolf: { title: 'White Werewolf Wins!', body: 'The White Werewolf is the last survivor!' },
-        angel: { title: 'Angel Wins!', body: 'The Angel was the first to be executed on Day 1!' },
+        village: {
+          title: 'Village Wins!',
+          body: 'All werewolves have been eliminated.',
+          suggestion: 'It looks like the villagers have won.',
+        },
+        werewolves: {
+          title: 'Werewolves Win!',
+          body: 'The wolves now control the village.',
+          suggestion: 'It looks like the werewolves have won.',
+        },
+        pied_piper: {
+          title: 'Pied Piper Wins!',
+          body: 'All players have been enchanted by the Pied Piper!',
+          suggestion: 'It looks like the Pied Piper has won.',
+        },
+        white_werewolf: {
+          title: 'White Werewolf Wins!',
+          body: 'The White Werewolf is the last survivor!',
+          suggestion: 'It looks like the White Werewolf has won.',
+        },
+        angel: {
+          title: 'Angel Wins!',
+          body: 'The Angel was the first to be executed on Day 1!',
+          suggestion: 'It looks like the Angel has won.',
+        },
       },
+      confirmWinBody: 'Confirm before ending the game.',
+      confirmWin: 'Confirm winner',
+      keepPlaying: 'Keep playing',
+      reviewWin: 'Review win',
       newGame: '🔄 New Game',
     },
     night: {
@@ -394,20 +437,12 @@ const translations: Record<Language, Strings> = {
       skipInfect: '— Do not infect —',
       infectNote: (name: string) =>
         `⚠️ If infected, ${name} stays alive and secretly joins the wolves.`,
-      bigBadWolfLocked:
-        '⚠️ A wolf has been eliminated — Big Bad Wolf’s extra kill power is gone.',
-      bigBadWolfLabel: '🐗 OPTIONAL extra victim (while no wolf eliminated):',
-      skipExtra: '— Skip extra kill —',
-      whiteWolfLabel: '⬛ OPTIONAL — devour one of the other werewolves:',
-      skipWhiteWolf: '— Skip —',
       noOtherWolves: 'No other werewolves are alive.',
       seerLabel: '🪄 Seer looks at player:',
       selectPlayer: '— Select player —',
       dmReveal: (name: string, role: string) => `DM only: ${name} is ${role}`,
-      witchVictim: (name: string | null) =>
-        name ? `🐺 Wolf victim tonight: ${name}` : '🌙 No wolf victim tonight.',
-      witchHeal: '💖 Use Healing Potion (save victim)',
-      witchDeath: '☠️ Use Death Potion on:',
+      witchHeal: '💖 Use Healing Potion',
+      witchDeath: '☠️ Use Death Potion',
       none: '— None —',
       cupidLabel: '💘 Cupid links these two lovers:',
       player1: '— Player 1 —',
@@ -429,9 +464,6 @@ const translations: Record<Language, Strings> = {
       piperOneTarget: 'Only one eligible target remains to enchant this night.',
       piperNoTargets: 'All eligible players are already enchanted. Continue to skip this action.',
       enchantNote: 'Enchanted players acknowledge secretly (e.g. thumb up under the table).',
-      ravenLabel: '🦅 Raven places a curse on (optional):',
-      ravenNone: '— No curse this night —',
-      ravenNote: (name: string) => `☠️ ${name} will have +2 votes against them tomorrow.`,
       foxActive: '🦊 Fox still has its sniffing power.',
       foxLost: '🦊 Fox already lost its sniffing power.',
       foxCenterLabel: '🦊 Center seat of the trio to sniff:',
@@ -485,12 +517,8 @@ const translations: Record<Language, Strings> = {
       tieResolutionNeedPlayers: 'Select at least 2 tied players before resolving the tie.',
       tieResolutionResolve: 'Resolve Tie',
       tieResolutionCancel: 'Cancel',
-      ravenCurse: (name: string) => `🦅 Raven curse: ${name} has +2 votes today.`,
       mayorReminder: (mayorName: string) =>
         `🎖️ Mayor reminder: ${mayorName} is still the Mayor at the table.`,
-      scapegoatResolution: (scapegoatName: string, tiedNames: string) =>
-        `🪢 Tie between ${tiedNames}. Scapegoat ${scapegoatName} is eliminated instead.`,
-      confirmScapegoat: (scapegoatName: string) => `☠️ Eliminate ${scapegoatName}`,
       nightButton: '🌙 Start Night Phase',
     },
     timer: {
@@ -522,7 +550,6 @@ const translations: Record<Language, Strings> = {
         names ? `Night ${round}: ${names} were eliminated.${extraLog}` : `Night ${round}: No one was eliminated (peaceful night).`,
       dayElimination: (round: number, names: string) => `Day ${round}: ${names} eliminated.`,
       tieBreaker: (name: string) => `Tie-breaker: ${name} was randomly selected for elimination.`,
-      scapegoatTie: (name: string) => `Scapegoat: ${name} was eliminated because the village vote ended in a tie.`,
       knightRustySword: (name: string) => ` ⚔️ Knight's rusty sword: ${name} dies of tetanus!`,
       witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
         `🧙‍♀️ Witch potions — Healing: ${healUsed ? 'USED' : 'available'}, Death: ${poisonUsed ? 'USED' : 'available'}.`,
@@ -550,6 +577,13 @@ const translations: Record<Language, Strings> = {
       roleSummary: 'Résumé des rôles',
       discussionTimer: 'Minuteur de discussion',
       optionalRules: 'Règles optionnelles',
+      orderedRoles: 'Rôles ordonnés',
+      tablePreview: 'Ordre de table',
+      addRole: 'Ajouter un rôle',
+      removeRole: 'Retirer le rôle',
+      moveUp: 'Monter',
+      moveDown: 'Descendre',
+      seatLabel: (seat: number) => `Siège ${seat}`,
       startGame: '🐺 Lancer la partie',
       rolesTabHint: 'Relisez chaque rôle avant de les attribuer aux joueurs.',
       backToSetup: '↩️ Retour à la préparation',
@@ -568,12 +602,12 @@ const translations: Record<Language, Strings> = {
       balance: [
         'Commencez avec 1 loup pour 4–5 joueurs ; ajoutez-en un plus tôt si vous jouez beaucoup de rôles d’information.',
         'Gardez au moins autant de simples Villageois que de rôles spéciaux pour que le village doive déduire.',
-        'Introduisez seulement 1–2 rôles chaotiques (Corbeau, Renard, Cupidon) à la fois pour éviter le chaos.',
+        'Introduisez seulement 1–2 rôles chaotiques (Renard, Cupidon, Montreur d’Ours) à la fois pour éviter le chaos.',
       ],
       difficultyTitle: 'Difficulté des rôles',
       beginner: 'Faciles : Voyante, Salvateur, Sorcière, Chasseur, Maire / Capitaine',
       spicy:
-        'Avancés / swingy : Petite Fille, Grand Méchant Loup, Infect Père des Loups, Idiot du Village, Bouc Émissaire, Montreur d’Ours, Corbeau, Renard, Cupidon',
+        'Avancés / swingy : Petite Fille, Grand Méchant Loup, Infect Père des Loups, Montreur d’Ours, Renard, Cupidon',
       ratioTitle: 'Nombre de loups suggéré',
       ratios: [
         '5–6 joueurs : 1 loup (pression légère)',
@@ -604,9 +638,9 @@ const translations: Record<Language, Strings> = {
         {
           id: 'spicy-10',
           title: 'Épicé mais lisible (10j)',
-          description: 'Trois loups avec pression du Corbeau et des rôles d’info clairs.',
+          description: 'Trois loups avec pression du Renard et des rôles d’info clairs.',
           players: 10,
-          roles: ['werewolf', 'werewolf', 'werewolf', 'seer', 'witch', 'cupid', 'raven', 'bear_tamer', 'villager', 'villager'],
+          roles: ['werewolf', 'werewolf', 'werewolf', 'seer', 'witch', 'cupid', 'fox', 'bear_tamer', 'villager', 'villager'],
         },
       ],
     },
@@ -641,17 +675,48 @@ const translations: Record<Language, Strings> = {
         roles: '📚 Rôles',
         log: '📜 Journal',
       },
+      powerStatus: {
+        title: 'État des pouvoirs',
+        auto: 'Auto',
+        active: 'Actif',
+        inactive: 'Inactif',
+        resetAuto: 'Auto',
+      },
       log: {
         title: '📜 Journal de partie',
         empty: 'Aucun événement pour le moment.',
       },
       wins: {
-        village: { title: 'Victoire du village !', body: 'Tous les loups-garous sont éliminés.' },
-        werewolves: { title: 'Victoire des loups-garous !', body: 'Les loups contrôlent désormais le village.' },
-        pied_piper: { title: 'Victoire du Joueur de Flûte !', body: 'Tous les joueurs ont été envoûtés par le Joueur de Flûte !' },
-        white_werewolf: { title: 'Victoire du Loup-Garou Blanc !', body: 'Le Loup-Garou Blanc est le dernier survivant !' },
-        angel: { title: "Victoire de l'Ange !", body: "L'Ange a été le premier exécuté du Jour 1 !" },
+        village: {
+          title: 'Victoire du village !',
+          body: 'Tous les loups-garous sont éliminés.',
+          suggestion: 'On dirait que les villageois ont gagné.',
+        },
+        werewolves: {
+          title: 'Victoire des loups-garous !',
+          body: 'Les loups contrôlent désormais le village.',
+          suggestion: 'On dirait que les loups-garous ont gagné.',
+        },
+        pied_piper: {
+          title: 'Victoire du Joueur de Flûte !',
+          body: 'Tous les joueurs ont été envoûtés par le Joueur de Flûte !',
+          suggestion: 'On dirait que le Joueur de Flûte a gagné.',
+        },
+        white_werewolf: {
+          title: 'Victoire du Loup-Garou Blanc !',
+          body: 'Le Loup-Garou Blanc est le dernier survivant !',
+          suggestion: 'On dirait que le Loup-Garou Blanc a gagné.',
+        },
+        angel: {
+          title: "Victoire de l'Ange !",
+          body: "L'Ange a été le premier exécuté du Jour 1 !",
+          suggestion: "On dirait que l'Ange a gagné.",
+        },
       },
+      confirmWinBody: 'Confirmez avant de terminer la partie.',
+      confirmWin: 'Confirmer le vainqueur',
+      keepPlaying: 'Continuer la partie',
+      reviewWin: 'Revoir la victoire',
       newGame: '🔄 Nouvelle partie',
     },
     night: {
@@ -676,20 +741,12 @@ const translations: Record<Language, Strings> = {
       skipInfect: '— Ne pas infecter —',
       infectNote: (name: string) =>
         `⚠️ Si infecté, ${name} reste en vie et rejoint secrètement les loups.`,
-      bigBadWolfLocked:
-        '⚠️ Un loup a été éliminé — le pouvoir de mise à mort supplémentaire du Grand Méchant Loup est perdu.',
-      bigBadWolfLabel: '🐗 VICTIME OPTIONNELLE (tant qu’aucun loup éliminé) :',
-      skipExtra: '— Passer —',
-      whiteWolfLabel: '⬛ OPTION — dévorer un autre loup :',
-      skipWhiteWolf: '— Passer —',
       noOtherWolves: "Aucun autre loup-garou n'est en vie.",
       seerLabel: '🪄 La Voyante regarde le joueur :',
       selectPlayer: '— Choisir un joueur —',
       dmReveal: (name: string, role: string) => `MDJ seulement : ${name} est ${role}`,
-      witchVictim: (name: string | null) =>
-        name ? `🐺 Victime des loups : ${name}` : '🌙 Aucune victime cette nuit.',
-      witchHeal: '💖 Utiliser la potion de vie (sauver la victime)',
-      witchDeath: '☠️ Utiliser la potion de mort sur :',
+      witchHeal: '💖 Utiliser la potion de vie',
+      witchDeath: '☠️ Utiliser la potion de mort',
       none: '— Aucun —',
       cupidLabel: '💘 Cupidon lie ces deux amoureux :',
       player1: '— Joueur 1 —',
@@ -711,9 +768,6 @@ const translations: Record<Language, Strings> = {
       piperOneTarget: "Plus qu'une seule cible éligible à envoûter cette nuit.",
       piperNoTargets: 'Tous les joueurs éligibles sont déjà envoûtés. Continuez pour passer cette action.',
       enchantNote: 'Les joueurs envoûtés acquiescent discrètement (ex : pouce levé).',
-      ravenLabel: '🦅 Le Corbeau place une malédiction sur (optionnel) :',
-      ravenNone: '— Pas de malédiction cette nuit —',
-      ravenNote: (name: string) => `☠️ ${name} aura +2 voix contre lui demain.`,
       foxActive: '🦊 Le Renard a toujours son pouvoir de flair.',
       foxLost: '🦊 Le Renard a déjà perdu son pouvoir de flair.',
       foxCenterLabel: '🦊 Siège central du trio à flairer :',
@@ -768,12 +822,8 @@ const translations: Record<Language, Strings> = {
       tieResolutionNeedPlayers: 'Sélectionnez au moins 2 joueurs à égalité avant de résoudre.',
       tieResolutionResolve: 'Résoudre l’égalité',
       tieResolutionCancel: 'Annuler',
-      ravenCurse: (name: string) => `🦅 Malédiction du Corbeau : ${name} a +2 voix aujourd’hui.`,
       mayorReminder: (mayorName: string) =>
         `🎖️ Rappel Maire : ${mayorName} est toujours le Maire à la table.`,
-      scapegoatResolution: (scapegoatName: string, tiedNames: string) =>
-        `🪢 Égalité entre ${tiedNames}. Le Bouc Émissaire ${scapegoatName} est éliminé à la place.`,
-      confirmScapegoat: (scapegoatName: string) => `☠️ Éliminer ${scapegoatName}`,
       nightButton: '🌙 Commencer la nuit',
     },
     timer: {
@@ -805,7 +855,6 @@ const translations: Record<Language, Strings> = {
         names ? `Nuit ${round} : ${names} ont été éliminés.${extraLog}` : `Nuit ${round} : Personne éliminé (nuit paisible).`,
       dayElimination: (round: number, names: string) => `Jour ${round} : ${names} éliminé(s).`,
       tieBreaker: (name: string) => `Bris d’égalité : ${name} a été tiré au sort pour être éliminé.`,
-      scapegoatTie: (name: string) => `Bouc émissaire : ${name} est éliminé car le vote du village s’est terminé à égalité.`,
       knightRustySword: (name: string) => ` ⚔️ Épée rouillée du Chevalier : ${name} meurt du tétanos !`,
       witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
         `🧙‍♀️ Potions de la Sorcière — Vie : ${healUsed ? 'UTILISÉE' : 'disponible'}, Mort : ${poisonUsed ? 'UTILISÉE' : 'disponible'}.`,

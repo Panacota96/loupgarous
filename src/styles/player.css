@@ -11,7 +11,6 @@
   box-shadow: 0 12px 26px rgba(0,0,0,0.35);
 }
 .player-card.dead { opacity: 0.45; border-style: dashed; }
-.player-card.mayor { border-color: #c9a227; box-shadow: 0 0 0 1px rgba(201,162,39,0.2); }
 .player-card.lover { border-color: var(--camp-lovers); box-shadow: 0 0 0 1px rgba(216,92,159,0.18); }
 
 .player-card-header {

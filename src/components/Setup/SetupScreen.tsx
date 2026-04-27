@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, type CSSProperties } from 'react';
 import { useGameStore } from '../../store/gameStore';
 import { SETUP_ROLE_IDS, SETUP_ROLES, getRoleName, getRoleTexts } from '../../data/roles';
 import RoleReference from '../Roles/RoleReference';
@@ -12,6 +12,22 @@ const MAX_PLAYERS = 20;
 const RULEBOOK_URL =
   'https://media.play-in.com/pdf/rules_games/best_of__les_loups-garous_de_thiercelieux_regles_fr.pdf';
 
+function countAssignedRoles(assignments: string[]) {
+  const counts: Record<string, number> = {};
+  assignments.forEach((roleId) => {
+    const sanitizedRoleId = SETUP_ROLE_IDS.has(roleId) ? roleId : 'villager';
+    counts[sanitizedRoleId] = (counts[sanitizedRoleId] ?? 0) + 1;
+  });
+  return counts;
+}
+
+function getFirstAvailableRoleId(assignments: string[]) {
+  const counts = countAssignedRoles(assignments);
+  const villager = SETUP_ROLES.find((role) => role.id === 'villager');
+  if (villager && (counts.villager ?? 0) < villager.maxCount) return villager.id;
+  return SETUP_ROLES.find((role) => (counts[role.id] ?? 0) < role.maxCount)?.id ?? 'villager';
+}
+
 export default function SetupScreen() {
   const { language, t } = useI18n();
   const setSetup = useGameStore((s) => s.setSetup);
@@ -19,9 +35,6 @@ export default function SetupScreen() {
 
   const [tab, setTab] = useState<'setup' | 'roles' | 'guide'>('setup');
   const [playerCount, setPlayerCount] = useState(6);
-  const [playerNames, setPlayerNames] = useState<string[]>(
-    Array.from({ length: 6 }, (_, i) => t.setup.playerNamePlaceholder(i + 1))
-  );
   const [roleAssignment, setRoleAssignment] = useState<string[]>(
     Array(6).fill('villager')
   );
@@ -32,32 +45,44 @@ export default function SetupScreen() {
     (count: number) => {
       const c = Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, count));
       setPlayerCount(c);
-      setPlayerNames((prev) => {
-        const next = [...prev];
-        while (next.length < c) next.push(t.setup.playerNamePlaceholder(next.length + 1));
-        return next.slice(0, c);
-      });
       setRoleAssignment((prev) => {
         const next = [...prev];
-        while (next.length < c) next.push('villager');
+        while (next.length < c) next.push(getFirstAvailableRoleId(next));
         return next.slice(0, c);
       });
     },
-    [t]
+    []
   );
 
-  const handleNameChange = (i: number, value: string) => {
-    setPlayerNames((prev) => {
+  const handleRoleChange = (i: number, roleId: string) => {
+    setRoleAssignment((prev) => {
+      const requestedRoleId = SETUP_ROLE_IDS.has(roleId) ? roleId : 'villager';
+      if (prev[i] === requestedRoleId) return prev;
+      const requestedRole = SETUP_ROLES.find((role) => role.id === requestedRoleId);
+      if (!requestedRole) return prev;
+      const usedByOtherSeats = prev
+        .slice(0, playerCount)
+        .filter((assignedRoleId, index) => index !== i && assignedRoleId === requestedRoleId)
+        .length;
+      if (usedByOtherSeats >= requestedRole.maxCount) return prev;
       const next = [...prev];
-      next[i] = value;
+      next[i] = requestedRoleId;
       return next;
     });
   };
 
-  const handleRoleChange = (i: number, roleId: string) => {
+  const addRoleSlot = () => handlePlayerCountChange(playerCount + 1);
+  const removeRoleSlot = (index: number) => {
+    if (playerCount <= MIN_PLAYERS) return;
+    setRoleAssignment((prev) => prev.filter((_, i) => i !== index));
+    setPlayerCount((count) => count - 1);
+  };
+  const moveRoleSlot = (index: number, direction: -1 | 1) => {
+    const target = index + direction;
+    if (target < 0 || target >= playerCount) return;
     setRoleAssignment((prev) => {
       const next = [...prev];
-      next[i] = SETUP_ROLE_IDS.has(roleId) ? roleId : 'villager';
+      [next[index], next[target]] = [next[target], next[index]];
       return next;
     });
   };
@@ -66,11 +91,6 @@ export default function SetupScreen() {
     (preset: (typeof t.quickGuide.starterSets)[number]) => {
       const clamped = Math.min(MAX_PLAYERS, Math.max(MIN_PLAYERS, preset.players));
       setPlayerCount(clamped);
-      setPlayerNames((prev) => {
-        const next = [...prev];
-        while (next.length < clamped) next.push(t.setup.playerNamePlaceholder(next.length + 1));
-        return next.slice(0, clamped);
-      });
       setRoleAssignment(() => {
         const next = preset.roles.slice(0, clamped);
         while (next.length < clamped) next.push('villager');
@@ -82,11 +102,7 @@ export default function SetupScreen() {
   );
 
   // Tally roles assigned
-  const roleCounts: Record<string, number> = {};
-  roleAssignment.slice(0, playerCount).forEach((r) => {
-    const roleId = SETUP_ROLE_IDS.has(r) ? r : 'villager';
-    roleCounts[roleId] = (roleCounts[roleId] ?? 0) + 1;
-  });
+  const roleCounts = countAssignedRoles(roleAssignment.slice(0, playerCount));
 
   // Validation
   const errors: string[] = [];
@@ -117,7 +133,7 @@ export default function SetupScreen() {
       Object.entries(optionalRules).filter(([id]) => SETUP_ROLE_IDS.has(id))
     );
     setSetup({
-      playerNames: playerNames.slice(0, playerCount),
+      playerNames: [],
       roleIds: sanitizedRoleIds,
       discussionTime,
       optionalRules: allowedOptionalRules,
@@ -196,38 +212,112 @@ export default function SetupScreen() {
             </div>
           </section>
 
-          {/* Player Names & Role Assignment */}
+          {/* Ordered Role Assignment */}
           <section className="setup-section">
             <div className="setup-section-header">
-              <h2>🃏 {t.setup.assignRoles}</h2>
+              <h2>🃏 {t.setup.orderedRoles}</h2>
               <button className="btn btn-ghost btn-sm" onClick={() => setTab('roles')}>
                 📚 {t.setup.viewRoleDescriptions}
               </button>
             </div>
             <div className="player-list">
-              {Array.from({ length: playerCount }, (_, i) => (
-                <div key={i} className="player-row" data-testid={`player-row-${i}`}>
-                  <span className="player-num">{i + 1}</span>
-                  <input
-                    className="player-name-input"
-                    value={playerNames[i] ?? ''}
-                    onChange={(e) => handleNameChange(i, e.target.value)}
-                    placeholder={t.setup.playerNamePlaceholder(i + 1)}
-                  />
+              {Array.from({ length: playerCount }, (_, i) => {
+                const roleId = roleAssignment[i] ?? 'villager';
+                const role = SETUP_ROLES.find((r) => r.id === roleId);
+                const selectableRoles = SETUP_ROLES.filter(
+                  (r) => r.id === roleId || (roleCounts[r.id] ?? 0) < r.maxCount
+                );
+                return (
+                <div key={i} className="player-row role-slot-row" data-testid={`player-row-${i}`}>
+                  <span className="player-num" aria-label={t.setup.seatLabel(i + 1)}>
+                    #{i + 1}
+                  </span>
                   <select
                     className="role-select"
                     data-testid="role-select"
-                    value={roleAssignment[i] ?? 'villager'}
+                    aria-label={t.setup.seatLabel(i + 1)}
+                    value={roleId}
                     onChange={(e) => handleRoleChange(i, e.target.value)}
                   >
-                    {SETUP_ROLES.map((r) => (
+                    {selectableRoles.map((r) => (
                       <option key={r.id} value={r.id}>
                         {r.emoji} {getRoleName(r, language)}
                       </option>
                     ))}
                   </select>
+                  <span className="role-slot-label">
+                    {role ? `${role.emoji} ${getRoleName(role, language)}` : roleId}
+                  </span>
+                  <div className="role-slot-actions">
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      type="button"
+                      data-testid={`move-seat-up-${i}`}
+                      onClick={() => moveRoleSlot(i, -1)}
+                      disabled={i === 0}
+                      aria-label={`${t.setup.moveUp} ${t.setup.seatLabel(i + 1)}`}
+                    >
+                      ↑
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      type="button"
+                      data-testid={`move-seat-down-${i}`}
+                      onClick={() => moveRoleSlot(i, 1)}
+                      disabled={i === playerCount - 1}
+                      aria-label={`${t.setup.moveDown} ${t.setup.seatLabel(i + 1)}`}
+                    >
+                      ↓
+                    </button>
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      type="button"
+                      data-testid={`remove-seat-${i}`}
+                      onClick={() => removeRoleSlot(i)}
+                      disabled={playerCount <= MIN_PLAYERS}
+                      aria-label={`${t.setup.removeRole} ${t.setup.seatLabel(i + 1)}`}
+                    >
+                      −
+                    </button>
+                  </div>
                 </div>
-              ))}
+              );
+              })}
+            </div>
+            <button
+              className="btn btn-primary btn-sm add-role-btn"
+              type="button"
+              data-testid="add-role-slot"
+              onClick={addRoleSlot}
+              disabled={playerCount >= MAX_PLAYERS}
+            >
+              + {t.setup.addRole}
+            </button>
+          </section>
+
+          <section className="setup-section">
+            <h2>◯ {t.setup.tablePreview}</h2>
+            <div className="table-preview" data-testid="table-preview">
+              {roleAssignment.slice(0, playerCount).map((roleId, i) => {
+                const role = SETUP_ROLES.find((r) => r.id === roleId);
+                const style = {
+                  '--seat-index': i,
+                  '--seat-count': playerCount,
+                } as CSSProperties;
+                return (
+                  <div
+                    key={`${roleId}-${i}`}
+                    className={`table-seat camp-${role?.camp ?? 'neutral'}`}
+                    style={style}
+                    data-testid={`table-seat-${i}`}
+                  >
+                    <span className="table-seat-number">#{i + 1}</span>
+                    <span className="table-seat-role">
+                      {role ? `${role.emoji} ${getRoleName(role, language)}` : roleId}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
           </section>
 
