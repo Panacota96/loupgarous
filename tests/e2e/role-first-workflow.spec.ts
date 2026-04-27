@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-test('role-first setup uses ordered seats, table preview, and seat labels', async ({ page }) => {
+test('role-first setup uses ordered seats and seat labels', async ({ page }) => {
   await page.goto('/');
 
   await expect(page.getByTestId('player-row-0').getByRole('textbox')).toHaveCount(0);
@@ -15,11 +15,12 @@ test('role-first setup uses ordered seats, table preview, and seat labels', asyn
   await page.getByTestId('player-row-3').getByTestId('role-select').selectOption('villager');
   await expect(page.getByTestId('player-row-4').getByTestId('role-select')).toContainText('Cupid');
 
-  await expect(page.getByTestId('table-preview')).toContainText('#1');
-  await expect(page.getByTestId('table-seat-1')).toContainText('Fox');
+  await expect(page.getByTestId('table-preview')).toHaveCount(0);
 
   await page.getByTestId('move-seat-down-1').click();
-  await expect(page.getByTestId('table-seat-2')).toContainText('Fox');
+  await expect(page.getByTestId('player-row-2').getByTestId('role-select')).toHaveValue('fox');
+  await expect(page.getByTestId('player-row-2')).toContainText('#3');
+  await expect(page.getByTestId('player-row-2')).toContainText('Fox');
 
   await page.getByTestId('add-role-slot').click();
   await expect(page.getByTestId('player-row-6')).toBeVisible();
@@ -90,4 +91,32 @@ test('role pools cap wolves at three and hide removed roles', async ({ page }) =
   await expect(page.getByTestId('setup-roles-tab')).not.toContainText('Raven');
   await expect(page.getByTestId('setup-roles-tab')).not.toContainText('Village Idiot');
   await expect(page.getByTestId('setup-roles-tab')).not.toContainText('Scapegoat');
+});
+
+test('setup validation requires villagers but accepts wolf-side special roles', async ({ page }) => {
+  await page.goto('/');
+
+  const noVillagerRoles = ['big_bad_wolf', 'fox', 'witch', 'cupid', 'protector', 'hunter'];
+  for (const [index, roleId] of noVillagerRoles.entries()) {
+    await page.getByTestId(`player-row-${index}`).getByTestId('role-select').selectOption(roleId);
+  }
+
+  await expect(page.getByTestId('start-game')).toBeDisabled();
+  await expect(page.locator('.setup-errors')).toContainText(/Villager/i);
+
+  await page.getByTestId('player-row-5').getByTestId('role-select').selectOption('villager');
+  await expect(page.getByTestId('start-game')).toBeEnabled();
+});
+
+test('special wolf-side roles still create the normal wolf wake-up', async ({ page }) => {
+  await page.goto('/');
+
+  const roles = ['big_bad_wolf', 'villager', 'villager', 'villager', 'villager', 'villager'];
+  for (const [index, roleId] of roles.entries()) {
+    await page.getByTestId(`player-row-${index}`).getByTestId('role-select').selectOption(roleId);
+  }
+
+  await page.getByTestId('start-game').click();
+
+  await expect(page.getByRole('heading', { name: /Werewolf wakes up/i })).toBeVisible();
 });

@@ -115,6 +115,7 @@ export interface GameState {
   enchantedPlayerIds: string[];          // players enchanted by Pied Piper
   infectedPlayerIds: string[];           // players infected by Infect Père (secret wolves)
   angelWon: boolean;                     // true if Angel was first Day-1 execution
+  firstDayExecutionDone: boolean;        // true after the first village execution on Day 1
   language: Language;
   nightStepStates: NightStepState[];     // checkpoints for each night step to allow back navigation
   protectorHistory: ProtectorRecord[];   // records per-night Protector targets

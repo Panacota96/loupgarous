@@ -74,6 +74,7 @@ export default function GameBoard() {
   const wolvesWin =
     packWolfCount > 0 &&
     packWolfCount >= villageCount &&
+    !whiteWolfAlive &&
     !piedPiperWins &&
     !whiteWolfWins &&
     !angelWon;

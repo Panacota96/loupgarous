@@ -1,6 +1,6 @@
-import { useState, useCallback, type CSSProperties } from 'react';
+import { useState, useCallback } from 'react';
 import { useGameStore } from '../../store/gameStore';
-import { SETUP_ROLE_IDS, SETUP_ROLES, getRoleName, getRoleTexts } from '../../data/roles';
+import { SETUP_ROLE_IDS, SETUP_ROLES, WOLF_ROLE_IDS, getRoleName, getRoleTexts } from '../../data/roles';
 import RoleReference from '../Roles/RoleReference';
 import LanguageToggle from '../LanguageToggle';
 import QuickGuide from './QuickGuide';
@@ -106,16 +106,18 @@ export default function SetupScreen() {
 
   // Validation
   const errors: string[] = [];
-  Object.entries(roleCounts).forEach(([id, count]) => {
-    const def = SETUP_ROLES.find((r) => r.id === id);
-    if (!def) return;
+  SETUP_ROLES.forEach((def) => {
+    const count = roleCounts[def.id] ?? 0;
     const roleLabel = getRoleName(def, language);
     if (count > def.maxCount)
       errors.push(t.setup.errors.tooMany(roleLabel, def.maxCount));
     if (count < def.minCount)
       errors.push(t.setup.errors.notEnough(roleLabel, def.minCount));
   });
-  const wolfSideCount = (roleCounts['werewolf'] ?? 0) + (roleCounts['white_werewolf'] ?? 0);
+  const wolfSideCount = [...WOLF_ROLE_IDS, 'white_werewolf'].reduce(
+    (count, roleId) => count + (roleCounts[roleId] ?? 0),
+    0
+  );
   if (wolfSideCount === 0)
     errors.push(t.setup.errors.needWolf);
   const sistersDef = SETUP_ROLES.find((r) => r.id === 'soeurs');
@@ -293,32 +295,6 @@ export default function SetupScreen() {
             >
               + {t.setup.addRole}
             </button>
-          </section>
-
-          <section className="setup-section">
-            <h2>◯ {t.setup.tablePreview}</h2>
-            <div className="table-preview" data-testid="table-preview">
-              {roleAssignment.slice(0, playerCount).map((roleId, i) => {
-                const role = SETUP_ROLES.find((r) => r.id === roleId);
-                const style = {
-                  '--seat-index': i,
-                  '--seat-count': playerCount,
-                } as CSSProperties;
-                return (
-                  <div
-                    key={`${roleId}-${i}`}
-                    className={`table-seat camp-${role?.camp ?? 'neutral'}`}
-                    style={style}
-                    data-testid={`table-seat-${i}`}
-                  >
-                    <span className="table-seat-number">#{i + 1}</span>
-                    <span className="table-seat-role">
-                      {role ? `${role.emoji} ${getRoleName(role, language)}` : roleId}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
           </section>
 
           {/* Role Summary */}

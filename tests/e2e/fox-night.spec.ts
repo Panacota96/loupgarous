@@ -57,3 +57,16 @@ test('manual fox power override skips future Fox wake-ups', async ({ page }) => 
   await expect(page.getByRole('heading', { name: /Night ends/i })).toBeVisible();
   await expect(page.getByText(/Fox wakes up/i)).toHaveCount(0);
 });
+
+test('manual fox power override is reflected in the day reminder', async ({ page }) => {
+  await setupGame(
+    page,
+    ['werewolf', 'fox', 'villager', 'villager', 'villager', 'villager']
+  );
+
+  await page.getByTestId('power-toggle-fox').uncheck();
+  await page.getByTestId('night-next').click();
+  await page.getByTestId('reveal-day').click();
+
+  await expect(page.getByTestId('day-phase')).toContainText('Fox sniffing power: LOST');
+});

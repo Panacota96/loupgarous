@@ -19,6 +19,7 @@ export default function DayPhase() {
   const wolfDogChoice = useGameStore((s) => s.wolfDogChoice);
   const foxPowerActive = useGameStore((s) => s.foxPowerActive);
   const usedGameAbilities = useGameStore((s) => s.usedGameAbilities);
+  const rolePowerOverrides = useGameStore((s) => s.rolePowerOverrides ?? {});
 
   const eliminatePlayer = useGameStore((s) => s.eliminatePlayer);
   const addLog = useGameStore((s) => s.addLog);
@@ -71,6 +72,7 @@ export default function DayPhase() {
 
   const mayorAlive = players.find((p) => p.isAlive && p.isMayor) ?? null;
   const foxInGame = players.some((p) => p.roleId === 'fox');
+  const foxEffectivePowerActive = rolePowerOverrides.fox ?? foxPowerActive;
   const witchInGame = players.some((p) => p.roleId === 'witch' && p.isAlive);
   const witchHealUsed = usedGameAbilities.includes('witch_heal');
   const witchPoisonUsed = usedGameAbilities.includes('witch_poison');
@@ -152,7 +154,7 @@ export default function DayPhase() {
 
       {foxInGame && (
         <div className="day-trigger-item">
-          {foxPowerActive ? t.day.foxPowerActive : t.day.foxPowerLost}
+          {foxEffectivePowerActive ? t.day.foxPowerActive : t.day.foxPowerLost}
         </div>
       )}
 
