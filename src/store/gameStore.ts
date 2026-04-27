@@ -221,10 +221,13 @@ export function resolveNightEliminations(
   const labelFor = (id: string) => getPlayerRoleLabelById(id, players, language);
 
   const knightPlayer = players.find((p) => p.isAlive && p.roleId === 'knight');
+  const knightEliminationCause = knightPlayer
+    ? eliminationCauses[knightPlayer.id] ?? 'wolves'
+    : undefined;
   if (
     knightPlayer &&
     finalEliminated.includes(knightPlayer.id) &&
-    eliminationCauses[knightPlayer.id] === 'wolves'
+    knightEliminationCause === 'wolves'
   ) {
     const total = players.length;
     const knightIdx = players.findIndex((p) => p.id === knightPlayer.id);
@@ -720,21 +723,51 @@ export const useGameStore = create<GameStore>()(
               })
               .filter((entry) => entry.round > 0)
             : [];
+        const normalizeLoversIds = (value: unknown) =>
+          Array.isArray(value) &&
+          value.length === 2 &&
+          typeof value[0] === 'string' &&
+          typeof value[1] === 'string'
+            ? value as [string, string]
+            : null;
 
         delete rest.votes;
         rest.rolePowerOverrides = normalizeOverrides(rest.rolePowerOverrides);
         if (typeof rest.firstDayExecutionDone !== 'boolean') rest.firstDayExecutionDone = false;
+        rest.loversIds = normalizeLoversIds(rest.loversIds);
         if (Array.isArray(rest.roleIds)) rest.roleIds = rest.roleIds.map(sanitizeRoleId);
         if (Array.isArray(rest.players)) {
           rest.players = rest.players.map(normalizePlayer);
         }
         if (Array.isArray(rest.nightSteps)) {
-          rest.nightSteps = rest.nightSteps.filter((step) => {
-            const roleId = step && typeof step === 'object'
-              ? (step as Record<string, unknown>).roleId
-              : null;
-            return typeof roleId === 'string' && SETUP_ROLE_IDS.has(roleId);
-          });
+          const currentNightStepIndex =
+            typeof rest.currentNightStepIndex === 'number'
+              ? Math.max(0, rest.currentNightStepIndex)
+              : 0;
+          let adjustedCurrentNightStepIndex = 0;
+          const nightSteps = rest.nightSteps.flatMap((step, originalIndex) => {
+            const raw = step && typeof step === 'object'
+              ? step as Record<string, unknown>
+              : {};
+            const roleId = raw.roleId;
+            if (
+              typeof roleId !== 'string' ||
+              !SETUP_ROLE_IDS.has(roleId) ||
+              REMOVED_ROLE_IDS.has(roleId)
+            ) return [];
+            if (originalIndex < currentNightStepIndex) adjustedCurrentNightStepIndex += 1;
+            return [{
+              ...raw,
+              roleId,
+              stepIndex: 0,
+            }];
+          }).map((step, index) => ({
+            ...step,
+            stepIndex: index,
+            completed: index < adjustedCurrentNightStepIndex,
+          }));
+          rest.nightSteps = nightSteps;
+          rest.currentNightStepIndex = Math.min(adjustedCurrentNightStepIndex, nightSteps.length);
         }
         if (Array.isArray(rest.nightStepStates)) {
           rest.nightStepStates = rest.nightStepStates.map((snapshot) => {
@@ -747,9 +780,7 @@ export const useGameStore = create<GameStore>()(
               usedGameAbilities: Array.isArray(raw.usedGameAbilities) ? raw.usedGameAbilities : [],
               enchantedPlayerIds: Array.isArray(raw.enchantedPlayerIds) ? raw.enchantedPlayerIds : [],
               infectedPlayerIds: Array.isArray(raw.infectedPlayerIds) ? raw.infectedPlayerIds : [],
-              loversIds: Array.isArray(raw.loversIds) && raw.loversIds.length === 2
-                ? raw.loversIds as [string, string]
-                : null,
+              loversIds: normalizeLoversIds(raw.loversIds),
               players: Array.isArray(raw.players) ? raw.players.map(normalizePlayer) : [],
               foxPowerActive: typeof raw.foxPowerActive === 'boolean' ? raw.foxPowerActive : true,
               wildChildModelId: typeof raw.wildChildModelId === 'string' ? raw.wildChildModelId : null,
