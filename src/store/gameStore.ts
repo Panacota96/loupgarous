@@ -126,6 +126,15 @@ export function isNightRoleAvailable(roleId: string, context: NightStepContext) 
   return getAutoNightRoleAvailability(roleId, context);
 }
 
+export function computePowerAutoOverrides(context: NightStepContext): Record<string, boolean> {
+  const overrides: Record<string, boolean> = {};
+  for (const roleId of ['fox', 'witch', 'infect_pere', 'big_bad_wolf']) {
+    const autoAvailable = getAutoNightRoleAvailability(roleId, context);
+    if (!autoAvailable) overrides[roleId] = false;
+  }
+  return overrides;
+}
+
 function buildNightSteps(context: NightStepContext): NightStep[] {
   const roleIds = [...new Set(context.players.filter((p) => p.isAlive).map((p) => p.roleId))];
   const hasPackWolf = context.players.some(
@@ -282,8 +291,7 @@ export const useGameStore = create<GameStore>()(
           usedAbilities: [],
         }));
         const round = 1;
-        const rolePowerOverrides: Record<string, boolean> = {};
-        const nightSteps = buildNightSteps({
+        const baseContext: NightStepContext = {
           players,
           round,
           foxPowerActive: true,
@@ -291,8 +299,10 @@ export const useGameStore = create<GameStore>()(
           infectedPlayerIds: [],
           wolfDogChoice: null,
           wildChildTransformed: false,
-          rolePowerOverrides,
-        });
+          rolePowerOverrides: {},
+        };
+        const rolePowerOverrides = computePowerAutoOverrides(baseContext);
+        const nightSteps = buildNightSteps({ ...baseContext, rolePowerOverrides });
         const nextState: Partial<GameStore> = {
           phase: 'night',
           round,
@@ -489,7 +499,7 @@ export const useGameStore = create<GameStore>()(
           (wildChildModelId !== null && finalEliminated.includes(wildChildModelId));
 
         const newRound = round + 1;
-        const nightSteps = buildNightSteps({
+        const baseContext: NightStepContext = {
           players: updated,
           round: newRound,
           foxPowerActive,
@@ -497,8 +507,11 @@ export const useGameStore = create<GameStore>()(
           infectedPlayerIds,
           wolfDogChoice,
           wildChildTransformed: newWildChildTransformed,
-          rolePowerOverrides,
-        });
+          rolePowerOverrides: {},
+        };
+        const autoOverrides = computePowerAutoOverrides(baseContext);
+        const nextRolePowerOverrides = { ...rolePowerOverrides, ...autoOverrides };
+        const nightSteps = buildNightSteps({ ...baseContext, rolePowerOverrides: nextRolePowerOverrides });
 
         const eliminatedNames = finalEliminated
           .map((id) => getPlayerRoleLabelById(id, updated, language, ''))
@@ -524,6 +537,7 @@ export const useGameStore = create<GameStore>()(
           wildChildTransformed: newWildChildTransformed,
           protectedPlayerId: null,
           lastProtectedPlayerId: protectedPlayerId,
+          rolePowerOverrides: nextRolePowerOverrides,
         });
       },
 
@@ -543,7 +557,7 @@ export const useGameStore = create<GameStore>()(
         } = get();
         if (phase === 'day') {
           const newRound = round + 1;
-          const nightSteps = buildNightSteps({
+          const baseContext: NightStepContext = {
             players,
             round: newRound,
             foxPowerActive,
@@ -551,8 +565,11 @@ export const useGameStore = create<GameStore>()(
             infectedPlayerIds,
             wolfDogChoice,
             wildChildTransformed,
-            rolePowerOverrides,
-          });
+            rolePowerOverrides: {},
+          };
+          const autoOverrides = computePowerAutoOverrides(baseContext);
+          const nextRolePowerOverrides = { ...rolePowerOverrides, ...autoOverrides };
+          const nightSteps = buildNightSteps({ ...baseContext, rolePowerOverrides: nextRolePowerOverrides });
           const nextState: Partial<GameStore> = {
             phase: 'night',
             round: newRound,
@@ -561,6 +578,7 @@ export const useGameStore = create<GameStore>()(
             eliminatedThisNight: [],
             optionalRules,
             protectedPlayerId: null,
+            rolePowerOverrides: nextRolePowerOverrides,
           };
           const snapshotBase = { ...get(), ...nextState, nightStepStates: [] } as GameStore;
           const nightStepStates = [captureNightState(snapshotBase)];
