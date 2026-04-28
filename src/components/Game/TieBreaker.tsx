@@ -1,13 +1,18 @@
 import { useState } from 'react';
+import type { Language } from '../../types/game.types';
 import type { useI18n } from '../../i18n';
+import type { Player } from '../../types/game.types';
+import { getPlayerRoleLabelById } from '../../utils/playerLabels';
 import '../../styles/tiebreaker.css';
 
 type Strings = ReturnType<typeof useI18n>['t'];
-type SimplePlayer = { id: string; name: string };
+type SimplePlayer = { id: string };
 
 type Props = {
   tiedPlayerIds: string[];
   players: SimplePlayer[];
+  allPlayers: Player[];
+  language: Language;
   t: Strings;
   onEliminate: (id: string) => void;
   onLog: (message: string) => void;
@@ -17,6 +22,8 @@ type Props = {
 export default function TieBreaker({
   tiedPlayerIds,
   players,
+  allPlayers,
+  language,
   t,
   onEliminate,
   onLog,
@@ -36,7 +43,7 @@ export default function TieBreaker({
   const confirmElim = () => {
     if (!selectedPlayer) return;
     onEliminate(selectedPlayer.id);
-    onLog(t.logs.tieBreaker(selectedPlayer.name));
+    onLog(t.logs.tieBreaker(getPlayerRoleLabelById(selectedPlayer.id, allPlayers, language)));
     onClose?.();
   };
 
@@ -54,14 +61,14 @@ export default function TieBreaker({
             data-testid={`tie-breaker-player-${p.id}`}
             onClick={() => setSelectedId(p.id)}
           >
-            {p.name}
+            {getPlayerRoleLabelById(p.id, allPlayers, language)}
           </button>
         ))}
       </div>
       <div className="tb-result" data-testid="tie-breaker-result">
         <p>
           {selectedPlayer
-            ? t.tieBreaker.selected(selectedPlayer.name)
+            ? t.tieBreaker.selected(getPlayerRoleLabelById(selectedPlayer.id, allPlayers, language))
             : t.tieBreaker.selectionRequired}
         </p>
         <button className="btn btn-danger" onClick={confirmElim} disabled={!selectedPlayer}>

@@ -234,8 +234,9 @@ export default function DayPhase() {
                 tiedPlayerIds={activeTieIds}
                 players={alivePlayers.map((player) => ({
                   id: player.id,
-                  name: playerLabel(player),
                 }))}
+                allPlayers={players}
+                language={language}
                 t={t}
                 onLog={addLog}
                 onEliminate={(id) => {
