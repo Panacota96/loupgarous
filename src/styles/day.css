@@ -22,13 +22,6 @@
   background: linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
   box-shadow: 0 8px 20px rgba(0,0,0,0.28);
 }
-.bear-signal.growl {
-  background: rgba(218,54,51,0.1);
-  border-color: var(--danger);
-  color: #f85149;
-}
-.bear-signal.silent { color: var(--text-muted); }
-
 /* Day triggers */
 .day-triggers {
   background: linear-gradient(120deg, rgba(255,255,255,0.02), rgba(255,255,255,0));
