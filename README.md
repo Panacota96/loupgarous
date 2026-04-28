@@ -4,7 +4,7 @@
 
 Web-first moderator tooling for Loup-Garous / Werewolf.
 
-Run setup, role assignment, night actions, manual day elimination, and trigger-heavy table flow from one interface, then ship the same product to GitHub Pages and Android through Capacitor.
+Run role-first setup, ordered seat tracking, night reminders, manual day elimination, and trigger-heavy table flow from one interface, then ship the same product to GitHub Pages and Android through Capacitor.
 
 [![CI](https://img.shields.io/github/actions/workflow/status/Panacota96/loupgarous/ci.yml?branch=main&label=CI)](https://github.com/Panacota96/loupgarous/actions/workflows/ci.yml)
 [![Deploy Web](https://img.shields.io/github/actions/workflow/status/Panacota96/loupgarous/deploy-web.yml?label=Deploy%20Web)](https://github.com/Panacota96/loupgarous/actions/workflows/deploy-web.yml)
@@ -21,11 +21,11 @@ Run setup, role assignment, night actions, manual day elimination, and trigger-h
 - React + TypeScript app designed for the game master, not for individual players
 - Web app is the source of truth for local use, Pages deployment, and Android packaging
 - Playwright covers the core moderator flow to catch UI and release regressions
-- Built for live table use with setup, role reference, timed day phases, and guided night actions
+- Built for live table use with role-first setup, seat labels, role reference, timed day phases, and guided night actions
 
 ## What This Project Is
 
-`loupgarous` is built around one core idea: the moderator should be able to run the entire table from a single interface without juggling paper notes, remembering every night trigger, or manually tracking exceptions.
+`loupgarous` is built around one core idea: the moderator should be able to run the entire table from a single interface without juggling paper notes, remembering every night trigger, or memorizing every player name.
 
 It combines:
 
@@ -48,15 +48,42 @@ That means the same product flow is designed, tested, and released from one code
 
 ## Product Highlights
 
-- Configure 5 to 20 players with names and role assignments
-- Run ordered night actions with DM guidance for each role
-- Manage day flow with timers, manual elimination, and explicit tie-resolution tools
-- Track one-time abilities, first-night-only behavior, and reveal/death triggers
-- Use a built-in role reference while preparing the table
+- Configure 5 to 20 ordered seats by role, without entering player names
+- Use `#seat Role` labels everywhere the DM needs to identify someone
+- Add, remove, and move seats during setup so the app order matches the physical table
+- Choose roles from a limited role pool: unique roles disappear once assigned, and Werewolves are capped at 3
+- Run ordered night reminders without target dropdowns for hidden choices the DM should not record
+- Track Witch potions with checkboxes instead of player target selection
+- Manage power availability for Fox, Witch, Infected Father of Wolves, and Big Bad Wolf from a GM-facing status panel
+- Manage day flow with timers, manual elimination, explicit tie-resolution tools, and confirmed win suggestions
 - Keep state across reloads with persistent local storage
 - Ship the same experience to the web and Android wrapper
 
-Supported role coverage includes villagers, werewolves, Seer, Witch, Hunter, Cupid, Little Girl, Mayor, Protector, Elder, Village Idiot, Scapegoat, Bear Tamer, Raven, Fox, and additional advanced roles already represented in the UI.
+Supported setup roles include Villager, Werewolf, Big Bad Wolf, Infected Father of Wolves, Seer, Witch, Hunter, Cupid, Little Girl, Protector, Elder, Bear Tamer, Fox, Two Sisters, Knight with Rusty Sword, Wolf-Dog, Wild Child, White Werewolf, Pied Piper, and Angel. Mayor is tracked as an elected table status, not a setup role. Raven, Village Idiot, and Scapegoat are intentionally hidden from setup and the role reference.
+
+## Current GM Workflow
+
+The default workflow is role-first:
+
+1. Add one ordered role slot for each person at the table.
+2. Ask each person for their role and assign it to the matching seat.
+3. Reorder seats if needed so `#1`, `#2`, `#3`, and so on match the real table order.
+4. Start the game and use seat labels like `#4 Witch` for all day cards, logs, summaries, and reminders.
+
+The app does not ask for player names in the normal setup flow. Existing saved games that still contain names are migrated defensively, but seat identity is the source of truth for current games.
+
+## Night And Power Handling
+
+Night turns are designed as moderator prompts, not as a hidden action database. The app no longer records wolf victims, Cupid lovers, Wild Child role model, Protector target, Infected Father of Wolves target, Big Bad Wolf extra victim, Fox sniff center, Seer target, or Pied Piper targets through dropdowns.
+
+Power status is tracked separately:
+
+- Fox can be marked inactive after losing the sniff power.
+- Witch life and death potions are disabled after use.
+- Infected Father of Wolves can be marked used after the once-per-game infection.
+- Big Bad Wolf can be disabled once the wolf-side death condition locks the extra kill.
+
+Unavailable powers are skipped when night steps are generated. The GM can also override power status during play to correct the table state.
 
 ## Screenshot Gallery
 
@@ -96,7 +123,7 @@ The production bundle is written to `dist/`.
 npm run test:e2e
 ```
 
-The Playwright suite covers the main 6-player moderator flow, including setup, phase transitions, and UI visibility checks that protect against black-screen regressions.
+The Playwright suite covers the role-first moderator flow, setup constraints, phase transitions, night-step behavior, win confirmation, and UI visibility checks that protect against black-screen regressions.
 
 ## Requesting Changes
 
@@ -160,28 +187,29 @@ More detail is documented in [`docs/android-setup.md`](./docs/android-setup.md) 
 ## Gameplay Flow
 
 ```text
-Setup -> Night -> Day -> Night -> ... -> Win detection
+Role setup -> Night -> Day -> Night -> ... -> Win suggestion -> GM confirmation
 ```
 
 ### Night Order
 
-1. Cupid on the first night
-2. Little Girl passive peek
-3. Protector
-4. Werewolves choose a victim
-5. Fox sniff
-6. Seer reveal
-7. Witch save or poison
-8. Raven curse for the next day
+Night steps are generated from the roles currently in play and their power status. The active flow can include:
+
+1. First-night identity or choice roles such as Cupid, Wolf-Dog, Wild Child, and Two Sisters
+2. Passive reminders such as Bear Tamer, Elder, Hunter, and Angel
+3. Wolf-side wake-up and special wolf-side reminders
+4. Fox, Seer, Witch, Protector, Pied Piper, and other active night roles when their powers are available
+5. Night resolution summary using seat labels
 
 ### Day Order
 
-1. Bear Tamer signal
-2. Resolve night deaths and triggers
-3. Discussion timer
-4. Manual elimination by the DM
-5. Optional tie-breaker or Scapegoat resolution
-6. Transition back to night
+1. Review night results and role reminders
+2. Run the discussion timer
+3. Apply manual elimination by seat
+4. Resolve tie handling and reveal/death triggers
+5. Review any suggested winner before confirming the game is over
+6. Transition back to night when the table keeps playing
+
+Win detection is intentionally advisory. If the app thinks Werewolves, Villagers, White Werewolf, Pied Piper, or Angel have won, it asks the GM to confirm before showing the final victory screen.
 
 ## Release Tracks And Ops
 
