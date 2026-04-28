@@ -31,15 +31,9 @@ interface StoreActions {
   resetGame: () => void;
   completeNightStep: () => void;
   goToNightStep: (index: number) => void;
-  setEliminatedThisNight: (ids: string[]) => void;
   useGameAbility: (key: string) => void;
   applyNightResults: () => void;
-  setWildChildModel: (id: string) => void;
   setWolfDogChoice: (choice: 'villager' | 'werewolf') => void;
-  addEnchanted: (ids: string[]) => void;
-  infectPlayer: (id: string) => void;
-  setAngelWon: (val: boolean) => void;
-  setFoxPowerActive: (active: boolean) => void;
   setRolePowerOverride: (roleId: string, active: boolean | null) => void;
   togglePhase: () => void;
   startTimer: () => void;
@@ -48,10 +42,8 @@ interface StoreActions {
   resetTimer: () => void;
   eliminatePlayer: (id: string) => void;
   electMayor: (id: string) => void;
-  setLovers: (id1: string, id2: string) => void;
   addLog: (message: string) => void;
   setLanguage: (lang: Language) => void;
-  setProtectorTarget: (targetId: string | null) => void;
 }
 
 export type GameStore = SetupState & GameState & StoreActions;
@@ -381,23 +373,10 @@ export const useGameStore = create<GameStore>()(
           };
         }),
 
-      setEliminatedThisNight: (ids) => set({ eliminatedThisNight: ids }),
-
       useGameAbility: (key) =>
         set((s) => ({ usedGameAbilities: [...s.usedGameAbilities, key] })),
 
-      setWildChildModel: (id) => set({ wildChildModelId: id }),
       setWolfDogChoice: (choice) => set({ wolfDogChoice: choice }),
-      addEnchanted: (ids) =>
-        set((s) => ({ enchantedPlayerIds: [...new Set([...s.enchantedPlayerIds, ...ids])] })),
-      infectPlayer: (id) =>
-        set((s) => ({
-          eliminatedThisNight: s.eliminatedThisNight.filter((eid) => eid !== id),
-          infectedPlayerIds: [...new Set([...s.infectedPlayerIds, id])],
-          usedGameAbilities: [...s.usedGameAbilities, 'infect_pere'],
-        })),
-      setAngelWon: (val) => set({ angelWon: val }),
-      setFoxPowerActive: (active) => set({ foxPowerActive: active }),
       setRolePowerOverride: (roleId, active) =>
         set((state) => {
           const rolePowerOverrides = { ...state.rolePowerOverrides };
@@ -442,15 +421,6 @@ export const useGameStore = create<GameStore>()(
             nightStepStates,
           };
         }),
-      setProtectorTarget: (targetId) =>
-        set((s) => {
-          const withoutCurrentRound = s.protectorHistory.filter((p) => p.round !== s.round);
-          return {
-            protectorHistory: [...withoutCurrentRound, { round: s.round, targetId }],
-            protectedPlayerId: targetId,
-          };
-        }),
-
       applyNightResults: () => {
         const {
           players,
@@ -662,12 +632,6 @@ export const useGameStore = create<GameStore>()(
         set((s) => ({
           mayorId: id,
           players: s.players.map((p) => ({ ...p, isMayor: p.id === id })),
-        })),
-
-      setLovers: (id1, id2) =>
-        set((s) => ({
-          loversIds: [id1, id2],
-          players: s.players.map((p) => ({ ...p, isLover: p.id === id1 || p.id === id2 })),
         })),
 
       addLog: (message) =>

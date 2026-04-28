@@ -75,6 +75,8 @@ interface Strings {
     resetConfirm: string;
     reset: string;
     tabs: { game: string; roles: string; log: string };
+    roleTrayLabel: string;
+    roleTrayDead: string;
     powerStatus: {
       title: string;
       auto: string;
@@ -169,7 +171,7 @@ interface Strings {
     title: (round: number) => string;
     subtitle: string;
     dmView: { show: string; hide: string };
-    bearSignal: (growls: boolean) => string;
+    bearReminder: string;
     dmReminders: string;
     piedPiperBar: (count: number, total: number) => string;
     piedPiperWins: string;
@@ -208,7 +210,7 @@ interface Strings {
   tieBreaker: {
     title: string;
     hint: string;
-    randomPick: string;
+    selectionRequired: string;
     selected: (name: string) => string;
     confirm: string;
     cancel: string;
@@ -369,6 +371,8 @@ const translations: Record<Language, Strings> = {
         roles: '📚 Roles',
         log: '📜 Log',
       },
+      roleTrayLabel: 'GM role reminder tray',
+      roleTrayDead: 'eliminated',
       powerStatus: {
         title: 'Power Status',
         auto: 'Auto',
@@ -494,8 +498,7 @@ const translations: Record<Language, Strings> = {
       title: (round: number) => `Day Phase — Round ${round}`,
       subtitle: 'All players open their eyes.',
       dmView: { show: '👁 DM View', hide: '🙈 Hide Roles' },
-      bearSignal: (growls: boolean) =>
-        growls ? '🐻 Bear signal: 🔊 GROWLS (wolf nearby!)' : '🐻 Bear signal: 🤫 Silent',
+      bearReminder: '🐻 Bear Tamer: check the nearest alive neighbor on each side and give the table signal.',
       dmReminders: '📋 DM Reminders',
       piedPiperBar: (count: number, total: number) =>
         `🎶 Pied Piper enchanted: ${count} / ${total} players`,
@@ -536,9 +539,9 @@ const translations: Record<Language, Strings> = {
     },
     tieBreaker: {
       title: '⚖️ Tie-Breaker',
-      hint: 'The DM selected the tied players manually. One of them was selected at random.',
-      randomPick: '🎲 Random Pick',
-      selected: (name: string) => `➡️ ${name} is selected for elimination.`,
+      hint: 'Select the tied player who was eliminated at the table.',
+      selectionRequired: 'Select one tied player to eliminate.',
+      selected: (name: string) => `➡️ ${name} will be eliminated.`,
       confirm: '☠️ Confirm Elimination',
       cancel: 'Cancel',
     },
@@ -547,7 +550,7 @@ const translations: Record<Language, Strings> = {
       nightSummary: (round: number, names: string | null, extraLog: string) =>
         names ? `Night ${round}: ${names} were eliminated.${extraLog}` : `Night ${round}: No one was eliminated (peaceful night).`,
       dayElimination: (round: number, names: string) => `Day ${round}: ${names} eliminated.`,
-      tieBreaker: (name: string) => `Tie-breaker: ${name} was randomly selected for elimination.`,
+      tieBreaker: (name: string) => `Tie resolved: ${name} eliminated.`,
       knightRustySword: (name: string) => ` ⚔️ Knight's rusty sword: ${name} dies of tetanus!`,
       witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
         `🧙‍♀️ Witch potions — Healing: ${healUsed ? 'USED' : 'available'}, Death: ${poisonUsed ? 'USED' : 'available'}.`,
@@ -672,6 +675,8 @@ const translations: Record<Language, Strings> = {
         roles: '📚 Rôles',
         log: '📜 Journal',
       },
+      roleTrayLabel: 'Plateau de rappel des rôles MJ',
+      roleTrayDead: 'éliminé',
       powerStatus: {
         title: 'État des pouvoirs',
         auto: 'Auto',
@@ -798,8 +803,7 @@ const translations: Record<Language, Strings> = {
       title: (round: number) => `Phase de jour — Manche ${round}`,
       subtitle: 'Tous les joueurs ouvrent les yeux.',
       dmView: { show: '👁 Vue MJ', hide: '🙈 Masquer les rôles' },
-      bearSignal: (growls: boolean) =>
-        growls ? '🐻 Signal de l’ours : 🔊 GROGNE (loup voisin !)' : '🐻 Signal de l’ours : 🤫 Silencieux',
+      bearReminder: '🐻 Montreur d’ours : vérifiez le voisin vivant le plus proche de chaque côté et donnez le signal à la table.',
       dmReminders: '📋 Rappels MJ',
       piedPiperBar: (count: number, total: number) =>
         `🎶 Envoûtés par le Joueur de Flûte : ${count} / ${total} joueurs`,
@@ -840,9 +844,9 @@ const translations: Record<Language, Strings> = {
     },
     tieBreaker: {
       title: '⚖️ Bris d’égalité',
-      hint: 'Le MJ a sélectionné manuellement les joueurs à égalité. L’un d’eux a été tiré au sort.',
-      randomPick: '🎲 Tirage aléatoire',
-      selected: (name: string) => `➡️ ${name} est choisi pour l’élimination.`,
+      hint: 'Sélectionnez le joueur à égalité éliminé à la table.',
+      selectionRequired: 'Sélectionnez un joueur à égalité à éliminer.',
+      selected: (name: string) => `➡️ ${name} sera éliminé.`,
       confirm: '☠️ Confirmer l’élimination',
       cancel: 'Annuler',
     },
@@ -851,7 +855,7 @@ const translations: Record<Language, Strings> = {
       nightSummary: (round: number, names: string | null, extraLog: string) =>
         names ? `Nuit ${round} : ${names} ont été éliminés.${extraLog}` : `Nuit ${round} : Personne éliminé (nuit paisible).`,
       dayElimination: (round: number, names: string) => `Jour ${round} : ${names} éliminé(s).`,
-      tieBreaker: (name: string) => `Bris d’égalité : ${name} a été tiré au sort pour être éliminé.`,
+      tieBreaker: (name: string) => `Égalité résolue : ${name} éliminé.`,
       knightRustySword: (name: string) => ` ⚔️ Épée rouillée du Chevalier : ${name} meurt du tétanos !`,
       witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) =>
         `🧙‍♀️ Potions de la Sorcière — Vie : ${healUsed ? 'UTILISÉE' : 'disponible'}, Mort : ${poisonUsed ? 'UTILISÉE' : 'disponible'}.`,
