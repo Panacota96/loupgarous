@@ -195,7 +195,7 @@ Role setup -> Night -> Day -> Night -> ... -> Win suggestion -> GM confirmation
 Night steps are generated from the roles currently in play and their power status. The active flow can include:
 
 1. First-night identity or choice roles such as Cupid, Wolf-Dog, Wild Child, and Two Sisters
-2. Passive reminders such as Little Girl, Bear Tamer, Elder, Hunter, and Angel
+2. Passive reminders such as Bear Tamer, Elder, Hunter, and Angel
 3. Wolf-side wake-up and special wolf-side reminders
 4. Fox, Seer, Witch, Protector, Pied Piper, and other active night roles when their powers are available
 5. Night resolution summary using seat labels
