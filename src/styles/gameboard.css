@@ -131,6 +131,60 @@
   width: 100%;
 }
 
+.gm-role-tray {
+  margin: 1rem 1.1rem 0;
+  padding: 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.025);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+}
+.gm-role-tray__list {
+  display: flex;
+  gap: 0.45rem;
+  overflow-x: auto;
+  padding-bottom: 0.1rem;
+  scrollbar-width: thin;
+}
+.gm-role-chip {
+  flex: 0 0 auto;
+  min-width: 4.4rem;
+  max-width: 8.5rem;
+  min-height: 2.25rem;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-left: 3px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.035);
+}
+.gm-role-chip.camp-village { border-left-color: var(--camp-village); }
+.gm-role-chip.camp-werewolves { border-left-color: var(--camp-werewolves); }
+.gm-role-chip.camp-lovers { border-left-color: var(--camp-lovers); }
+.gm-role-chip.camp-neutral { border-left-color: var(--camp-neutral); }
+.gm-role-chip.is-dead {
+  opacity: 0.45;
+  border-style: dashed;
+}
+.gm-role-chip__seat {
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+.gm-role-chip__emoji {
+  font-size: 1rem;
+}
+.gm-role-chip__name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
 .power-status-panel {
   margin: 1.1rem 1.1rem 0;
   padding: 0.9rem 1rem;
@@ -252,6 +306,20 @@
   .power-status-row {
     grid-template-columns: 1fr;
     align-items: stretch;
+  }
+
+  .gm-role-tray {
+    margin-inline: 0.85rem;
+  }
+
+  .gm-role-chip {
+    min-width: 3.4rem;
+    max-width: 5.8rem;
+    grid-template-columns: auto auto;
+  }
+
+  .gm-role-chip__name {
+    display: none;
   }
 
   .conf-menu {

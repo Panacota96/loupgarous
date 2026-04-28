@@ -14,11 +14,6 @@ type Props = {
   onClose?: () => void;
 };
 
-function pickRandomId(ids: string[]) {
-  if (ids.length < 2) return null;
-  return ids[Math.floor(Math.random() * ids.length)] ?? null;
-}
-
 export default function TieBreaker({
   tiedPlayerIds,
   players,
@@ -30,15 +25,16 @@ export default function TieBreaker({
   const tiedPlayers = tiedPlayerIds
     .map((id) => players.find((p) => p.id === id))
     .filter((player): player is SimplePlayer => Boolean(player));
-  const [result] = useState<string | null>(() => pickRandomId(tiedPlayerIds));
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const selectedPlayer = tiedPlayers.find((p) => p.id === result) ?? null;
+  const selectedPlayer = tiedPlayers.find((p) => p.id === selectedId) ?? null;
 
-  if (tiedPlayers.length < 2 || !selectedPlayer) {
+  if (tiedPlayers.length < 2) {
     return null;
   }
 
   const confirmElim = () => {
+    if (!selectedPlayer) return;
     onEliminate(selectedPlayer.id);
     onLog(t.logs.tieBreaker(selectedPlayer.name));
     onClose?.();
@@ -50,14 +46,25 @@ export default function TieBreaker({
       <p className="tb-hint">{t.tieBreaker.hint}</p>
       <div className="tb-player-list">
         {tiedPlayers.map((p) => (
-          <div key={p.id} className="tb-player selected readonly" data-testid={`tie-breaker-player-${p.id}`}>
+          <button
+            key={p.id}
+            type="button"
+            className={`tb-player ${selectedId === p.id ? 'selected' : ''}`}
+            aria-pressed={selectedId === p.id}
+            data-testid={`tie-breaker-player-${p.id}`}
+            onClick={() => setSelectedId(p.id)}
+          >
             {p.name}
-          </div>
+          </button>
         ))}
       </div>
       <div className="tb-result" data-testid="tie-breaker-result">
-        <p>{t.tieBreaker.selected(selectedPlayer.name)}</p>
-        <button className="btn btn-danger" onClick={confirmElim}>
+        <p>
+          {selectedPlayer
+            ? t.tieBreaker.selected(selectedPlayer.name)
+            : t.tieBreaker.selectionRequired}
+        </p>
+        <button className="btn btn-danger" onClick={confirmElim} disabled={!selectedPlayer}>
           {t.tieBreaker.confirm}
         </button>
         <button className="btn btn-ghost" onClick={() => onClose?.()}>

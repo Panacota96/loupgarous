@@ -4,6 +4,7 @@ import { WOLF_ROLE_IDS, INDEPENDENT_LONER_ROLE_IDS } from '../../data/roles';
 import NightPhase from './NightPhase';
 import DayPhase from './DayPhase';
 import PowerStatusPanel from './PowerStatusPanel';
+import RoleTray from './RoleTray';
 import RoleReference from '../Roles/RoleReference';
 import LanguageToggle from '../LanguageToggle';
 import { useI18n } from '../../i18n';
@@ -245,6 +246,7 @@ export default function GameBoard() {
           <div className="tab-content">
             {tab === 'game' && (
               <>
+                <RoleTray />
                 <PowerStatusPanel />
                 {phase === 'night' ? <NightPhase /> : <DayPhase />}
               </>

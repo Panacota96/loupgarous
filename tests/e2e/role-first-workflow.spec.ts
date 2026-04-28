@@ -29,6 +29,9 @@ test('role-first setup uses ordered seats and seat labels', async ({ page }) => 
 
   await page.getByTestId('start-game').click();
   await expect(page.getByTestId('night-phase')).toBeVisible();
+  await expect(page.getByTestId('gm-role-tray')).toBeVisible();
+  await expect(page.getByTestId('gm-role-chip-p0')).toContainText('#1');
+  await expect(page.getByTestId('gm-role-chip-p0')).toContainText('Werewolf');
   await page.getByTestId('night-next').click();
   await page.getByTestId('night-next').click();
   await page.getByTestId('night-next').click();

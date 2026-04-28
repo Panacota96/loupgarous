@@ -31,4 +31,7 @@ test('first-night checklist highlights passive/manual roles without adding night
   await page.getByTestId('night-next').click();
   await page.getByTestId('night-next').click();
   await expect(page.getByRole('heading', { name: /Night ends/i })).toBeVisible();
+  await page.getByTestId('reveal-day').click();
+  await expect(page.getByText(/Bear Tamer: check the nearest alive neighbor/i)).toBeVisible();
+  await expect(page.getByText(/Bear signal:.*GROWLS|Bear signal:.*Silent/i)).toHaveCount(0);
 });

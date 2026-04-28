@@ -39,10 +39,6 @@ test('manual tie flow requires at least two players and resolves through the tie
   await panel.getByTestId('tie-player-p0').click();
   await panel.getByTestId('tie-player-p1').click();
 
-  await page.evaluate(() => {
-    Math.random = () => 0.75;
-  });
-
   await page.getByTestId('tie-resolution-resolve').click();
 
   const tieBreakerPanel = page.getByTestId('tie-breaker-panel');
@@ -50,6 +46,10 @@ test('manual tie flow requires at least two players and resolves through the tie
   await expect(tieBreakerPanel).toContainText('#1 Werewolf');
   await expect(tieBreakerPanel).toContainText('#2 Werewolf');
   await expect(tieBreakerPanel).not.toContainText('#3 Villager');
+  await expect(page.getByTestId('tie-breaker-result')).toContainText('Select one tied player');
+  await expect(page.getByRole('button', { name: /Confirm Elimination/ })).toBeDisabled();
+
+  await page.getByTestId('tie-breaker-player-p1').click();
   await expect(page.getByTestId('tie-breaker-result')).toContainText('#2 Werewolf');
 
   await page.getByRole('button', { name: /Confirm Elimination/ }).click();

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useGameStore } from '../../store/gameStore';
-import { ROLE_MAP, getRoleTexts, getRoleName, isPlayerWolfIdentity } from '../../data/roles';
+import { ROLE_MAP, getRoleTexts, getRoleName } from '../../data/roles';
 import { useI18n } from '../../i18n';
 import { getPlayerRoleLabel } from '../../utils/playerLabels';
 import PlayerCard from './PlayerCard';
@@ -15,8 +15,6 @@ export default function DayPhase() {
   const round = useGameStore((s) => s.round);
   const infectedPlayerIds = useGameStore((s) => s.infectedPlayerIds);
   const enchantedPlayerIds = useGameStore((s) => s.enchantedPlayerIds);
-  const wildChildTransformed = useGameStore((s) => s.wildChildTransformed);
-  const wolfDogChoice = useGameStore((s) => s.wolfDogChoice);
   const foxPowerActive = useGameStore((s) => s.foxPowerActive);
   const usedGameAbilities = useGameStore((s) => s.usedGameAbilities);
   const rolePowerOverrides = useGameStore((s) => s.rolePowerOverrides ?? {});
@@ -32,43 +30,7 @@ export default function DayPhase() {
   const [showTieBreaker, setShowTieBreaker] = useState(false);
   const [showTieValidation, setShowTieValidation] = useState(false);
 
-  // Bear Tamer morning signal: use full player list (stable seating order)
-  // and scan for the nearest alive neighbor on each side.
   const bearTamer = players.find((p) => p.isAlive && p.roleId === 'bear_tamer');
-  const bearGrowls = (() => {
-    if (!bearTamer || players.length < 2) return false;
-    const total = players.length;
-    const idx = players.findIndex((p) => p.id === bearTamer.id);
-    if (idx === -1) return false;
-
-    const isWolfSide = (p: typeof players[0] | undefined) =>
-      !!p &&
-      isPlayerWolfIdentity(p, {
-        infectedPlayerIds,
-        wolfDogChoice,
-        wildChildTransformed,
-      });
-
-    let leftNeighbor: typeof players[0] | undefined;
-    for (let offset = 1; offset < total; offset++) {
-      const candidate = players[(idx - offset + total) % total];
-      if (candidate.isAlive) {
-        leftNeighbor = candidate;
-        break;
-      }
-    }
-
-    let rightNeighbor: typeof players[0] | undefined;
-    for (let offset = 1; offset < total; offset++) {
-      const candidate = players[(idx + offset) % total];
-      if (candidate.isAlive) {
-        rightNeighbor = candidate;
-        break;
-      }
-    }
-
-    return isWolfSide(leftNeighbor) || isWolfSide(rightNeighbor);
-  })();
 
   const mayorAlive = players.find((p) => p.isAlive && p.isMayor) ?? null;
   const foxInGame = players.some((p) => p.roleId === 'fox');
@@ -130,8 +92,8 @@ export default function DayPhase() {
       </div>
 
       {bearTamer && (
-        <div className={`bear-signal ${bearGrowls ? 'growl' : 'silent'}`}>
-          <strong>{t.day.bearSignal(bearGrowls)}</strong>
+        <div className="bear-signal">
+          <strong>{t.day.bearReminder}</strong>
         </div>
       )}
 
