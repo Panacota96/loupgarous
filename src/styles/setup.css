@@ -355,22 +355,6 @@
   box-shadow: 0 6px 14px rgba(0,0,0,0.35);
 }
 
-/* Optional rules */
-.optional-rule {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.6rem;
-  cursor: pointer;
-  font-size: 0.9rem;
-  line-height: 1.5;
-  padding: 0.3rem 0.4rem;
-  border-radius: 8px;
-  transition: background 0.15s, border-color 0.15s;
-  border: 1px solid transparent;
-}
-.optional-rule:hover { background: rgba(255,255,255,0.03); border-color: rgba(255,255,255,0.05); }
-.optional-rule input { margin-top: 3px; flex-shrink: 0; }
-
 /* Errors */
 .setup-errors {
   display: flex;

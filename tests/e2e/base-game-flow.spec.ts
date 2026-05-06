@@ -63,7 +63,12 @@ test('base 6-player game flow stays visible and interactive', async ({ page }, t
     await expect(page.getByRole('button', { name: '🎖️ Mayor' })).toHaveCount(0);
 
     await page.locator('.player-card').first().getByRole('button', { name: /Elim\./ }).click();
-    await expect(page.locator('.player-card.dead')).toHaveCount(1);
+    await expect(page.locator('.player-card')).toHaveCount(5);
+    await expect(page.locator('.player-card.dead')).toHaveCount(0);
+    await expect(page.getByTestId('gm-role-chip-p0')).toHaveCount(0);
+    await expect(page.locator('.gm-role-chip')).toHaveCount(5);
+    await expect(page.getByTestId('recent-eliminations')).toContainText('#1 Werewolf');
+    await expect(page.getByRole('heading', { name: /Players \(5 alive\)/ })).toBeVisible();
 
     await page.getByRole('button', { name: /Start Night Phase/ }).click();
   });

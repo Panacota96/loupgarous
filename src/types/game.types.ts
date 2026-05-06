@@ -39,8 +39,6 @@ export interface RoleDefinition {
   revealTrigger: string | null;    // what happens when this role is revealed/dies
   dayTriggerFr?: string | null;
   revealTriggerFr?: string | null;
-  optionalRule?: string;
-  optionalRuleFr?: string;
   description: string;
   descriptionFr?: string;
   emoji: string;
@@ -92,6 +90,17 @@ export interface ProtectorRecord {
   targetId: string | null;
 }
 
+export interface PendingDayElimination {
+  id: string;
+  round: number;
+  eliminatedPlayerIds: string[];
+  eliminatedNames: string;
+  playersBefore: Player[];
+  wildChildTransformedBefore: boolean;
+  angelWonBefore: boolean;
+  firstDayExecutionDoneBefore: boolean;
+}
+
 export interface GameState {
   phase: Phase;
   round: number;
@@ -106,7 +115,6 @@ export interface GameState {
   mayorId: string | null;
   log: string[];
   usedGameAbilities: string[]; // e.g. 'witch_heal', 'witch_poison', 'infect_pere'
-  optionalRules: Record<string, boolean>;
   foxPowerActive: boolean;                 // true while Fox still has sniffing power
   // New role mechanics
   wildChildModelId: string | null;       // ID of Wild Child's chosen role model
@@ -122,4 +130,5 @@ export interface GameState {
   protectedPlayerId: string | null;      // player protected by Protector for the current night
   lastProtectedPlayerId: string | null;  // player protected on the previous night
   rolePowerOverrides: Record<string, boolean>; // manual GM overrides for role power availability
+  pendingDayEliminations: PendingDayElimination[]; // reversible Day eliminations until phase/win confirmation
 }

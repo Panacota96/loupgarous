@@ -117,6 +117,18 @@ test('village win is suggested before it is confirmed', async ({ page }) => {
 
   await expect(page.locator('.win-screen')).toHaveCount(1);
   await expect(page.getByRole('heading', { name: 'Village Wins!' })).toBeVisible();
+  await expect.poll(async () =>
+      page.evaluate(() => {
+        const raw = localStorage.getItem('loupgarous-game');
+        return raw ? JSON.parse(raw).state.pendingDayEliminations.length : -1;
+      })
+    ).toBe(0);
+  await expect.poll(async () =>
+      page.evaluate(() => {
+        const raw = localStorage.getItem('loupgarous-game');
+        return raw ? JSON.parse(raw).state.log.join('\n') : '';
+      })
+    ).toContain('Day 1: #1 Werewolf eliminated.');
 });
 
 test('angel win is suggested when Angel is the first Day 1 execution', async ({ page }) => {

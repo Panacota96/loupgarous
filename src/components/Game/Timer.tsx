@@ -1,7 +1,19 @@
 import { useEffect, useRef } from 'react';
-import { useGameStore } from '../../store/gameStore';
+import {
+  DISCUSSION_TIME_STEP_SECONDS,
+  MAX_DISCUSSION_TIME_SECONDS,
+  MIN_DISCUSSION_TIME_SECONDS,
+  useGameStore,
+} from '../../store/gameStore';
 import { useI18n } from '../../i18n';
 import '../../styles/timer.css';
+
+function formatTimer(seconds: number) {
+  const safeSeconds = Math.max(0, seconds);
+  const minutes = Math.floor(safeSeconds / 60);
+  const remainingSeconds = safeSeconds % 60;
+  return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+}
 
 export default function Timer() {
   const { t } = useI18n();
@@ -12,6 +24,7 @@ export default function Timer() {
   const stopTimer = useGameStore((s) => s.stopTimer);
   const tickTimer = useGameStore((s) => s.tickTimer);
   const resetTimer = useGameStore((s) => s.resetTimer);
+  const adjustDiscussionTimer = useGameStore((s) => s.adjustDiscussionTimer);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -28,17 +41,17 @@ export default function Timer() {
     };
   }, [timerRunning, tickTimer]);
 
-  const minutes = Math.floor(timerRemaining / 60);
-  const seconds = timerRemaining % 60;
   const progress = timerRemaining / discussionTimeSeconds;
   const isDanger = progress <= 0.25;
   const isWarning = progress <= 0.5 && !isDanger;
+  const canDecrease = discussionTimeSeconds > MIN_DISCUSSION_TIME_SECONDS;
+  const canIncrease = discussionTimeSeconds < MAX_DISCUSSION_TIME_SECONDS;
 
   return (
     <div className={`timer-widget ${isDanger ? 'danger' : isWarning ? 'warning' : ''}`}>
       <div className="timer-label">{t.timer.label}</div>
-      <div className="timer-display">
-        {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+      <div className="timer-display" data-testid="timer-display">
+        {formatTimer(timerRemaining)}
       </div>
       <div className="timer-bar-wrap">
         <div
@@ -46,13 +59,44 @@ export default function Timer() {
           style={{ width: `${Math.max(0, progress * 100)}%` }}
         />
       </div>
+      <div className="timer-adjust" aria-label={t.timer.adjustLabel}>
+        <button
+          className="timer-step-btn"
+          type="button"
+          onClick={() => adjustDiscussionTimer(-DISCUSSION_TIME_STEP_SECONDS)}
+          disabled={!canDecrease}
+          aria-label={t.timer.decrease}
+          data-testid="timer-decrease"
+        >
+          -30s
+        </button>
+        <div className="timer-duration">
+          <span>{t.timer.duration}</span>
+          <strong data-testid="timer-duration">{formatTimer(discussionTimeSeconds)}</strong>
+        </div>
+        <button
+          className="timer-step-btn"
+          type="button"
+          onClick={() => adjustDiscussionTimer(DISCUSSION_TIME_STEP_SECONDS)}
+          disabled={!canIncrease}
+          aria-label={t.timer.increase}
+          data-testid="timer-increase"
+        >
+          +30s
+        </button>
+      </div>
       <div className="timer-controls">
         {!timerRunning ? (
-          <button className="btn btn-green" onClick={startTimer} disabled={timerRemaining === 0}>
+          <button
+            className="btn btn-green"
+            onClick={startTimer}
+            disabled={timerRemaining === 0}
+            data-testid="timer-start"
+          >
             {t.timer.start}
           </button>
         ) : (
-          <button className="btn btn-yellow" onClick={stopTimer}>
+          <button className="btn btn-yellow" onClick={stopTimer} data-testid="timer-pause">
             {t.timer.pause}
           </button>
         )}
