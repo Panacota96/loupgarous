@@ -32,6 +32,7 @@ export default function GameBoard() {
   const infectedPlayerIds = useGameStore((s) => s.infectedPlayerIds);
   const enchantedPlayerIds = useGameStore((s) => s.enchantedPlayerIds);
   const angelWon = useGameStore((s) => s.angelWon);
+  const finalizePendingDayEliminations = useGameStore((s) => s.finalizePendingDayEliminations);
   const { t } = useI18n();
 
   const [tab, setTab] = useState<Tab>('game');
@@ -153,7 +154,10 @@ export default function GameBoard() {
           <div className="win-actions">
             <button
               className="btn btn-primary"
-              onClick={() => setConfirmedWinner(pendingWinner)}
+              onClick={() => {
+                finalizePendingDayEliminations();
+                setConfirmedWinner(pendingWinner);
+              }}
               data-testid="confirm-winner"
             >
               {t.game.confirmWin}

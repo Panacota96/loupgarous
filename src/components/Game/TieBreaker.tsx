@@ -10,7 +10,6 @@ type Props = {
   players: SimplePlayer[];
   t: Strings;
   onEliminate: (id: string) => void;
-  onLog: (message: string) => void;
   onClose?: () => void;
 };
 
@@ -19,7 +18,6 @@ export default function TieBreaker({
   players,
   t,
   onEliminate,
-  onLog,
   onClose,
 }: Props) {
   const tiedPlayers = tiedPlayerIds
@@ -36,7 +34,6 @@ export default function TieBreaker({
   const confirmElim = () => {
     if (!selectedPlayer) return;
     onEliminate(selectedPlayer.id);
-    onLog(t.logs.tieBreaker(selectedPlayer.name));
     onClose?.();
   };
 

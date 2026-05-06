@@ -18,9 +18,10 @@ export default function DayPhase() {
   const foxPowerActive = useGameStore((s) => s.foxPowerActive);
   const usedGameAbilities = useGameStore((s) => s.usedGameAbilities);
   const rolePowerOverrides = useGameStore((s) => s.rolePowerOverrides ?? {});
+  const pendingDayEliminations = useGameStore((s) => s.pendingDayEliminations);
 
   const eliminatePlayer = useGameStore((s) => s.eliminatePlayer);
-  const addLog = useGameStore((s) => s.addLog);
+  const undoLastPendingDayElimination = useGameStore((s) => s.undoLastPendingDayElimination);
   const togglePhase = useGameStore((s) => s.togglePhase);
   const playerLabel = (player: typeof players[number]) =>
     getPlayerRoleLabel(player, players, language);
@@ -157,11 +158,39 @@ export default function DayPhase() {
       <section className="day-players">
         <h3>{t.day.playersTitle(alivePlayers.length)}</h3>
         <div className="players-grid">
-          {players.map((p) => (
+          {alivePlayers.map((p) => (
             <PlayerCard key={p.id} playerId={p.id} showRole />
           ))}
         </div>
       </section>
+
+      {pendingDayEliminations.length > 0 && (
+        <section className="recent-eliminations" data-testid="recent-eliminations">
+          <div className="recent-eliminations-header">
+            <h3>{t.day.recentlyEliminatedTitle}</h3>
+            <button
+              className="btn btn-ghost btn-sm"
+              type="button"
+              onClick={undoLastPendingDayElimination}
+              data-testid="undo-pending-elimination"
+            >
+              {t.day.undoLastElimination}
+            </button>
+          </div>
+          <p className="recent-eliminations-hint">{t.day.recentlyEliminatedHint}</p>
+          <div className="recent-eliminations-list">
+            {[...pendingDayEliminations].reverse().map((entry) => (
+              <div
+                key={entry.id}
+                className="recent-elimination-item"
+                data-testid={`pending-elimination-${entry.id}`}
+              >
+                {t.day.pendingElimination(entry.eliminatedNames)}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <section className="voting-section tie-resolution-section" data-testid="tie-resolution-panel">
         <div className="voting-header">
@@ -237,7 +266,6 @@ export default function DayPhase() {
                   name: playerLabel(player),
                 }))}
                 t={t}
-                onLog={addLog}
                 onEliminate={(id) => {
                   eliminatePlayer(id);
                   resetTieFlow();

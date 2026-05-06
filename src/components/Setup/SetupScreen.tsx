@@ -1,6 +1,17 @@
 import { useState, useCallback } from 'react';
-import { useGameStore } from '../../store/gameStore';
-import { SETUP_ROLE_IDS, SETUP_ROLES, WOLF_ROLE_IDS, getRoleName, getRoleTexts } from '../../data/roles';
+import {
+  DISCUSSION_TIME_STEP_SECONDS,
+  MAX_DISCUSSION_TIME_SECONDS,
+  MIN_DISCUSSION_TIME_SECONDS,
+  useGameStore,
+} from '../../store/gameStore';
+import {
+  SETUP_ROLE_IDS,
+  SETUP_ROLES,
+  WOLF_ROLE_IDS,
+  getRoleName,
+  sortRolesByName,
+} from '../../data/roles';
 import RoleReference from '../Roles/RoleReference';
 import LanguageToggle from '../LanguageToggle';
 import QuickGuide from './QuickGuide';
@@ -39,7 +50,6 @@ export default function SetupScreen() {
     Array(6).fill('villager')
   );
   const [discussionTime, setDiscussionTime] = useState(180);
-  const [optionalRules, setOptionalRules] = useState<Record<string, boolean>>({});
 
   const handlePlayerCountChange = useCallback(
     (count: number) => {
@@ -96,13 +106,13 @@ export default function SetupScreen() {
         while (next.length < clamped) next.push('villager');
         return next.map((id: string) => (SETUP_ROLE_IDS.has(id) ? id : 'villager'));
       });
-      setOptionalRules({});
     },
     [t]
   );
 
   // Tally roles assigned
   const roleCounts = countAssignedRoles(roleAssignment.slice(0, playerCount));
+  const sortedSetupRoles = sortRolesByName(SETUP_ROLES, language);
 
   // Validation
   const errors: string[] = [];
@@ -131,20 +141,13 @@ export default function SetupScreen() {
     const sanitizedRoleIds = roleAssignment
       .slice(0, playerCount)
       .map((id) => (SETUP_ROLE_IDS.has(id) ? id : 'villager'));
-    const allowedOptionalRules = Object.fromEntries(
-      Object.entries(optionalRules).filter(([id]) => SETUP_ROLE_IDS.has(id))
-    );
     setSetup({
       playerNames: [],
       roleIds: sanitizedRoleIds,
       discussionTime,
-      optionalRules: allowedOptionalRules,
     });
     startGame();
   };
-
-  // Role distribution helper: roles that have optional rules
-  const optionalRoleRules = SETUP_ROLES.filter((r) => r.optionalRule);
 
   return (
     <div className="setup-screen">
@@ -226,7 +229,7 @@ export default function SetupScreen() {
               {Array.from({ length: playerCount }, (_, i) => {
                 const roleId = roleAssignment[i] ?? 'villager';
                 const role = SETUP_ROLES.find((r) => r.id === roleId);
-                const selectableRoles = SETUP_ROLES.filter(
+                const selectableRoles = sortedSetupRoles.filter(
                   (r) => r.id === roleId || (roleCounts[r.id] ?? 0) < r.maxCount
                 );
                 return (
@@ -301,11 +304,11 @@ export default function SetupScreen() {
           <section className="setup-section">
             <h2>📊 {t.setup.roleSummary}</h2>
             <div className="role-summary">
-              {Object.entries(roleCounts).map(([id, count]) => {
-                const def = SETUP_ROLES.find((r) => r.id === id);
-                if (!def) return null;
+              {sortedSetupRoles.map((def) => {
+                const count = roleCounts[def.id] ?? 0;
+                if (count === 0) return null;
                 return (
-                  <div key={id} className={`role-badge camp-${def.camp}`}>
+                  <div key={def.id} className={`role-badge camp-${def.camp}`}>
                     {def.emoji} {getRoleName(def, language)} ×{count}
                   </div>
                 );
@@ -319,7 +322,11 @@ export default function SetupScreen() {
             <div className="timer-config">
               <button
                 className="count-btn"
-                onClick={() => setDiscussionTime((t) => Math.max(30, t - 30))}
+                onClick={() =>
+                  setDiscussionTime((time) =>
+                    Math.max(MIN_DISCUSSION_TIME_SECONDS, time - DISCUSSION_TIME_STEP_SECONDS)
+                  )
+                }
               >
                 −30s
               </button>
@@ -328,33 +335,16 @@ export default function SetupScreen() {
               </span>
               <button
                 className="count-btn"
-                onClick={() => setDiscussionTime((t) => Math.min(600, t + 30))}
+                onClick={() =>
+                  setDiscussionTime((time) =>
+                    Math.min(MAX_DISCUSSION_TIME_SECONDS, time + DISCUSSION_TIME_STEP_SECONDS)
+                  )
+                }
               >
                 +30s
               </button>
             </div>
           </section>
-
-          {/* Optional Rules */}
-          {optionalRoleRules.length > 0 && (
-            <section className="setup-section">
-              <h2>⚙️ {t.setup.optionalRules}</h2>
-              {optionalRoleRules.map((r) => (
-                <label key={r.id} className="optional-rule">
-                  <input
-                    type="checkbox"
-                    checked={!!optionalRules[r.id]}
-                    onChange={(e) =>
-                      setOptionalRules((prev) => ({ ...prev, [r.id]: e.target.checked }))
-                    }
-                  />
-                  <span>
-                    {r.emoji} <strong>{getRoleName(r, language)}</strong>: {getRoleTexts(r, language).optionalRule}
-                  </span>
-                </label>
-              ))}
-            </section>
-          )}
 
           {/* Errors */}
           {errors.length > 0 && (

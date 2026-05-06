@@ -53,6 +53,17 @@ test('manual tie flow requires at least two players and resolves through the tie
   await expect(page.getByTestId('tie-breaker-result')).toContainText('#2 Werewolf');
 
   await page.getByRole('button', { name: /Confirm Elimination/ }).click();
-  await expect(page.getByTestId('player-card-p1')).toHaveClass(/dead/);
+  await expect(page.getByTestId('player-card-p1')).toHaveCount(0);
+  await expect(page.getByTestId('gm-role-chip-p1')).toHaveCount(0);
+  await expect(page.locator('.player-card')).toHaveCount(5);
+  await expect(page.locator('.gm-role-chip')).toHaveCount(5);
+  await expect(page.getByTestId('recent-eliminations')).toContainText('#2 Werewolf');
+
+  await page.getByTestId('undo-pending-elimination').click();
+  await expect(page.getByTestId('recent-eliminations')).toHaveCount(0);
+  await expect(page.getByTestId('player-card-p1')).toBeVisible();
+  await expect(page.getByTestId('gm-role-chip-p1')).toBeVisible();
+  await expect(page.locator('.player-card')).toHaveCount(6);
+  await expect(page.locator('.gm-role-chip')).toHaveCount(6);
 });
 

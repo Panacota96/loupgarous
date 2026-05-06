@@ -13,7 +13,6 @@ interface Strings {
     viewRoleDescriptions: string;
     roleSummary: string;
     discussionTimer: string;
-    optionalRules: string;
     orderedRoles: string;
     addRole: string;
     removeRole: string;
@@ -60,7 +59,6 @@ interface Strings {
       night: string;
       day: string;
       reveal: string;
-      optional: string;
       firstNightOnly: string;
       everyOtherNight: string;
       oddNightsOnly: string;
@@ -181,6 +179,10 @@ interface Strings {
     witchPotionsStatus: (healUsed: boolean, poisonUsed: boolean) => string;
     witchPotionsSpent: string;
     playersTitle: (alive: number) => string;
+    recentlyEliminatedTitle: string;
+    recentlyEliminatedHint: string;
+    pendingElimination: (names: string) => string;
+    undoLastElimination: string;
     tieResolutionTitle: string;
     tieResolutionHint: string;
     tieResolutionStart: string;
@@ -194,6 +196,10 @@ interface Strings {
   };
   timer: {
     label: string;
+    duration: string;
+    adjustLabel: string;
+    decrease: string;
+    increase: string;
     start: string;
     pause: string;
     reset: string;
@@ -273,7 +279,6 @@ const translations: Record<Language, Strings> = {
       viewRoleDescriptions: 'Roles',
       roleSummary: 'Role Summary',
       discussionTimer: 'Discussion Timer',
-      optionalRules: 'Optional Rules',
       orderedRoles: 'Ordered Roles',
       addRole: 'Add role',
       removeRole: 'Remove role',
@@ -351,7 +356,6 @@ const translations: Record<Language, Strings> = {
         night: 'Night',
         day: 'Day',
         reveal: 'On reveal/death',
-        optional: 'Optional',
         firstNightOnly: 'First Night Only',
         everyOtherNight: 'Every Other Night',
         oddNightsOnly: 'Nights 1, 3, 5…',
@@ -510,6 +514,10 @@ const translations: Record<Language, Strings> = {
         `🧙‍♀️ Witch potions — Healing: ${healUsed ? 'USED' : 'available'}, Death: ${poisonUsed ? 'USED' : 'available'}.`,
       witchPotionsSpent: '🧙‍♀️ Witch has no potions left (skip future Witch wake-ups).',
       playersTitle: (alive: number) => `👥 Players (${alive} alive)`,
+      recentlyEliminatedTitle: 'Recently eliminated',
+      recentlyEliminatedHint: 'These eliminations are not final until Night starts.',
+      pendingElimination: (names: string) => `${names} will be removed when Night starts.`,
+      undoLastElimination: 'Undo last',
       tieResolutionTitle: '⚖️ Tie Resolution',
       tieResolutionHint: 'Use this only when the real-table vote ends in a tie.',
       tieResolutionStart: 'Start Tie Resolution',
@@ -524,6 +532,10 @@ const translations: Record<Language, Strings> = {
     },
     timer: {
       label: '⏱️ Discussion Timer',
+      duration: 'Length',
+      adjustLabel: 'Adjust discussion length',
+      decrease: 'Shorten discussion by 30 seconds',
+      increase: 'Add 30 seconds to discussion',
       start: '▶ Start',
       pause: '⏸ Pause',
       reset: '🔄 Reset',
@@ -577,7 +589,6 @@ const translations: Record<Language, Strings> = {
       viewRoleDescriptions: 'Rôles',
       roleSummary: 'Résumé des rôles',
       discussionTimer: 'Minuteur de discussion',
-      optionalRules: 'Règles optionnelles',
       orderedRoles: 'Rôles ordonnés',
       addRole: 'Ajouter un rôle',
       removeRole: 'Retirer le rôle',
@@ -655,7 +666,6 @@ const translations: Record<Language, Strings> = {
         night: 'Nuit',
         day: 'Jour',
         reveal: 'À la révélation / mort',
-        optional: 'Optionnel',
         firstNightOnly: 'Première nuit uniquement',
         everyOtherNight: 'Une nuit sur deux',
         oddNightsOnly: 'Nuits 1, 3, 5…',
@@ -815,6 +825,10 @@ const translations: Record<Language, Strings> = {
         `🧙‍♀️ Potions de la Sorcière — Vie : ${healUsed ? 'UTILISÉE' : 'disponible'}, Mort : ${poisonUsed ? 'UTILISÉE' : 'disponible'}.`,
       witchPotionsSpent: '🧙‍♀️ La Sorcière n’a plus de potions (ne se réveillera plus).',
       playersTitle: (alive: number) => `👥 Joueurs (${alive} vivants)`,
+      recentlyEliminatedTitle: 'Éliminés récemment',
+      recentlyEliminatedHint: 'Ces éliminations ne sont pas définitives avant le début de la nuit.',
+      pendingElimination: (names: string) => `${names} sera retiré au début de la nuit.`,
+      undoLastElimination: 'Annuler la dernière',
       tieResolutionTitle: '⚖️ Gestion de l’égalité',
       tieResolutionHint: 'Utilisez ceci uniquement si le vote réel autour de la table finit à égalité.',
       tieResolutionStart: 'Lancer la résolution',
@@ -829,6 +843,10 @@ const translations: Record<Language, Strings> = {
     },
     timer: {
       label: '⏱️ Minuteur de discussion',
+      duration: 'Durée',
+      adjustLabel: 'Ajuster la durée de discussion',
+      decrease: 'Raccourcir la discussion de 30 secondes',
+      increase: 'Ajouter 30 secondes à la discussion',
       start: '▶ Démarrer',
       pause: '⏸ Pause',
       reset: '🔄 Réinitialiser',

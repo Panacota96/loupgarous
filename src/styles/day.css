@@ -51,6 +51,48 @@
   gap: 0.7rem;
 }
 
+/* Recently eliminated */
+.recent-eliminations {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(199,164,70,0.42);
+  border-radius: 10px;
+  background: rgba(199,164,70,0.08);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.3);
+}
+.recent-eliminations-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+.recent-eliminations-header h3 {
+  font-size: 1rem;
+  font-weight: 800;
+}
+.recent-eliminations-hint {
+  color: var(--text-muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+.recent-eliminations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+.recent-elimination-item {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-left: 3px solid var(--yellow);
+  border-radius: 8px;
+  background: rgba(0,0,0,0.16);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
 /* Tie resolution */
 .voting-section {
   background: linear-gradient(120deg, rgba(255,255,255,0.02), rgba(255,255,255,0));

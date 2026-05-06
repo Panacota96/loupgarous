@@ -46,7 +46,58 @@
 .timer-widget.warning .timer-bar { background: var(--yellow); }
 .timer-widget.danger .timer-bar { background: var(--danger); }
 
-.timer-controls { display: flex; gap: 0.7rem; }
+.timer-adjust {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+}
+.timer-step-btn {
+  min-width: 4.15rem;
+  height: 2.3rem;
+  padding: 0 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255,255,255,0.025);
+  color: var(--text);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s, opacity 0.2s, transform 0.2s;
+}
+.timer-step-btn:hover:not(:disabled) {
+  background: rgba(185,42,58,0.16);
+  border-color: rgba(185,42,58,0.7);
+  transform: translateY(-1px);
+}
+.timer-step-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+.timer-duration {
+  min-width: 7.2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+}
+.timer-duration span {
+  color: var(--text-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.timer-duration strong {
+  font-size: 1rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+}
+
+.timer-controls { display: flex; gap: 0.7rem; flex-wrap: wrap; justify-content: center; }
 
 .timer-alert {
   font-weight: 700;

@@ -1,5 +1,31 @@
 import { test, expect } from '@playwright/test';
 
+function expectAlphabetical(labels: string[], locale: string) {
+  const collator = new Intl.Collator(locale, { sensitivity: 'base' });
+  const sorted = [...labels].sort((a, b) => collator.compare(a, b));
+  expect(labels).toEqual(sorted);
+}
+
+function stripRoleEmoji(label: string) {
+  return label.replace(/^[^\p{L}\p{N}]+/u, '').trim();
+}
+
+test('role chooser and role reference are alphabetized', async ({ page }) => {
+  await page.goto('/');
+
+  const optionLabels = (
+    await page.getByTestId('player-row-0').getByTestId('role-select').locator('option').allTextContents()
+  ).map(stripRoleEmoji);
+  expectAlphabetical(optionLabels, 'en');
+  await expect(page.locator('.optional-rule')).toHaveCount(0);
+  await expect(page.getByText('Optional Rules', { exact: true })).toHaveCount(0);
+
+  await page.getByTestId('setup-tab-roles').click();
+  const referenceLabels = await page.locator('.role-ref-card .rrc-header strong').allTextContents();
+  expectAlphabetical(referenceLabels, 'en');
+  await expect(page.locator('.optional-action')).toHaveCount(0);
+});
+
 test('role-first setup uses ordered seats and seat labels', async ({ page }) => {
   await page.goto('/');
 

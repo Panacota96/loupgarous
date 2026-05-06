@@ -86,7 +86,3 @@
   background: rgba(218,54,51,0.08);
   border-left: 3px solid var(--danger);
 }
-.optional-action {
-  background: rgba(137,87,229,0.1);
-  border-left: 3px solid #8957e5;
-}

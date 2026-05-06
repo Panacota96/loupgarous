@@ -285,8 +285,6 @@ export const ROLES: RoleDefinition[] = [
     descriptionFr:
       "Survit à la première attaque des loups. Si le village vote son exécution, tous les pouvoirs spéciaux des villageois sont supprimés définitivement.",
     emoji: '🧓',
-    optionalRule: 'Elder loses all powers after being attacked once (not just surviving).',
-    optionalRuleFr: "L'Ancien perd tous ses pouvoirs après avoir été attaqué une fois (même s'il survit).",
   },
   {
     id: 'village_idiot',
@@ -327,8 +325,6 @@ export const ROLES: RoleDefinition[] = [
     descriptionFr:
       "Si un vote se termine à égalité, le Bouc Émissaire est éliminé à la place. Il choisit ensuite qui pourra voter au prochain tour.",
     emoji: '🐐',
-    optionalRule: 'Apply Scapegoat rule only in exact tie situations.',
-    optionalRuleFr: "N'appliquez la règle du Bouc Émissaire qu'en cas d'égalité parfaite.",
   },
   {
     id: 'bear_tamer',
@@ -600,6 +596,17 @@ export function getRoleName(role: RoleDefinition, language: Language) {
   return language === 'fr' ? role.nameFr : role.name;
 }
 
+export function sortRolesByName(roles: RoleDefinition[], language: Language) {
+  return [...roles].sort((a, b) => {
+    const nameComparison = getRoleName(a, language).localeCompare(
+      getRoleName(b, language),
+      language,
+      { sensitivity: 'base' }
+    );
+    return nameComparison || a.id.localeCompare(b.id);
+  });
+}
+
 export function getRoleTexts(role: RoleDefinition, language: Language) {
   const isFr = language === 'fr';
   return {
@@ -612,7 +619,6 @@ export function getRoleTexts(role: RoleDefinition, language: Language) {
       : null,
     dayTrigger: isFr ? role.dayTriggerFr ?? role.dayTrigger : role.dayTrigger,
     revealTrigger: isFr ? role.revealTriggerFr ?? role.revealTrigger : role.revealTrigger,
-    optionalRule: isFr ? role.optionalRuleFr ?? role.optionalRule : role.optionalRule,
   };
 }
 

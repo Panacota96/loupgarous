@@ -6,6 +6,7 @@ import type {
   NightStep,
   NightStepState,
   Language,
+  PendingDayElimination,
   Player as GamePlayer,
 } from '../types/game.types';
 import {
@@ -22,7 +23,6 @@ interface SetupState {
   playerNames: string[];
   roleIds: string[];
   discussionTime: number;
-  optionalRules: Record<string, boolean>;
 }
 
 interface StoreActions {
@@ -40,7 +40,10 @@ interface StoreActions {
   stopTimer: () => void;
   tickTimer: () => void;
   resetTimer: () => void;
+  adjustDiscussionTimer: (deltaSeconds: number) => void;
   eliminatePlayer: (id: string) => void;
+  undoLastPendingDayElimination: () => void;
+  finalizePendingDayEliminations: () => void;
   electMayor: (id: string) => void;
   addLog: (message: string) => void;
   setLanguage: (lang: Language) => void;
@@ -52,7 +55,6 @@ const defaultSetup: SetupState = {
   playerNames: [],
   roleIds: [],
   discussionTime: 180,
-  optionalRules: {},
 };
 
 const defaultGame: GameState = {
@@ -70,7 +72,6 @@ const defaultGame: GameState = {
   mayorId: null,
   log: [],
   usedGameAbilities: [],
-  optionalRules: {},
   foxPowerActive: true,
   protectorHistory: [],
   wildChildModelId: null,
@@ -84,7 +85,16 @@ const defaultGame: GameState = {
   protectedPlayerId: null,
   lastProtectedPlayerId: null,
   rolePowerOverrides: {},
+  pendingDayEliminations: [],
 };
+
+export const MIN_DISCUSSION_TIME_SECONDS = 30;
+export const MAX_DISCUSSION_TIME_SECONDS = 600;
+export const DISCUSSION_TIME_STEP_SECONDS = 30;
+
+function clampDiscussionTime(seconds: number) {
+  return Math.min(MAX_DISCUSSION_TIME_SECONDS, Math.max(MIN_DISCUSSION_TIME_SECONDS, seconds));
+}
 
 interface NightStepContext {
   players: GamePlayer[];
@@ -151,6 +161,16 @@ function buildNightSteps(context: NightStepContext): NightStep[] {
 
 function clonePlayers(players: Player[]) {
   return players.map((p) => ({ ...p }));
+}
+
+function buildPendingDayEliminationLogs(
+  pendingDayEliminations: PendingDayElimination[],
+  language: Language
+) {
+  const strings = getStrings(language);
+  return pendingDayEliminations.map((entry) =>
+    strings.logs.dayElimination(entry.round, entry.eliminatedNames)
+  );
 }
 
 function buildNightStepsForState(
@@ -268,7 +288,8 @@ export const useGameStore = create<GameStore>()(
       setSetup: (s) => set({ ...s }),
 
       startGame: () => {
-        const { roleIds, discussionTime, optionalRules, language } = get();
+        const { roleIds, discussionTime, language } = get();
+        const discussionTimeSeconds = clampDiscussionTime(discussionTime);
         const strings = getStrings(language);
         const players: Player[] = roleIds.map((roleId, i) => ({
           id: `p${i}`,
@@ -300,13 +321,12 @@ export const useGameStore = create<GameStore>()(
           nightSteps,
           currentNightStepIndex: 0,
           eliminatedThisNight: [],
-          timerRemaining: discussionTime,
-          discussionTimeSeconds: discussionTime,
+          timerRemaining: discussionTimeSeconds,
+          discussionTimeSeconds,
           loversIds: null,
           mayorId: null,
           log: [strings.logs.gameStarted(players.length)],
           usedGameAbilities: [],
-          optionalRules,
           foxPowerActive: true,
           protectorHistory: [],
           wildChildModelId: null,
@@ -320,6 +340,7 @@ export const useGameStore = create<GameStore>()(
           protectedPlayerId: null,
           lastProtectedPlayerId: null,
           rolePowerOverrides,
+          pendingDayEliminations: [],
         };
         const snapshotBase = { ...get(), ...nextState, nightStepStates: [] } as GameStore;
         const nightStepStates = [captureNightState(snapshotBase)];
@@ -427,7 +448,6 @@ export const useGameStore = create<GameStore>()(
           eliminatedThisNight,
           round,
           discussionTimeSeconds,
-          optionalRules,
           infectedPlayerIds,
           wildChildModelId,
           wildChildTransformed,
@@ -520,10 +540,10 @@ export const useGameStore = create<GameStore>()(
           nightStepStates: [],
           timerRemaining: discussionTimeSeconds,
           log: [...log, nightMsg],
-          optionalRules,
           wildChildTransformed: newWildChildTransformed,
           protectedPlayerId: null,
           lastProtectedPlayerId: protectedPlayerId,
+          pendingDayEliminations: [],
         });
       },
 
@@ -533,15 +553,21 @@ export const useGameStore = create<GameStore>()(
           round,
           players,
           discussionTimeSeconds,
-          optionalRules,
           foxPowerActive,
           usedGameAbilities,
           infectedPlayerIds,
           wolfDogChoice,
           wildChildTransformed,
           rolePowerOverrides,
+          pendingDayEliminations,
+          log,
+          language,
         } = get();
         if (phase === 'day') {
+          const finalizedDayLogs = buildPendingDayEliminationLogs(
+            pendingDayEliminations,
+            language
+          );
           const newRound = round + 1;
           const nightSteps = buildNightSteps({
             players,
@@ -559,8 +585,9 @@ export const useGameStore = create<GameStore>()(
             nightSteps,
             currentNightStepIndex: 0,
             eliminatedThisNight: [],
-            optionalRules,
             protectedPlayerId: null,
+            pendingDayEliminations: [],
+            log: finalizedDayLogs.length > 0 ? [...log, ...finalizedDayLogs] : log,
           };
           const snapshotBase = { ...get(), ...nextState, nightStepStates: [] } as GameStore;
           const nightStepStates = [captureNightState(snapshotBase)];
@@ -582,6 +609,24 @@ export const useGameStore = create<GameStore>()(
       },
       resetTimer: () =>
         set((s) => ({ timerRemaining: s.discussionTimeSeconds, timerRunning: false })),
+      adjustDiscussionTimer: (deltaSeconds) =>
+        set((state) => {
+          const currentDuration = clampDiscussionTime(state.discussionTimeSeconds);
+          const nextDuration = clampDiscussionTime(currentDuration + deltaSeconds);
+          const appliedDelta = nextDuration - currentDuration;
+          if (appliedDelta === 0) return {};
+
+          const timerRemaining = Math.max(
+            0,
+            Math.min(nextDuration, state.timerRemaining + appliedDelta)
+          );
+
+          return {
+            discussionTimeSeconds: nextDuration,
+            timerRemaining,
+            timerRunning: timerRemaining > 0 && state.timerRunning,
+          };
+        }),
 
       eliminatePlayer: (id) => {
         const {
@@ -592,10 +637,15 @@ export const useGameStore = create<GameStore>()(
           round,
           wildChildModelId,
           wildChildTransformed,
+          angelWon,
           firstDayExecutionDone,
+          pendingDayEliminations,
         } = get();
         const strings = getStrings(get().language);
         const language = get().language;
+        const executedPlayer = players.find((p) => p.id === id);
+        if (!executedPlayer?.isAlive) return;
+
         const toElim = [id];
         if (loversIds && loversIds.includes(id)) {
           const other = loversIds.find((lid) => lid !== id);
@@ -603,7 +653,6 @@ export const useGameStore = create<GameStore>()(
         }
         const updated = players.map((p) => toElim.includes(p.id) ? { ...p, isAlive: false } : p);
         const isFirstDayExecution = phase === 'day' && round === 1 && !firstDayExecutionDone;
-        const executedPlayer = players.find((p) => p.id === id);
         const angelWins = isFirstDayExecution && executedPlayer?.roleId === 'angel';
         const finalPlayers =
           isFirstDayExecution && !angelWins
@@ -616,17 +665,60 @@ export const useGameStore = create<GameStore>()(
           .map((eid) => getPlayerRoleLabelById(eid, players, language, ''))
           .filter(Boolean)
           .join(' & ');
+        const nextPendingDayEliminations =
+          phase === 'day'
+            ? [
+                ...pendingDayEliminations,
+                {
+                  id: `${round}-${id}-${pendingDayEliminations.length}`,
+                  round,
+                  eliminatedPlayerIds: toElim,
+                  eliminatedNames: elimNames,
+                  playersBefore: clonePlayers(players),
+                  wildChildTransformedBefore: wildChildTransformed,
+                  angelWonBefore: angelWon,
+                  firstDayExecutionDoneBefore: firstDayExecutionDone,
+                } satisfies PendingDayElimination,
+              ]
+            : pendingDayEliminations;
         set({
           players: finalPlayers,
           wildChildTransformed: newWildChildTransformed,
           angelWon: angelWins || get().angelWon,
           firstDayExecutionDone: firstDayExecutionDone || isFirstDayExecution,
-          log: [
-            ...log,
-            strings.logs.dayElimination(round, elimNames),
-          ],
+          pendingDayEliminations: nextPendingDayEliminations,
+          log: phase === 'day' ? log : [...log, strings.logs.dayElimination(round, elimNames)],
         });
       },
+
+      undoLastPendingDayElimination: () =>
+        set((state) => {
+          const lastPending = state.pendingDayEliminations.at(-1);
+          if (!lastPending) return {};
+
+          return {
+            players: clonePlayers(lastPending.playersBefore),
+            wildChildTransformed: lastPending.wildChildTransformedBefore,
+            angelWon: lastPending.angelWonBefore,
+            firstDayExecutionDone: lastPending.firstDayExecutionDoneBefore,
+            pendingDayEliminations: state.pendingDayEliminations.slice(0, -1),
+          };
+        }),
+
+      finalizePendingDayEliminations: () =>
+        set((state) => {
+          if (state.pendingDayEliminations.length === 0) return {};
+          return {
+            pendingDayEliminations: [],
+            log: [
+              ...state.log,
+              ...buildPendingDayEliminationLogs(
+                state.pendingDayEliminations,
+                state.language
+              ),
+            ],
+          };
+        }),
 
       electMayor: (id) =>
         set((s) => ({
@@ -641,7 +733,7 @@ export const useGameStore = create<GameStore>()(
     }),
     {
       name: 'loupgarous-game',
-      version: 2,
+      version: 3,
       migrate: (persistedState: unknown) => {
         if (!persistedState || typeof persistedState !== 'object') {
           return persistedState as unknown as GameStore;
@@ -696,6 +788,7 @@ export const useGameStore = create<GameStore>()(
             : null;
 
         delete rest.votes;
+        delete rest.optionalRules;
         rest.rolePowerOverrides = normalizeOverrides(rest.rolePowerOverrides);
         if (typeof rest.firstDayExecutionDone !== 'boolean') rest.firstDayExecutionDone = false;
         rest.loversIds = normalizeLoversIds(rest.loversIds);
