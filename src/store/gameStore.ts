@@ -786,9 +786,29 @@ export const useGameStore = create<GameStore>()(
           typeof value[1] === 'string'
             ? value as [string, string]
             : null;
+        const normalizeDiscussionSeconds = (value: unknown, fallback: number) =>
+          typeof value === 'number' && Number.isFinite(value)
+            ? clampDiscussionTime(value)
+            : fallback;
 
         delete rest.votes;
         delete rest.optionalRules;
+        rest.pendingDayEliminations = [];
+        rest.discussionTime = normalizeDiscussionSeconds(
+          rest.discussionTime,
+          defaultSetup.discussionTime
+        );
+        rest.discussionTimeSeconds = normalizeDiscussionSeconds(
+          rest.discussionTimeSeconds,
+          defaultGame.discussionTimeSeconds
+        );
+        rest.timerRemaining =
+          typeof rest.timerRemaining === 'number' && Number.isFinite(rest.timerRemaining)
+            ? Math.max(0, Math.min(rest.discussionTimeSeconds as number, rest.timerRemaining))
+            : rest.discussionTimeSeconds;
+        if (typeof rest.timerRunning !== 'boolean' || rest.timerRemaining === 0) {
+          rest.timerRunning = false;
+        }
         rest.rolePowerOverrides = normalizeOverrides(rest.rolePowerOverrides);
         if (typeof rest.firstDayExecutionDone !== 'boolean') rest.firstDayExecutionDone = false;
         rest.loversIds = normalizeLoversIds(rest.loversIds);
