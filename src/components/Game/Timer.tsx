@@ -41,8 +41,7 @@ export default function Timer() {
     };
   }, [timerRunning, tickTimer]);
 
-  const totalSeconds = Math.max(MIN_DISCUSSION_TIME_SECONDS, discussionTimeSeconds);
-  const progress = timerRemaining / totalSeconds;
+  const progress = timerRemaining / discussionTimeSeconds;
   const isDanger = progress <= 0.25;
   const isWarning = progress <= 0.5 && !isDanger;
   const canDecrease = discussionTimeSeconds > MIN_DISCUSSION_TIME_SECONDS;
